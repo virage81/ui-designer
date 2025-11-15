@@ -1,0 +1,26 @@
+{
+	"tabWidth": 2,
+	"useTabs": true,
+	"arrowParens": "avoid",
+	"bracketSameLine": true,
+	"bracketSpacing": true,
+	"endOfLine": "lf",
+	"jsxSingleQuote": true,
+	"printWidth": 120,
+	"singleQuote": true,
+	"trailingComma": "all",
+	"semi": true,
+	"proseWrap": "always",
+	"quoteProps": "as-needed",
+	"objectWrap": "collapse",
+	"singleAttributePerLine": false,
+	"overrides": [
+		{
+			"files": "*.md",
+			"options": {
+				"useTabs": false,
+				"tabWidth": 2
+			}
+		}
+	]
+}
