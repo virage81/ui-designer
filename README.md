@@ -1,80 +1,42 @@
-# React + TypeScript + Vite
+# UI Designer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Проект представляет собой веб-ориентированный графический редактор, позволяющий создавать и редактировать изображения в
+браузере. Пользователь может работать с холстом произвольного размера, рисовать различными инструментами, управлять
+слоями, просматривать историю действий и экспортировать итоговое изображение в формате PNG. Архитектура включает систему
+слоев с настройками прозрачности, возможность скрывать и переупорядочивать элементы, а также полный набор базовых
+инструментов — кисть, ластик, линии и фигуры с настраиваемой толщиной и цветом. Приложение сохраняет состояние проектов,
+обеспечивает удобную навигацию между ними и предоставляет интерфейс для создания новых холстов. Решение реализовано на
+TypeScript и React с использованием менеджера состояния и ориентировано на высокую производительность, удобство
+сопровождения и покрытие тестами.
 
-Currently, two official plugins are available:
+## 🧑‍💻 Команда и контакты
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses
-  [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown))
-  for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses
-  [SWC](https://swc.rs/) for Fast Refresh
+| Роль        | Имя       | Телеграм / Контакт для связи | Часов в неделю | Комментарии (отпуск, др. обстоятельства) |
+| :---------- | :-------- | :--------------------------- | :------------- | :--------------------------------------- |
+| Team Lead   | Булат     | @Bulat_KA18                  | 20-30          |                                          |
+| Разработчик | Михаил    | @Tynou_KpacaB4uk             | 15-20          |                                          |
+| Разработчик | Владислав | @vladislav_frolenkov         | 16-20          |                                          |
+| Разработчик | Александр | @Gradiented                  | 15             |                                          |
+| Разработчик | Сергей    | @Gray_Spaer                  | 40-60          |                                          |
 
-## React Compiler
+## 🎯 Ключевые договорённости по процессу
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see
-[this documentation](https://react.dev/learn/react-compiler/installation).
+- **Коммуникация:** Основной чат - [Telegram](https://t.me/c/3250545881/1).
+- **Встречи:** Внутренние митинги команды проводятся [например, каждый понедельник и четверг в 10:00].
+- **Протоколы встреч:** Все решения и итоги встреч фиксируются:
+  - **В репозитории:** В папке `docs/protocols` создавайте файлы в формате `.md` (например, `2024-05-20_standup.md`).
+- **Код-ревью:** Все пул-реквесты должны быть одобрены как минимум одним участником команды, прежде чем их сможет
+  принять Лид.
 
-## Expanding the ESLint configuration
+## 🛠 Технологический стек
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Фронтенд:** [React, Typescript, MUI, Redux Toolkit, Konva]
+- **Деплой:** [Vercel]
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 📋 Основные требования (Vision)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+[Здесь можно кратко перечислить 3-5 ключевых фич или требований к проекту, которые были согласованы.]
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
-
-You can also install
-[eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and
-[eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for
-React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+- Приложение должно иметь 2 страницы: главная страница с проектами и страница редактирования
+- Данные должны сохраняться, чтобы при перезагрузке ничего не пропало
+- Код должен быть написан на typescript
