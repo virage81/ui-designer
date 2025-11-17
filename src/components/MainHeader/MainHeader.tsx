@@ -1,4 +1,5 @@
-import { AppBar, Box, Container, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material';
+import { Add } from '@mui/icons-material';
 
 export const MainHeader: React.FC = () => {
 	return (
@@ -27,6 +28,15 @@ export const MainHeader: React.FC = () => {
 								Графический редактор
 							</Typography>
 						</Box>
+
+						<Button
+							variant='contained'
+							startIcon={<Add />}
+							sx={{
+								textTransform: 'none',
+							}}>
+							Создать проект
+						</Button>
 					</Toolbar>
 				</Container>
 			</AppBar>
