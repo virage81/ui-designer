@@ -50,6 +50,7 @@ h1 {
 	:root {
 		--main-bg: #0d0d0d;
 		--color: white;
+		--color-dark: #838383;
 		--header-bg: #181818;
 		--header-border-color: #292929;
 	}

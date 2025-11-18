@@ -1,12 +1,23 @@
 import { MainHeader } from '@components/MainHeader';
+import { ProjectsList } from '@components/ProjectsList';
+import { Box } from '@mui/material';
 
 export const MainPage: React.FC = () => {
 	return (
-		<div>
+		<Box
+			sx={{
+				display: 'flex',
+				flexDirection: 'column',
+				height: '100vh',
+			}}>
 			<MainHeader />
-
-			{/* TODO: Ниже расположить контент главной страницы */}
-			<main>MainPage</main>
-		</div>
+			<Box
+				component='main'
+				sx={{
+					flexGrow: 1,
+				}}>
+				<ProjectsList />
+			</Box>
+		</Box>
 	);
 };
