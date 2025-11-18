@@ -8,7 +8,7 @@ export const EmptyProjectsState: React.FC = () => {
 				textAlign: 'center',
 				mt: 10,
 			}}>
-			<Typography variant='body2' sx={{ mt: 2, color: 'var(--color-dark)' }}>
+			<Typography variant='body2' sx={{ mt: 2, color: 'var(--color-dark)', fontSize: '1rem' }}>
 				У вас пока нет проектов
 			</Typography>
 			<Button
@@ -16,7 +16,7 @@ export const EmptyProjectsState: React.FC = () => {
 				startIcon={<Add />}
 				sx={{
 					textTransform: 'none',
-					mt: 4,
+					mt: 2,
 				}}>
 				Создать первый проект
 			</Button>
