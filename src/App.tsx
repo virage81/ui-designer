@@ -2,9 +2,13 @@ import { useState } from 'react';
 import './App.css';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
+import { Modal } from '@components/Modal';
 
 function App() {
-	const [count, setCount] = useState(0);
+	const [openModal, setOpenModal] = useState<boolean>(true);
+	const toggleModal: () => void = () => {
+		setOpenModal(!openModal);
+	};
 
 	return (
 		<>
@@ -16,6 +20,7 @@ function App() {
 					<img src={reactLogo} className='logo react' alt='React logo' />
 				</a>
 			</div>
+			<Modal open={openModal} onCreate={() => {}} toggleModal={toggleModal} />
 			<h1>Vite + React</h1>
 			<div className='card'>
 				<button onClick={() => setCount(count => count + 1)}>count is {count}</button>
