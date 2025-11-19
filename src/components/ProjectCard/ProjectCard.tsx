@@ -2,19 +2,27 @@ import { Button, Card, CardActions, CardContent, CardMedia, Typography } from '@
 import { Placeholder } from './components';
 import { DeleteOutlineOutlined, FolderOpenOutlined } from '@mui/icons-material';
 
-// const imageUrl = 'https://wallpaper.forfun.com/fetch/11/11a73adf58ad1cbb6ee08f4971a0027a.jpeg' //TODO удалить (для теста)
-const imageUrl = ''; //TODO удалить (для теста)
+interface ProjectCardProps {
+	id: number;
+	title: string;
+	updatedAt: string;
+	previewUrl?: string | null;
+} // TODO удалить (для теста)
 
-export const ProjectCard = () => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({
+  title,
+  updatedAt,
+  previewUrl = null
+}) => {
 	return (
 		<Card
 			sx={{
-				maxWidth: 295,
+				maxWidth: 290,
 				borderRadius: 3,
 				backgroundColor: 'var(--header-bg)',
 				py: 3,
 			}}>
-			{!imageUrl ? (
+			{!previewUrl ? (
 				<Placeholder />
 			) : (
 				<CardMedia
@@ -24,23 +32,24 @@ export const ProjectCard = () => {
 					}}
 					component='img'
 					alt='green iguana'
-					height='190'
-					image={imageUrl}
+					height='150'
+					image={previewUrl}
 				/>
 			)}
 
-			<CardContent>
+			<CardContent sx={{ pb: 0.2 }}>
 				<Typography
 					component='h3'
 					sx={{
 						fontSize: '1.1rem',
 						fontWeight: 600,
 						color: 'var(--color)',
+						mt: 1.5,
 					}}>
-					Мой первый проект
+					{title}
 				</Typography>
 				<Typography variant='body2' sx={{ fontSize: '0.87rem', color: 'var(--color-dark)' }}>
-					Обновлено: 18 нояб. 2025г.
+					Обновлено: {updatedAt}
 				</Typography>
 			</CardContent>
 			<CardActions sx={{ px: 2 }}>
