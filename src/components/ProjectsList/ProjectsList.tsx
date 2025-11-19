@@ -27,9 +27,13 @@ const projects = [
 	},
 	{ id: 8, title: 'Проект 8', updatedAt: '21 нояб. 2025 г.', previewUrl: '' },
 ]; //TODO удалить (для теста)
-// const projectsTest = []; //TODO удалить (для теста)
+// const projects = []; //TODO удалить (для теста)
 
-export const ProjectsList: React.FC = () => {
+interface ProjectsListProps {
+	handleOpenDeleteConfirmModal: (title: string) => void;
+} //TODO удалить, когда появится StateManager
+
+export const ProjectsList: React.FC<ProjectsListProps> = ({ handleOpenDeleteConfirmModal }) => {
 	return (
 		<Box
 			sx={{
@@ -59,10 +63,10 @@ export const ProjectsList: React.FC = () => {
 				{!projects.length ? (
 					<EmptyProjectsState />
 				) : (
-					<Grid container gap={3} justifyContent='center' sx={{ mt: 3 }}>
+					<Grid container spacing={3} justifyContent='center' sx={{ mt: 3 }}>
 						{projects.map(project => (
-							<Grid>
-								<ProjectCard key={project.id} {...project}/>
+							<Grid key={project.id}>
+								<ProjectCard {...project} openModal={handleOpenDeleteConfirmModal} />
 							</Grid>
 						))}
 					</Grid>

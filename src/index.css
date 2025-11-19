@@ -54,8 +54,8 @@ h1 {
 		--card-placeholder-square: #2C3C5F;
 		--card-placeholder-icon: #4783FF;
 		--color: white;
-		--color-dark: #999999;
+		--color-dark: #8c8c8c;
 		--header-bg: #181818;
-		--header-border-color: #292929;
+		--header-modal-border-color: #292929;
 	}
 }

@@ -7,12 +7,14 @@ interface ProjectCardProps {
 	title: string;
 	updatedAt: string;
 	previewUrl?: string | null;
+	openModal: (title: string) => void;
 } // TODO удалить (для теста)
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   title,
   updatedAt,
-  previewUrl = null
+  previewUrl = null,
+	openModal
 }) => {
 	return (
 		<Card
@@ -31,7 +33,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 						borderTopRightRadius: 8,
 					}}
 					component='img'
-					alt='green iguana'
+					alt={title}
 					height='150'
 					image={previewUrl}
 				/>
@@ -69,7 +71,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 					sx={{
 						textTransform: 'none',
 						flex: 2,
-					}}>
+					}}
+					onClick={() => openModal(title)}
+					>
 					Удалить
 				</Button>
 			</CardActions>
