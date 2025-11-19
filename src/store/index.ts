@@ -2,7 +2,7 @@ import projectsReducer from '@store/projects';
 import projectReducer from '@store/project';
 import historyReducer from '@store/history';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import { persistReducer, persistStore } from 'redux-persist';
+import { PERSIST, REHYDRATE, persistReducer, persistStore,  } from 'redux-persist';
 import localStorage from 'redux-persist/lib/storage';
 
 const rootReducer = combineReducers({ projectReducer, projectsReducer, historyReducer });
@@ -17,7 +17,7 @@ export const store = configureStore({
 	middleware: (getDefaultMiddleware) =>
 		getDefaultMiddleware({
 			serializableCheck: {
-				ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
+				ignoredActions: [PERSIST, REHYDRATE],
 			},
 		}),
 	devTools: true,
