@@ -7,8 +7,12 @@
 
 	--main-bg: white;
 	--color: black;
+	--color-muted: #8f8f8f;
 	--header-bg: white;
 	--header-border-color: #dcdcdc;
+
+	--hover-color: black;
+	--hover-bg: #f6fafd;
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
@@ -41,8 +45,12 @@ h1 {
 	:root {
 		--main-bg: white;
 		--color: black;
+		--color-muted: #8f8f8f;
 		--header-bg: white;
 		--header-border-color: #dcdcdc;
+
+		--hover-color: black;
+		--hover-bg: #f6fafd;
 	}
 }
 
@@ -50,7 +58,11 @@ h1 {
 	:root {
 		--main-bg: #0d0d0d;
 		--color: white;
+		--color-muted: #8f8f8f;
 		--header-bg: #181818;
 		--header-border-color: #292929;
+
+		--hover-color: white;
+		--hover-bg: #333333;
 	}
 }
