@@ -57,11 +57,17 @@ h1 {
 @media (prefers-color-scheme: dark) {
 	:root {
 		--main-bg: #0d0d0d;
+		--card-placeholder-bg-t: #262C38;
+		--card-placeholder-bg-b: #292e37;
+		--card-placeholder-square: #2C3C5F;
+		--card-placeholder-icon: #4783FF;
 		--color: white;
+		--color-dark: #8c8c8c;
+		--header-bg: #181818;
+		--header-modal-border-color: #292929;
 		--color-muted: #8f8f8f;
 		--header-bg: #181818;
 		--header-border-color: #292929;
-
 		--hover-color: white;
 		--hover-bg: #333333;
 	}

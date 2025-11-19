@@ -8,7 +8,7 @@ export const MainHeader: React.FC = () => {
 				position='static'
 				sx={{
 					backgroundColor: 'var(--header-bg)',
-					borderColor: 'var(--header-border-color)',
+					borderColor: 'var(--header-modal-border-color)',
 					borderWidth: 1,
 					borderStyle: 'solid',
 					color: 'var(--color)',
