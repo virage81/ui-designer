@@ -3,19 +3,21 @@ import './App.css';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import { useDispatch } from 'react-redux';
-import { listOfProjectSlice } from '@components/Projects/listOfProjectSlice';
-import { projectSlice } from '@components/Project/projectSlice';
-import { projectHistorySlice } from '@components/History/projectHistorySlice';
+import { modifyHistory } from '@store/history';
+import { modifyProjects } from '@store/projects';
+import { modifyProject } from '@store/project';
 
 function App() {
 	const dispatch = useDispatch();
 	const [count, setCount] = useState(0);
 
+	// @TODO: тестовое изменение
 	useEffect(() => {
-		dispatch(projectSlice.actions.modifyProject());
-		dispatch(listOfProjectSlice.actions.modifyList());
-		dispatch(projectHistorySlice.actions.modifyHistory());
+		dispatch(modifyProject());
+		dispatch(modifyProjects());
+		dispatch(modifyHistory());
 	}, []);
+	//
 
 	return (
 		<>
