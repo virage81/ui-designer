@@ -1,4 +1,4 @@
-export interface IHistoryEntry {
+export interface HistoryEntry {
 	id: number;
 	date: string;
 	typeOfEntry: string;
