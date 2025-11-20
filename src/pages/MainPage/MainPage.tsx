@@ -4,7 +4,7 @@ import { useState } from 'react';
 export const MainPage: React.FC = () => {
 	const [openModal, setOpenModal] = useState<boolean>(false);
 	const toggleModal: () => void = () => {
-		setOpenModal(!openModal);
+		setOpenModal((prev: boolean) => !prev);
 	};
 	return (
 		<div>
