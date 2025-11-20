@@ -12,7 +12,7 @@ export const MainHeader: React.FC<MainHeader> = ({ onCreateClick }) => {
 				position='static'
 				sx={{
 					backgroundColor: 'var(--header-bg)',
-					borderColor: 'var(--header-border-color)',
+					borderColor: 'var(--header-modal-border-color)',
 					borderWidth: 1,
 					borderStyle: 'solid',
 					color: 'var(--color)',
