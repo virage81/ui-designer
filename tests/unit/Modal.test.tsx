@@ -1,6 +1,6 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Modal } from '@/components/Modal';
 import '@testing-library/jest-dom';
-import { Modal } from '../../src/components/Modal';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 describe('Modal Component', () => {
 	const mockOnCreate = jest.fn();
