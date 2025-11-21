@@ -30,7 +30,7 @@ const projectsSlice = createSlice({
 	initialState: initialState,
 	reducers: {
 		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
-			state.projects.push({ ...action.payload, id: generateId(), preview: '' });
+			state.projects.push({ ...action.payload, id: generateId(), preview: '', date: new Date().toISOString() });
 		},
 		updateProject: (state, action: PayloadAction<UpdateProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);

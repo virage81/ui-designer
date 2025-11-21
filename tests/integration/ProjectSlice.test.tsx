@@ -4,15 +4,15 @@ import { JestStoreProvider } from '../utils/StoreProvider';
 
 describe('CRUD операции для ProjectSlice', () => {
 	test.each([
-		['Проект 1', new Date().toISOString(), 200, 200],
-		['Проект 2', new Date().toISOString(), 200, 300],
-		['Проект 3', new Date().toISOString(), 300, 200],
-	])('Создание проекта', (name, date, width, height) => {
+		['Проект 1', 200, 200],
+		['Проект 2', 200, 300],
+		['Проект 3', 300, 200],
+	])('Создание проекта', (name, width, height) => {
 		const { store } = JestStoreProvider(<App />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
-		store.dispatch(createProject({ name, date, width, height }));
+		store.dispatch(createProject({ name, width, height }));
 
 		expect(store.getState().projects.projects).toStrictEqual([
 			expect.objectContaining({
@@ -27,15 +27,15 @@ describe('CRUD операции для ProjectSlice', () => {
 	});
 
 	test.each([
-		['Проект 1', new Date().toISOString(), 200, 200],
-		['Проект 2', new Date().toISOString(), 200, 300],
-		['Проект 3', new Date().toISOString(), 300, 200],
-	])('Редактирование проекта', (name, date, width, height) => {
+		['Проект 1', 200, 200],
+		['Проект 2', 200, 300],
+		['Проект 3', 300, 200],
+	])('Редактирование проекта', (name, width, height) => {
 		const { store } = JestStoreProvider(<App />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
-		store.dispatch(createProject({ name, date, width, height }));
+		store.dispatch(createProject({ name, width, height }));
 
 		expect(store.getState().projects.projects).toStrictEqual([
 			expect.objectContaining({
@@ -62,15 +62,15 @@ describe('CRUD операции для ProjectSlice', () => {
 	});
 
 	test.each([
-		['Проект 1', new Date().toISOString(), 200, 200],
-		['Проект 2', new Date().toISOString(), 200, 300],
-		['Проект 3', new Date().toISOString(), 300, 200],
-	])('Удаление проекта', (name, date, width, height) => {
+		['Проект 1', 200, 200],
+		['Проект 2', 200, 300],
+		['Проект 3', 300, 200],
+	])('Удаление проекта', (name, width, height) => {
 		const { store } = JestStoreProvider(<App />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
-		store.dispatch(createProject({ name, date, width, height }));
+		store.dispatch(createProject({ name, width, height }));
 
 		expect(store.getState().projects.projects).toStrictEqual([
 			expect.objectContaining({

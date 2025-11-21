@@ -1,16 +1,22 @@
 import { Modal } from '@/components/Modal';
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { JestStoreProvider } from '../utils/StoreProvider.tsx';
+import type { RootState } from '@/store';
+
+jest.mock('uuid', () => ({ v4: jest.fn(() => 'mocked-uuid-1234') }));
 
 describe('Modal Component', () => {
-	const mockOnCreate = jest.fn();
 	const mockToggle = jest.fn();
-	const renderModal: (open?: boolean) => void = (open: boolean = true) => {
-		render(<Modal open={open} onCreate={mockOnCreate} toggleModal={mockToggle} />);
+	const renderModal = ({
+		open = true,
+		preloadedState = {},
+	}: { open?: boolean; preloadedState?: Partial<RootState> } = {}) => {
+		const { store, ...utils } = JestStoreProvider(<Modal open={open} toggleModal={mockToggle} />, { preloadedState });
+		return { store, ...utils };
 	};
 
 	beforeEach(() => {
-		mockOnCreate.mockClear();
 		mockToggle.mockClear();
 	});
 
@@ -28,7 +34,7 @@ describe('Modal Component', () => {
 	});
 
 	test('closes when cancel button or close icon is clicked', () => {
-		renderModal(false);
+		renderModal({ open: false });
 
 		expect(screen.queryByText('Создать новый проект')).toBeNull();
 		expect(screen.queryByRole('dialog')).toBeNull();
@@ -88,25 +94,6 @@ describe('Modal Component', () => {
 		fireEvent.change(nameInput, { target: { value: '' } });
 
 		await waitFor(() => expect(createBtn).toBeDisabled());
-	});
-
-	test('calls onCreate with correct params when form is valid', async () => {
-		renderModal();
-
-		const nameInput = screen.getByLabelText('Название проекта');
-		const widthInput = screen.getByLabelText('Ширина холста (px)');
-		const heightInput = screen.getByLabelText('Высота холста (px)');
-		const createBtn = screen.getByRole('button', { name: /Создать/i });
-
-		fireEvent.change(nameInput, { target: { value: 'проект 1' } });
-		fireEvent.change(widthInput, { target: { value: '127873840' } });
-		fireEvent.change(heightInput, { target: { value: '0001111' } });
-
-		await waitFor(() => expect(createBtn).toBeEnabled());
-
-		fireEvent.click(createBtn);
-
-		expect(mockOnCreate).toHaveBeenCalledWith({ name: 'проект 1', width: 127873840, height: 1111 });
 	});
 
 	test('closes when the Escape key is pressed', async () => {

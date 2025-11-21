@@ -1,6 +1,6 @@
 import type { Layer, Project } from '@shared/types/project';
 
-export type CreateProjectParams = {} & Omit<Project, 'id' | 'preview'>;
+export type CreateProjectParams = {} & Omit<Project, 'id' | 'preview' | 'date'>;
 
 export type UpdateProjectParams = { id: Project['id'] } & Partial<Omit<Project, 'id'>>;
 
