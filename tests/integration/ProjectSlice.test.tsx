@@ -1,5 +1,6 @@
 import App from '@/App';
 import { createProject, deleteProject, updateProject } from '@store/slices/projectsSlice';
+import { act } from '@testing-library/react';
 import { JestStoreProvider } from '../utils/StoreProvider';
 
 describe('CRUD операции для ProjectSlice', () => {
@@ -12,8 +13,9 @@ describe('CRUD операции для ProjectSlice', () => {
 
 		const spied = jest.spyOn(store, 'dispatch');
 
-		store.dispatch(createProject({ name, width, height }));
-
+		act(() => {
+			store.dispatch(createProject({ name, width, height }));
+		});
 		expect(store.getState().projects.projects).toStrictEqual([
 			expect.objectContaining({
 				id: expect.any(String),
@@ -35,8 +37,9 @@ describe('CRUD операции для ProjectSlice', () => {
 
 		const spied = jest.spyOn(store, 'dispatch');
 
-		store.dispatch(createProject({ name, width, height }));
-
+		act(() => {
+			store.dispatch(createProject({ name, width, height }));
+		});
 		expect(store.getState().projects.projects).toStrictEqual([
 			expect.objectContaining({
 				id: expect.any(String),
@@ -47,7 +50,9 @@ describe('CRUD операции для ProjectSlice', () => {
 			}),
 		]);
 
-		store.dispatch(updateProject({ id: 'mocked-uuid', height: 100, width: 100 }));
+		act(() => {
+			store.dispatch(updateProject({ id: 'mocked-uuid', height: 100, width: 100 }));
+		});
 
 		expect(store.getState().projects.projects).toStrictEqual([
 			expect.objectContaining({
@@ -70,7 +75,9 @@ describe('CRUD операции для ProjectSlice', () => {
 
 		const spied = jest.spyOn(store, 'dispatch');
 
-		store.dispatch(createProject({ name, width, height }));
+		act(() => {
+			store.dispatch(createProject({ name, width, height }));
+		});
 
 		expect(store.getState().projects.projects).toStrictEqual([
 			expect.objectContaining({
@@ -82,8 +89,9 @@ describe('CRUD операции для ProjectSlice', () => {
 			}),
 		]);
 
-		store.dispatch(deleteProject({ id: 'mocked-uuid' }));
-
+		act(() => {
+			store.dispatch(deleteProject({ id: 'mocked-uuid' }));
+		});
 		expect(store.getState().projects.projects).toStrictEqual([]);
 		expect(spied).toHaveBeenCalledTimes(2);
 	});
