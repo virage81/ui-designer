@@ -11,9 +11,10 @@ import {
 	Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { useDispatch } from 'react-redux';
-import { addProject } from '@store/projects.ts';
+import { useDispatch, useSelector } from 'react-redux';
+import { addProject } from '@store/slices/projectsSlice';
 import { type Project } from '@shared/interfaces/project.interface.ts';
+import type { RootState } from '@/store';
 
 interface Modal {
 	open: boolean;
@@ -22,6 +23,10 @@ interface Modal {
 
 export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	const dispatch = useDispatch();
+	const projects = useSelector((state: RootState) => state.projects);
+	useEffect(() => {
+		console.log(projects);
+	}, [projects]);
 
 	const DEFAULT_NAME = 'Проект';
 	const DEFAULT_SIZE = 800;
@@ -60,8 +65,12 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 				history: [],
 				layers: [],
 			} as Omit<Project, 'id' | 'date'>;
-			dispatch(addProject(newProject));
-			toggleModal();
+			if (projects.some((p: Project) => p.name === projectName.trim())) {
+				setProjectNameError('Проект с таким именем уже существует');
+			} else {
+				dispatch(addProject(newProject));
+				toggleModal();
+			}
 		}
 	};
 
