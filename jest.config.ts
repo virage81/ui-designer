@@ -9,6 +9,7 @@ const config = {
 	moduleNameMapper: {
 		'\\.(css|less|png)$': '<rootDir>/spec/__mocks__/styleMock.js',
 		'^@/(.*)$': '<rootDir>/src/$1',
+		'^@store/(.*)$': '<rootDir>/src/store/$1'
 	},
 };
 

@@ -24,9 +24,6 @@ interface Modal {
 export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	const dispatch = useDispatch();
 	const projects = useSelector((state: RootState) => state.projects);
-	useEffect(() => {
-		console.log(projects);
-	}, [projects]);
 
 	const DEFAULT_NAME = 'Проект';
 	const DEFAULT_SIZE = 800;
