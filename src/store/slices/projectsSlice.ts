@@ -1,26 +1,15 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { generateId } from '@shared/helpers';
 import type { History, Layer, Project } from '@shared/types/project';
-import { v4 as uuid } from 'uuid';
-
-type CreateLayerParams = {
-	projectId: Project['id'];
-	data: Omit<Layer, 'id'>;
-};
-
-type UpdateLayerParams = {
-	projectId: Project['id'];
-	data: { id: Layer['id'] } & Partial<Omit<Layer, 'id'>>;
-};
-
-type DeleteLayerParams = {
-	id: Layer['id'];
-	projectId: Project['id'];
-};
-
-type SetActiveLayerParams = {
-	id: Layer['id'];
-	projectId: Project['id'];
-} | null;
+import type {
+	CreateLayerParams,
+	CreateProjectParams,
+	DeleteLayerParams,
+	DeleteProjectParams,
+	SetActiveLayerParams,
+	UpdateLayerParams,
+	UpdateProjectParams,
+} from './projectSliceTypes';
 
 interface State {
 	projects: Project[];
@@ -40,8 +29,24 @@ const projectsSlice = createSlice({
 	name: 'projects',
 	initialState: initialState,
 	reducers: {
+		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
+			state.projects.push({ ...action.payload, id: generateId(), preview: '' });
+		},
+		updateProject: (state, action: PayloadAction<UpdateProjectParams>) => {
+			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
+			if (projectIndex === -1) throw new Error(`Project with ID ${action.payload.id} not found`);
+
+			state.projects[projectIndex] = { ...state.projects[projectIndex], ...action.payload };
+		},
+		deleteProject: (state, action: PayloadAction<DeleteProjectParams>) => {
+			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
+			if (!projectIndex) throw new Error(`Project with ID ${action.payload.id} not found`);
+
+			state.projects.splice(projectIndex, 1);
+		},
+
 		createLayer: (state, action: PayloadAction<CreateLayerParams>) => {
-			state.layers[action.payload.projectId].push({ ...action.payload.data, id: uuid() });
+			state.layers[action.payload.projectId].push({ ...action.payload.data, id: generateId() });
 		},
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
 			const { data, projectId } = action.payload;
@@ -77,6 +82,7 @@ const projectsSlice = createSlice({
 	},
 });
 
-export const { createLayer, updateLayer, deleteLayer, setActiveLayer } = projectsSlice.actions;
+export const { createProject, updateProject, deleteProject, createLayer, updateLayer, deleteLayer, setActiveLayer } =
+	projectsSlice.actions;
 
 export default projectsSlice.reducer;

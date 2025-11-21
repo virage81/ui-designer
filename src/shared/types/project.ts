@@ -1,5 +1,5 @@
 export interface Project {
-	id: number;
+	id: string;
 	name: string;
 	date: string;
 	width: number;
@@ -8,7 +8,7 @@ export interface Project {
 }
 
 export interface History {
-	id: number;
+	id: string;
 	date: string;
 	typeOfEntry: string;
 	isActive: boolean;
