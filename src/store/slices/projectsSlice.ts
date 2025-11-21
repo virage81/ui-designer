@@ -40,7 +40,7 @@ const projectsSlice = createSlice({
 		},
 		deleteProject: (state, action: PayloadAction<DeleteProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
-			if (!projectIndex) throw new Error(`Project with ID ${action.payload.id} not found`);
+			if (projectIndex === -1) throw new Error(`Project with ID ${action.payload.id} not found`);
 
 			state.projects.splice(projectIndex, 1);
 		},
