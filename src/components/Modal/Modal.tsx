@@ -11,30 +11,34 @@ import {
 	Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useDispatch } from 'react-redux';
+import { addProject } from '@store/projects.ts';
+import { type Project } from '@shared/interfaces/project.interface.ts';
 
 interface Modal {
 	open: boolean;
-	onCreate: (params: { name: string; width: number; height: number }) => void;
 	toggleModal: () => void;
 }
 
-export const Modal: FC<Modal> = ({ open = false, onCreate, toggleModal }) => {
+export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
+	const dispatch = useDispatch();
+
 	const DEFAULT_NAME = 'Проект';
 	const DEFAULT_SIZE = 800;
 
-	const [name, setName] = useState<string>(DEFAULT_NAME);
+	const [projectName, setProjectName] = useState<string>(DEFAULT_NAME);
 	const [width, setWidth] = useState<number | string>(DEFAULT_SIZE);
 	const [height, setHeight] = useState<number | string>(DEFAULT_SIZE);
 
-	const [nameError, setNameError] = useState<string>('');
+	const [projectNameError, setProjectNameError] = useState<string>('');
 	const [widthError, setWidthError] = useState<string>('');
 	const [heightError, setHeightError] = useState<string>('');
 
 	const resetForm: () => void = (): void => {
-		setName(DEFAULT_NAME);
+		setProjectName(DEFAULT_NAME);
 		setWidth(DEFAULT_SIZE);
 		setHeight(DEFAULT_SIZE);
-		setNameError('');
+		setProjectNameError('');
 		setWidthError('');
 		setHeightError('');
 	};
@@ -47,8 +51,17 @@ export const Modal: FC<Modal> = ({ open = false, onCreate, toggleModal }) => {
 	}, [open]);
 
 	const handleCreate: () => void = (): void => {
-		if (!nameError && !widthError && !heightError) {
-			onCreate({ name: name.trim(), width: Number(width), height: Number(height) });
+		if (!projectNameError && !widthError && !heightError) {
+			const newProject = {
+				name: projectName.trim(),
+				width: Number(width),
+				height: Number(height),
+				preview: '',
+				history: [],
+				layers: [],
+			} as Omit<Project, 'id' | 'date'>;
+			dispatch(addProject(newProject));
+			toggleModal();
 		}
 	};
 
@@ -58,13 +71,13 @@ export const Modal: FC<Modal> = ({ open = false, onCreate, toggleModal }) => {
 		switch (field) {
 			case 'projectName': {
 				if (value.length === 0) {
-					setNameError('Название обязательно');
+					setProjectNameError('Название обязательно');
 				} else if (!pattern.test(value)) {
-					setNameError('Допустимы буквы и цифры');
+					setProjectNameError('Допустимы буквы и цифры');
 				} else {
-					setNameError('');
+					setProjectNameError('');
 				}
-				setName(value);
+				setProjectName(value);
 				break;
 			}
 			case 'width': {
@@ -118,12 +131,12 @@ export const Modal: FC<Modal> = ({ open = false, onCreate, toggleModal }) => {
 						label='Название проекта'
 						fullWidth
 						margin='normal'
-						value={name}
+						value={projectName}
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}
-						error={!!nameError}
-						helperText={nameError}
+						error={!!projectNameError}
+						helperText={projectNameError}
 					/>
 					<TextField
 						name='width'
@@ -172,7 +185,7 @@ export const Modal: FC<Modal> = ({ open = false, onCreate, toggleModal }) => {
 					<Button
 						onClick={handleCreate}
 						variant='contained'
-						disabled={!!nameError || !!widthError || !!heightError}
+						disabled={!!projectNameError || !!widthError || !!heightError}
 						sx={{ textTransform: 'none' }}>
 						Создать
 					</Button>

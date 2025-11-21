@@ -23,7 +23,7 @@ export const MainPage: React.FC = () => {
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
 			<MainHeader onCreateClick={toggleModal} />
-			<Modal open={openModal} onCreate={(): void => {}} toggleModal={toggleModal} />
+			<Modal open={openModal} toggleModal={toggleModal} />
 			<Box component='main' sx={{ flexGrow: 1 }}>
 				<ProjectsList handleOpenDeleteConfirmModal={handleOpenDeleteConfirmModal} />
 			</Box>

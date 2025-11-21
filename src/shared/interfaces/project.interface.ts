@@ -1,8 +1,8 @@
-import type { HistoryEntry } from "./history-entry.interface";
-import type { Layer } from "./layer.interface";
+import type { HistoryEntry } from './history-entry.interface';
+import type { Layer } from './layer.interface';
 
 export interface Project {
-	id: number;
+	id: string;
 	name: string;
 	date: string;
 	width: number;

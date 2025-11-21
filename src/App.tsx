@@ -3,7 +3,6 @@ import './App.css';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { modifyHistory } from '@store/history';
-import { modifyProjects } from '@store/projects';
 import { modifyProject } from '@store/project';
 
 function App() {
@@ -12,10 +11,8 @@ function App() {
 
 	useEffect(() => {
 		dispatch(modifyProject());
-		dispatch(modifyProjects());
 		dispatch(modifyHistory());
 	}, []);
-	//
 
 	return (
 		<>
