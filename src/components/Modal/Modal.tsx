@@ -1,4 +1,4 @@
-import { type ChangeEvent, type FC, useEffect, useState } from 'react';
+import CloseIcon from '@mui/icons-material/Close';
 import {
 	Box,
 	Button,
@@ -10,11 +10,12 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { createProject } from '@store/slices/projectsSlice';
+import { type ChangeEvent, type FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addProject } from '@store/slices/projectsSlice';
-import { type Project } from '@shared/interfaces/project.interface.ts';
+
 import type { RootState } from '@/store';
+import type { Project } from '@shared/types/project';
 
 interface Modal {
 	open: boolean;
@@ -23,7 +24,7 @@ interface Modal {
 
 export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	const dispatch = useDispatch();
-	const projects = useSelector((state: RootState) => state.projects);
+	const projects = useSelector((state: RootState) => state.projects.projects);
 
 	const DEFAULT_NAME = 'Проект';
 	const DEFAULT_SIZE = 800;
@@ -65,7 +66,7 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 			if (projects.some((p: Project) => p.name === projectName.trim())) {
 				setProjectNameError('Проект с таким именем уже существует');
 			} else {
-				dispatch(addProject(newProject));
+				dispatch(createProject(newProject));
 				toggleModal();
 			}
 		}
