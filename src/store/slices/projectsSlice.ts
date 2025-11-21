@@ -50,19 +50,18 @@ const projectsSlice = createSlice({
 		},
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
 			const { data, projectId } = action.payload;
-			const layer = state.layers[projectId].find(item => item.id === data.id);
+
 			const layerIndex = state.layers[projectId].findIndex(item => item.id === data.id);
+			if (layerIndex === -1) throw new Error(`Layer with ID ${data.id} not found`);
 
-			if (!layer || layerIndex === -1) throw new Error(`Layer with ID ${data.id} not found`);
-
-			state.layers[projectId][layerIndex] = { ...layer, ...data };
+			state.layers[projectId][layerIndex] = { ...state.layers[projectId][layerIndex], ...data };
 		},
 		deleteLayer: (state, action: PayloadAction<DeleteLayerParams>) => {
 			const { id, projectId } = action.payload;
 
 			const layerIndex = state.layers[projectId].findIndex(item => item.id === id);
-
 			if (layerIndex === -1) throw new Error(`Layer with ID ${id} not found`);
+
 			state.layers[projectId].splice(layerIndex, 1);
 		},
 		setActiveLayer: (state, action: PayloadAction<SetActiveLayerParams>) => {
@@ -74,7 +73,6 @@ const projectsSlice = createSlice({
 			}
 
 			const layerIndex = state.layers[payload.projectId].findIndex(item => item.id === payload.id);
-
 			if (layerIndex === -1) throw new Error(`Layer with ID ${payload.id} not found`);
 
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
