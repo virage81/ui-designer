@@ -1,6 +1,7 @@
 export interface Layer {
-	id: number;
-	date: string;
-	transparency: number;
-	elements: string[];
+	id: string;
+	name: string;
+	opacity: number;
+	zIndex: number;
+	hidden: boolean;
 }
