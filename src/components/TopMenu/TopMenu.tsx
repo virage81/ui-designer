@@ -1,5 +1,4 @@
 import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
-import React from 'react';
 
 export const TopMenu: React.FC = () => {
 	return (

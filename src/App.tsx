@@ -1,10 +1,10 @@
 import { MainPage } from '@pages/MainPage';
-import './App.css';
+import { modifyHistory } from '@store/slices/historySlice';
+import { modifyProject } from '@store/slices/projectSlice';
+import { modifyProjects } from '@store/slices/projectsSlice';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { modifyHistory } from '@store/history';
-import { modifyProjects } from '@store/projects';
-import { modifyProject } from '@store/project';
+import './App.css';
 
 function App() {
 	// @TODO: тестовое изменение
@@ -15,7 +15,6 @@ function App() {
 		dispatch(modifyProjects());
 		dispatch(modifyHistory());
 	}, []);
-	//
 
 	return (
 		<>

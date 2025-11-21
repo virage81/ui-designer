@@ -1,11 +1,18 @@
-import projectsReducer from '@store/projects';
-import projectReducer from '@store/project';
-import historyReducer from '@store/history';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import { PERSIST, REHYDRATE, persistReducer, persistStore,  } from 'redux-persist';
+import historyReducer from '@store/slices/historySlice';
+import layerReducer from '@store/slices/layerSlice';
+import projectReducer from '@store/slices/projectSlice';
+import projectsReducer from '@store/slices/projectsSlice';
+import { FLUSH, PAUSE, PERSIST, PURGE, REHYDRATE, persistReducer, persistStore } from 'redux-persist';
 import localStorage from 'redux-persist/lib/storage';
 
-const rootReducer = combineReducers({ projectReducer, projectsReducer, historyReducer });
+const rootReducer = combineReducers({
+	project: projectReducer,
+	projects: projectsReducer,
+	history: historyReducer,
+	layers: layerReducer,
+});
+
 const persistConfig = {
 	key: 'ui-designer',
 	storage: localStorage,
@@ -14,10 +21,10 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
 	reducer: persistedReducer,
-	middleware: (getDefaultMiddleware) =>
+	middleware: getDefaultMiddleware =>
 		getDefaultMiddleware({
 			serializableCheck: {
-				ignoredActions: [PERSIST, REHYDRATE],
+				ignoredActions: [PERSIST, REHYDRATE, FLUSH, PAUSE, PURGE],
 			},
 		}),
 	devTools: true,
