@@ -18,6 +18,10 @@ interface State {
 	activeLayer: Layer | null;
 }
 
+const checkProjectExistence = (state: State, projectId: Project['id']) => {
+	return state.projects.some(item => item.id === projectId);
+};
+
 const initialState: State = {
 	projects: [],
 	history: {},
@@ -30,7 +34,11 @@ const projectsSlice = createSlice({
 	initialState: initialState,
 	reducers: {
 		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
-			state.projects.push({ ...action.payload, id: generateId(), preview: '', date: new Date().toISOString() });
+			const id = generateId();
+
+			state.projects.push({ ...action.payload, id, preview: '', date: new Date().toISOString() });
+			state.history[id] = [];
+			state.layers[id] = [];
 		},
 		updateProject: (state, action: PayloadAction<UpdateProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
@@ -46,21 +54,26 @@ const projectsSlice = createSlice({
 		},
 
 		createLayer: (state, action: PayloadAction<CreateLayerParams>) => {
-			state.layers[action.payload.projectId].push({ ...action.payload.data, id: generateId() });
+			const { projectId, data } = action.payload;
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
+
+			state.layers[projectId].push({ ...data, id: generateId() });
 		},
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
 			const { data, projectId } = action.payload;
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			const layerIndex = state.layers[projectId].findIndex(item => item.id === data.id);
-			if (layerIndex === -1) throw new Error(`Layer with ID ${data.id} not found`);
+			const layerIndex = state.layers?.[projectId]?.findIndex(item => item.id === data.id);
+			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${data.id} not found`);
 
 			state.layers[projectId][layerIndex] = { ...state.layers[projectId][layerIndex], ...data };
 		},
 		deleteLayer: (state, action: PayloadAction<DeleteLayerParams>) => {
 			const { id, projectId } = action.payload;
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			const layerIndex = state.layers[projectId].findIndex(item => item.id === id);
-			if (layerIndex === -1) throw new Error(`Layer with ID ${id} not found`);
+			const layerIndex = state.layers?.[projectId]?.findIndex(item => item.id === id);
+			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${id} not found`);
 
 			state.layers[projectId].splice(layerIndex, 1);
 		},
@@ -72,8 +85,11 @@ const projectsSlice = createSlice({
 				return;
 			}
 
-			const layerIndex = state.layers[payload.projectId].findIndex(item => item.id === payload.id);
-			if (layerIndex === -1) throw new Error(`Layer with ID ${payload.id} not found`);
+			if (!checkProjectExistence(state, payload.projectId))
+				throw new Error(`Project with ID ${payload.projectId} does not exist`);
+
+			const layerIndex = state.layers?.[payload.projectId]?.findIndex(item => item.id === payload.id);
+			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.id} not found`);
 
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},

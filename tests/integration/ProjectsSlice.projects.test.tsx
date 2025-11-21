@@ -3,7 +3,7 @@ import { createProject, deleteProject, updateProject } from '@store/slices/proje
 import { act } from '@testing-library/react';
 import { JestStoreProvider } from '../utils/StoreProvider';
 
-describe('CRUD операции для ProjectSlice', () => {
+describe('CRUD операции для ProjectSlice.projects', () => {
 	test.each([
 		['Проект 1', 200, 200],
 		['Проект 2', 200, 300],
@@ -16,7 +16,10 @@ describe('CRUD операции для ProjectSlice', () => {
 		act(() => {
 			store.dispatch(createProject({ name, width, height }));
 		});
-		expect(store.getState().projects.projects).toStrictEqual([
+		const { projects, layers, history } = store.getState().projects;
+		const projectId = store.getState().projects.projects[0].id;
+
+		expect(projects).toStrictEqual([
 			expect.objectContaining({
 				id: expect.any(String),
 				name,
@@ -25,6 +28,8 @@ describe('CRUD операции для ProjectSlice', () => {
 				height,
 			}),
 		]);
+		expect(layers).toHaveProperty(projectId);
+		expect(history).toHaveProperty(projectId);
 		expect(spied).toHaveBeenCalledTimes(1);
 	});
 
