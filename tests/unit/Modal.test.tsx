@@ -2,18 +2,11 @@ import { Modal } from '@/components/Modal';
 import '@testing-library/jest-dom';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { JestStoreProvider } from '../utils/StoreProvider.tsx';
-import type { RootState } from '@/store';
-
-jest.mock('uuid', () => ({ v4: jest.fn(() => 'mocked-uuid-1234') }));
 
 describe('Modal Component', () => {
 	const mockToggle = jest.fn();
-	const renderModal = ({
-		open = true,
-		preloadedState = {},
-	}: { open?: boolean; preloadedState?: Partial<RootState> } = {}) => {
-		const { store, ...utils } = JestStoreProvider(<Modal open={open} toggleModal={mockToggle} />, { preloadedState });
-		return { store, ...utils };
+	const renderModal = (open = true) => {
+		return JestStoreProvider(<Modal open={open} toggleModal={mockToggle} />);
 	};
 
 	beforeEach(() => {
@@ -34,7 +27,7 @@ describe('Modal Component', () => {
 	});
 
 	test('closes when cancel button or close icon is clicked', () => {
-		renderModal({ open: false });
+		renderModal(false);
 
 		expect(screen.queryByText('Создать новый проект')).toBeNull();
 		expect(screen.queryByRole('dialog')).toBeNull();

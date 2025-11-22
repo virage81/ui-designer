@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, type ThemeOptions } from '@mui/material/styles';
 declare module '@mui/material/Button' {
 	interface ButtonPropsVariantOverrides {
 		'graphic-tools': true;
@@ -7,14 +7,11 @@ declare module '@mui/material/Button' {
 	}
 }
 
-export const theme = createTheme({
-	palette: {
-		// mode: 'light',
-		// mode: 'dark',
-		// primary: { main: '#4285F4' },
-		// error: { main: '#FA3F33' },
-		// divider: '#31313A',
-	},
+interface ExtendedThemeOptions extends ThemeOptions {
+	colorSchemes?: { light?: ThemeOptions; dark?: ThemeOptions };
+}
+
+const shared: ThemeOptions = {
 	components: {
 		MuiAppBar: {
 			styleOverrides: {
@@ -78,7 +75,7 @@ export const theme = createTheme({
 					backgroundColor: 'var(--header-bg)',
 					padding: '0.5rem',
 				},
-				flexContainer: {
+				list: {
 					width: '100%',
 					display: 'flex',
 					alignItems: 'center',
@@ -118,4 +115,20 @@ export const theme = createTheme({
 			},
 		},
 	},
-});
+};
+
+export const theme = createTheme({
+	...shared,
+	colorSchemes: {
+		light: {
+			palette: { mode: 'light' },
+			components: { MuiDialog: { styleOverrides: { paper: { background: '#fff', border: '1px solid #ccc' } } } },
+		},
+		dark: {
+			palette: { mode: 'dark', primary: { main: '#4285F4' }, error: { main: '#FA3F33' }, divider: '#31313A' },
+			components: {
+				MuiDialog: { styleOverrides: { paper: { background: '#0D0D0DFF', border: '1px solid #31313A' } } },
+			},
+		},
+	},
+} as ExtendedThemeOptions);
