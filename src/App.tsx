@@ -1,8 +1,8 @@
-import { MainPage } from '@pages/MainPage';
 import './App.css';
+import { AppRouter } from './routers/AppRouter';
 
 function App() {
-	return <MainPage />;
+	return <AppRouter />;
 }
 
 export default App;
