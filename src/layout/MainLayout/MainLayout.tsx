@@ -1,6 +1,6 @@
 import ErrorBoundary from '@components/ErrorBoundary/ErrorBoundary';
 import { Loader } from '@components/Loader';
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 
 export const MainLayout: React.FC = () => {

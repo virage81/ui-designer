@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, Paper, Slider, Tab, Tabs, Typography } from '@mui/material';
 import { EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // Статические данные для отображения
 const MOCK_LAYERS = [
