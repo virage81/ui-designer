@@ -7,13 +7,13 @@ export const TopMenu: React.FC = () => {
 				<Toolbar variant='dense'>
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexGrow: 1 }}>
 						<Button variant='tools' disableElevation>
-							File
+							Файл
 						</Button>
 						<Button variant='tools' disableElevation>
-							Edit
+							Правка
 						</Button>
 						<Button variant='tools' disableElevation>
-							All Projects
+							Все проекты
 						</Button>
 					</Box>
 					<Box>

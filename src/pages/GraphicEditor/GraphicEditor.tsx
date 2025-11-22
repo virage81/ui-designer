@@ -8,7 +8,7 @@ export const GraphicEditor: React.FC = () => {
 	return (
 		<div>
 			<TopMenu />
-			<Box sx={{ display: 'flex', height: 'calc(100vh - 50px)', width: '100%' }}>
+			<Box sx={{ display: 'flex', height: 'calc(100vh - 49px)', width: '100%' }}>
 				<LeftSidebar />
 				<Canvas />
 				<RightSideBar />

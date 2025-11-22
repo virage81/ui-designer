@@ -6,11 +6,16 @@
 	color-scheme: light dark;
 
 	--main-bg: white;
+	--card-placeholder-bg-t: #f7f9fc;
+	--card-placeholder-bg-b: #edf2f7;
+	--card-placeholder-square: #e6edf5;
+	--card-placeholder-icon: #3b78e7;
 	--color: black;
 	--color-muted: #8f8f8f;
 	--color-primary: #1976d2;
 	--header-bg: white;
 	--header-border-color: #dcdcdc;
+	--danger: #d40924;
 
 	--hover-color: black;
 	--hover-bg: #f6fafd;
@@ -53,11 +58,16 @@ h1 {
 @media (prefers-color-scheme: light) {
 	:root {
 		--main-bg: white;
+		--card-placeholder-bg-t: #f7f9fc;
+		--card-placeholder-bg-b: #edf2f7;
+		--card-placeholder-square: #e6edf5;
+		--card-placeholder-icon: #3b78e7;
 		--color: black;
 		--color-muted: #8f8f8f;
 		--color-primary: #1976d2;
 		--header-bg: white;
 		--header-border-color: #dcdcdc;
+		--danger: #d40924;
 
 		--hover-color: black;
 		--hover-bg: #f6fafd;
@@ -75,10 +85,10 @@ h1 {
 @media (prefers-color-scheme: dark) {
 	:root {
 		--main-bg: #0d0d0d;
-		--card-placeholder-bg-t: #262C38;
-		--card-placeholder-bg-b: #292e37;
-		--card-placeholder-square: #2C3C5F;
-		--card-placeholder-icon: #4783FF;
+		--card-placeholder-bg-t: #262c38;
+		--card-placeholder-bg-b: #24272d;
+		--card-placeholder-square: #2c3c5f;
+		--card-placeholder-icon: #4783ff;
 		--color: white;
 		--color-dark: #8c8c8c;
 		--header-bg: #181818;
@@ -89,6 +99,7 @@ h1 {
 		--header-border-color: #292929;
 		--hover-color: white;
 		--hover-bg: #333333;
+		--danger: #d40924;
 
 		--active-bg-primary: #212d4a;
 		--active-color-primary: #4580ff;
