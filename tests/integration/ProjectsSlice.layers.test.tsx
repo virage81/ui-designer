@@ -1,4 +1,3 @@
-import App from '@/App';
 import { createLayer, createProject, deleteLayer, setActiveLayer, updateLayer } from '@store/slices/projectsSlice';
 import { act } from '@testing-library/react';
 import { JestStoreProvider } from '../utils/StoreProvider';
@@ -9,7 +8,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 		['Проект 2', 200, 300],
 		['Проект 3', 300, 200],
 	])('Создание слоя', (name, width, height) => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -57,7 +56,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 	});
 
 	test('Создание слоя без проекта', () => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -85,7 +84,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 		['Проект 2', 200, 300],
 		['Проект 3', 300, 200],
 	])('Редактирование слоя', (name, width, height) => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -145,7 +144,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 	});
 
 	test('Редактирование слоя без проекта', () => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -173,7 +172,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 		['Проект 2', 200, 300],
 		['Проект 3', 300, 200],
 	])('Удаление слоя', (name, width, height) => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -215,7 +214,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 	});
 
 	test('Удаление слоя без проекта', () => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -239,7 +238,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 	});
 
 	test('Выбор активного слоя', () => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -313,7 +312,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 	});
 
 	test('Выбор активного слоя для несуществующего проекта', () => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -340,7 +339,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 	});
 
 	test('Выбор активного слоя с неверным id', () => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -374,7 +373,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 	});
 
 	test('Удаление активного слоя', () => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
