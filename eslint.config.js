@@ -25,7 +25,7 @@ export default defineConfig([
 				{
 					vars: 'all',
 					args: 'after-used',
-					caughtErrors: 'params',
+					caughtErrors: 'all',
 					ignoreRestSiblings: false,
 					ignoreUsingDeclarations: false,
 					reportUsedIgnorePattern: false,
