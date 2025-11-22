@@ -1,5 +1,5 @@
-import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material';
 
 interface MainHeader {
 	onCreateClick: () => void;
@@ -8,16 +8,7 @@ interface MainHeader {
 export const MainHeader: React.FC<MainHeader> = ({ onCreateClick }) => {
 	return (
 		<div>
-			<AppBar
-				position='static'
-				sx={{
-					backgroundColor: 'var(--header-bg)',
-					borderColor: 'var(--header-modal-border-color)',
-					borderWidth: 1,
-					borderStyle: 'solid',
-					color: 'var(--color)',
-					boxShadow: 0,
-				}}>
+			<AppBar position='static'>
 				<Container maxWidth='lg'>
 					<Toolbar>
 						<Box sx={{ flexGrow: 1 }}>

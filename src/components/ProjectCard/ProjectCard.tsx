@@ -14,8 +14,9 @@ export const ProjectCard: React.FC<Project> = ({ preview, name, date }) => {
 				sx={{
 					maxWidth: 290,
 					borderRadius: 3,
+					border: '1px solid var(--header-border-color)',
 					backgroundColor: 'var(--header-bg)',
-					py: 3,
+					paddingBottom: 3,
 				}}>
 				{!preview ? (
 					<Placeholder />

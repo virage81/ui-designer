@@ -129,7 +129,9 @@ export const RightSideBar: React.FC = () => {
 										<Typography variant='body2' sx={{ flex: 1 }}>
 											{layer.name}
 										</Typography>
-										<IconButton size='small' sx={{ p: 0.5, color: 'var(--color-muted)', '&:hover': { color: 'red' } }}>
+										<IconButton
+											size='small'
+											sx={{ p: 0.5, color: 'var(--color-muted)', '&:hover': { color: 'var(--danger)' } }}>
 											<Trash2Icon size={16} />
 										</IconButton>
 									</Box>

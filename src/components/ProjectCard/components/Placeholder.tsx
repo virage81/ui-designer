@@ -1,5 +1,5 @@
-import { ImageOutlined } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
+import { ImageOutlined } from '@mui/icons-material';
+import { Box, Typography } from '@mui/material';
 
 export const Placeholder = () => {
 	return (
@@ -8,8 +8,6 @@ export const Placeholder = () => {
 				height: 150,
 				background: `linear-gradient(145deg,
 						var(--card-placeholder-bg-t) 0%,
-						var(--card-placeholder-bg-t) 50%,
-						var(--card-placeholder-bg-b) 50%,
 						var(--card-placeholder-bg-b) 100%)`,
 				display: 'flex',
 				flexDirection: 'column',
