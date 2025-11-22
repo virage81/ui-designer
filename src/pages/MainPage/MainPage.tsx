@@ -1,4 +1,3 @@
-import { DeleteConfirmModal } from '@components/DeleteConfirmModal';
 import { MainHeader } from '@components/MainHeader';
 import { Modal } from '@components/Modal';
 import { ProjectsList } from '@components/ProjectsList';
@@ -6,15 +5,6 @@ import { Box } from '@mui/material';
 import { useState } from 'react';
 
 export const MainPage: React.FC = () => {
-	const [openDeleteConfirmModal, setOpenDeleteConfirmModal] = useState(false); //TODO удалить, когда появится StateManager
-	const [projectName, setProjectName] = useState(''); //TODO удалить, когда появится StateManager
-
-	const handleOpenDeleteConfirmModal = (title: string) => {
-		setOpenDeleteConfirmModal(true);
-		setProjectName(title);
-	}; //TODO удалить, когда появится StateManager
-	const handleCloseDeleteConfirmModal = () => setOpenDeleteConfirmModal(false); //TODO удалить, когда появится StateManager
-
 	const [openModal, setOpenModal] = useState<boolean>(false);
 	const toggleModal: () => void = () => {
 		setOpenModal((prev: boolean) => !prev);
@@ -25,13 +15,8 @@ export const MainPage: React.FC = () => {
 			<MainHeader onCreateClick={toggleModal} />
 			<Modal open={openModal} toggleModal={toggleModal} />
 			<Box component='main' sx={{ flexGrow: 1 }}>
-				<ProjectsList handleOpenDeleteConfirmModal={handleOpenDeleteConfirmModal} />
+				<ProjectsList />
 			</Box>
-			<DeleteConfirmModal
-				open={openDeleteConfirmModal}
-				handleClose={handleCloseDeleteConfirmModal}
-				projectName={projectName}
-			/>
 		</Box>
 	);
 };
