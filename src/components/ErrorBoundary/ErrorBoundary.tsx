@@ -1,6 +1,6 @@
 import { Box, Button, Card, Typography } from '@mui/material';
 import { RefreshCcw } from 'lucide-react';
-import React, { type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface ErrorBoundaryProps {
 	children: ReactNode;
@@ -10,7 +10,7 @@ interface ErrorBoundaryState {
 	hasError: boolean;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 	constructor(props: ErrorBoundaryProps) {
 		super(props);
 

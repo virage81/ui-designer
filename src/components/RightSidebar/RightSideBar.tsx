@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, Paper, Slider, Tab, Tabs, Typography } from '@mui/material';
 import { EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // Статические данные для отображения
 const MOCK_LAYERS = [
@@ -42,7 +42,7 @@ const MOCK_HISTORY = [
 export const RightSideBar: React.FC = () => {
 	const [activeTab, setActiveTab] = useState(0);
 
-	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setActiveTab(newValue);
 	};
 

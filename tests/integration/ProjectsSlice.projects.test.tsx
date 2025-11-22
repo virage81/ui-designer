@@ -1,4 +1,3 @@
-import App from '@/App';
 import { createProject, deleteProject, updateProject } from '@store/slices/projectsSlice';
 import { act } from '@testing-library/react';
 import { JestStoreProvider } from '../utils/StoreProvider';
@@ -9,7 +8,7 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 		['Проект 2', 200, 300],
 		['Проект 3', 300, 200],
 	])('Создание проекта', (name, width, height) => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -38,7 +37,7 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 		['Проект 2', 200, 300],
 		['Проект 3', 300, 200],
 	])('Редактирование проекта', (name, width, height) => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 
@@ -76,7 +75,7 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 		['Проект 2', 200, 300],
 		['Проект 3', 300, 200],
 	])('Удаление проекта', (name, width, height) => {
-		const { store } = JestStoreProvider(<App />);
+		const { store } = JestStoreProvider(<div />);
 
 		const spied = jest.spyOn(store, 'dispatch');
 

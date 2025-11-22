@@ -1,6 +1,5 @@
 import { Box, Button } from '@mui/material';
 import { BrushIcon, CircleIcon, EraserIcon, MinusIcon, NavigationIcon, SquareIcon, TypeIcon } from 'lucide-react';
-import React from 'react';
 
 const TOOLS = [
 	{ id: 'navigate', icon: <NavigationIcon size={16} color={'var(--color)'} />, label: 'Выделение' },
