@@ -42,7 +42,7 @@ const MOCK_HISTORY = [
 export const RightSideBar: React.FC = () => {
 	const [activeTab, setActiveTab] = useState(0);
 
-	const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setActiveTab(newValue);
 	};
 

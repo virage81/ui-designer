@@ -1,6 +1,5 @@
 import { Box, Button, Card, Typography } from '@mui/material';
 import { HomeIcon } from 'lucide-react';
-import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const NotFound: React.FC = () => {
