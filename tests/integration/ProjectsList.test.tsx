@@ -52,5 +52,44 @@ describe('ProjectsList', () => {
 		expect(projects).toHaveLength(0);
 	});
 
-	test.todo('when a project is deleted, the project list is updated');
+	test('when a project is deleted, the project list is updated', () => {
+		const { store } = JestStoreProvider(<ProjectsList />, {
+			preloadedState: {
+				projects: {
+					history: {},
+					layers: {},
+					activeLayer: null,
+					projects: [
+						{
+							date: new Date().toISOString(),
+							id: 'project1',
+							name: 'Project1',
+							height: 800,
+							width: 800,
+							preview: '',
+						},
+						{
+							date: new Date().toISOString(),
+							id: 'project2',
+							name: 'Project2',
+							height: 800,
+							width: 800,
+							preview: '',
+						},
+					],
+				},
+			},
+		});
+
+		let projectCards = screen.getAllByTestId('project-card');
+		expect(projectCards).toHaveLength(2);
+		expect(projectCards.length).toBeGreaterThan(0);
+
+		act(() => {
+			store.dispatch(deleteProject({ id: 'project1' }));
+		});
+
+		projectCards = screen.getAllByTestId('project-card');
+		expect(projectCards).toHaveLength(1);
+	});
 });
