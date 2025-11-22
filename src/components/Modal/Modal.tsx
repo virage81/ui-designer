@@ -13,16 +13,16 @@ import {
 import { createProject } from '@store/slices/projectsSlice';
 import { type ChangeEvent, type FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-
 import type { RootState } from '@/store';
 import type { Project } from '@shared/types/project';
+import { useNavigate } from 'react-router-dom';
 
 interface Modal {
 	open?: boolean;
 	toggleModal: () => void;
 }
 
-type NewProject = Omit<Project, 'id' | 'date'>
+type NewProject = Omit<Project, 'id' | 'date'>;
 
 const DEFAULT_NAME = 'Проект';
 const DEFAULT_SIZE = 800;
@@ -30,7 +30,10 @@ const NAME_PATTERN = /^[A-Za-zА-Яа-яЁё0-9\s]+$/;
 
 export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	const dispatch = useDispatch();
+	const navigate = useNavigate();
 	const projects = useSelector((state: RootState) => state.projects.projects);
+
+	const [pendingName, setPendingName] = useState<string | null>(null);
 
 	const [projectName, setProjectName] = useState<string>(DEFAULT_NAME);
 	const [width, setWidth] = useState<number | string>(DEFAULT_SIZE);
@@ -55,25 +58,6 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 			return (): void => clearTimeout(id);
 		}
 	}, [open]);
-
-	const handleCreate: () => void = (): void => {
-		if (!projectNameError && !widthError && !heightError) {
-			const newProject: NewProject = {
-				name: projectName.trim(),
-				width: Number(width),
-				height: Number(height),
-				preview: '',
-				history: [],
-				layers: [],
-			} as Omit<Project, 'id' | 'date'>;
-			if (projects.some((p: Project) => p.name === projectName.trim())) {
-				setProjectNameError('Проект с таким именем уже существует');
-			} else {
-				dispatch(createProject(newProject));
-				toggleModal();
-			}
-		}
-	};
 
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
@@ -113,6 +97,38 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 		}
 	};
 
+	useEffect(() => {
+		if (!pendingName) return;
+
+		const created: Project | undefined = projects.find((p: Project) => p.name === pendingName);
+		if (created?.id) {
+			navigate(`/projects/${created.id}`);
+			setPendingName(null);
+		}
+	}, [projects, pendingName, navigate]);
+
+	const handleCreate: () => void = (): void => {
+		if (!projectNameError && !widthError && !heightError) {
+			const trimmedName = projectName.trim();
+			const newProject: NewProject = {
+				name: trimmedName,
+				width: Number(width),
+				height: Number(height),
+				preview: '',
+				history: [],
+				layers: [],
+			} as Omit<Project, 'id' | 'date'>;
+
+			if (projects.some((p: Project) => p.name === trimmedName)) {
+				setProjectNameError('Проект с таким именем уже существует');
+			} else {
+				setPendingName(trimmedName);
+				dispatch(createProject(newProject));
+				toggleModal();
+			}
+		}
+	};
+
 	return (
 		<Dialog open={open} onClose={toggleModal} disableRestoreFocus>
 			<Box sx={{ position: 'relative', paddingBottom: 2 }}>
@@ -140,6 +156,7 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 						fullWidth
 						margin='normal'
 						value={projectName}
+						autoComplete="off"
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}
