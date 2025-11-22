@@ -18,16 +18,19 @@ import type { RootState } from '@/store';
 import type { Project } from '@shared/types/project';
 
 interface Modal {
-	open: boolean;
+	open?: boolean;
 	toggleModal: () => void;
 }
+
+type NewProject = Omit<Project, 'id' | 'date'>
+
+const DEFAULT_NAME = 'Проект';
+const DEFAULT_SIZE = 800;
+const NAME_PATTERN = /^[A-Za-zА-Яа-яЁё0-9\s]+$/;
 
 export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	const dispatch = useDispatch();
 	const projects = useSelector((state: RootState) => state.projects.projects);
-
-	const DEFAULT_NAME = 'Проект';
-	const DEFAULT_SIZE = 800;
 
 	const [projectName, setProjectName] = useState<string>(DEFAULT_NAME);
 	const [width, setWidth] = useState<number | string>(DEFAULT_SIZE);
@@ -55,7 +58,7 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 
 	const handleCreate: () => void = (): void => {
 		if (!projectNameError && !widthError && !heightError) {
-			const newProject = {
+			const newProject: NewProject = {
 				name: projectName.trim(),
 				width: Number(width),
 				height: Number(height),
@@ -73,13 +76,11 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	};
 
 	const validateInput = (value: string, field: string): void => {
-		const pattern = /^[A-Za-zА-Яа-яЁё0-9\s]+$/;
-
 		switch (field) {
 			case 'projectName': {
 				if (value.length === 0) {
 					setProjectNameError('Название обязательно');
-				} else if (!pattern.test(value)) {
+				} else if (!NAME_PATTERN.test(value)) {
 					setProjectNameError('Допустимы буквы и цифры');
 				} else {
 					setProjectNameError('');
