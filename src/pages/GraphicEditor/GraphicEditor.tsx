@@ -4,17 +4,13 @@ import { RightSideBar } from '@components/RightSidebar';
 import { TopMenu } from '@components/TopMenu';
 import { Box } from '@mui/material';
 import type {RootState} from "@/store";
-import type {Project} from "@shared/types/project.ts";
 import {Navigate, useParams} from "react-router-dom";
 import {useSelector} from "react-redux";
+import {checkProjectExistence} from "@store/utils/projects.ts";
 
 export const GraphicEditor: React.FC = () => {
-	const selectProjectExists = (state: RootState, id: string) => {
-		return state.projects.projects.some((p: Project) => p.id === id);
-	}
-
 	const { id } = useParams<{ id: string }>();
-	const exists: boolean = useSelector((state: RootState) => selectProjectExists(state, id ?? ''));
+	const exists: boolean = useSelector((state: RootState) => checkProjectExistence(state.projects, id ?? ''));
 
 	if (!exists) {
 		return <Navigate to="/404" replace />;

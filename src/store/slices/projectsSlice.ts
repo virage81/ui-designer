@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
-import type { History, Layer, Project } from '@shared/types/project';
+import type { ProjectsSliceState } from '@shared/types/projectsSliceState';
 import type {
 	CreateLayerParams,
 	CreateProjectParams,
@@ -10,19 +10,9 @@ import type {
 	UpdateLayerParams,
 	UpdateProjectParams,
 } from './projectSliceTypes';
+import { checkProjectExistence} from '@store/utils/projects';
 
-interface State {
-	projects: Project[];
-	history: Record<Project['id'], History[]>;
-	layers: Record<Project['id'], Layer[]>;
-	activeLayer: Layer | null;
-}
-
-const checkProjectExistence = (state: State, projectId: Project['id']) => {
-	return state.projects.some(item => item.id === projectId);
-};
-
-const initialState: State = {
+const initialState: ProjectsSliceState = {
 	projects: [],
 	history: {},
 	layers: {},
