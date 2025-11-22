@@ -15,22 +15,13 @@ export default defineConfig([
 			reactHooks.configs.flat.recommended,
 			reactRefresh.configs.vite,
 		],
-		languageOptions: {
-			ecmaVersion: 2020,
-			globals: globals.browser,
-		},
+		languageOptions: { ecmaVersion: 2020, globals: globals.browser },
 		rules: {
-			'no-unused-vars': [
+			'@typescript-eslint/no-unused-vars': [
 				'error',
-				{
-					vars: 'all',
-					args: 'after-used',
-					caughtErrors: 'params',
-					ignoreRestSiblings: false,
-					ignoreUsingDeclarations: false,
-					reportUsedIgnorePattern: false,
-				},
+				{ destructuredArrayIgnorePattern: '^_' },
 			],
+			'no-unused-vars': 'off',
 		},
 	},
 ]);

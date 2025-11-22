@@ -103,9 +103,13 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 		const created: Project | undefined = projects.find((p: Project) => p.name === pendingName);
 		if (created?.id) {
 			navigate(`/projects/${created.id}`);
-			setPendingName(null);
 		}
+
+		return () => {
+			setPendingName(null);
+		};
 	}, [projects, pendingName, navigate]);
+
 
 	const handleCreate: () => void = (): void => {
 		if (!projectNameError && !widthError && !heightError) {
