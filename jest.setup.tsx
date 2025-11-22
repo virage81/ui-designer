@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
 import { TextDecoder, TextEncoder } from 'util';
 
-global.TextDecoder = TextDecoder as any;
-global.TextEncoder = TextEncoder as any;
+global.TextDecoder = (TextDecoder as unknown) as typeof TextDecoder;
+global.TextEncoder = (TextEncoder as unknown) as typeof TextEncoder;
 
 jest.mock('uuid', () => ({
 	v4: jest.fn().mockReturnValue('mocked-uuid'),
