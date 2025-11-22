@@ -103,7 +103,7 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 		const created: Project | undefined = projects.find((p: Project) => p.name === pendingName);
 		if (created?.id) {
 			navigate(`/projects/${created.id}`);
-			setPendingName(null);
+			setTimeout(() => setPendingName(null), 0);
 		}
 	}, [projects, pendingName, navigate]);
 
