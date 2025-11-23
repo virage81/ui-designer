@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
 import type { History, Layer, Project } from '@shared/types/project';
+import type { RootState } from '..';
 import type {
 	CreateLayerParams,
 	CreateProjectParams,
@@ -9,7 +10,7 @@ import type {
 	SetActiveLayerParams,
 	UpdateLayerParams,
 	UpdateProjectParams,
-} from './projectSliceTypes';
+} from './projectSlice.types';
 
 interface State {
 	projects: Project[];
@@ -38,7 +39,7 @@ const projectsSlice = createSlice({
 
 			state.projects.push({ ...action.payload, id, preview: '', date: new Date().toISOString() });
 			state.history[id] = [];
-			state.layers[id] = [];
+			state.layers[id] = [{ id: generateId(), hidden: false, isBase: true, name: 'Фон', opacity: 100, zIndex: 1 }];
 		},
 		updateProject: (state, action: PayloadAction<UpdateProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
@@ -57,7 +58,7 @@ const projectsSlice = createSlice({
 			const { projectId, data } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			state.layers[projectId].push({ ...data, id: generateId() });
+			state.layers[projectId].push({ ...data, id: generateId(), isBase: false });
 		},
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
 			const { data, projectId } = action.payload;
@@ -74,6 +75,8 @@ const projectsSlice = createSlice({
 
 			const layerIndex = state.layers?.[projectId]?.findIndex(item => item.id === id);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${id} not found`);
+
+			if (state.layers[projectId][layerIndex].isBase) throw new Error('Cannot delete base layer');
 
 			state.layers[projectId].splice(layerIndex, 1);
 		},
@@ -95,6 +98,17 @@ const projectsSlice = createSlice({
 		},
 	},
 });
+
+export const sortedLayersSelector = (state: RootState, projectId: Project['id']) => {
+	const { layers } = state.projects;
+
+	return [...layers[projectId]].sort((a, b) => {
+		if (a.isBase && !b.isBase) return 1;
+		if (!a.isBase && b.isBase) return -1;
+
+		return b.zIndex - a.zIndex;
+	});
+};
 
 export const { createProject, updateProject, deleteProject, createLayer, updateLayer, deleteLayer, setActiveLayer } =
 	projectsSlice.actions;

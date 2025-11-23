@@ -8,7 +8,7 @@ export type DeleteProjectParams = { id: Project['id'] };
 
 export type CreateLayerParams = {
 	projectId: Project['id'];
-	data: Omit<Layer, 'id'>;
+	data: Omit<Layer, 'id' | 'isBase'>;
 };
 
 export type UpdateLayerParams = {

@@ -30,7 +30,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
+					projectId: expect.any(String),
 					data: {
 						name: 'Layer 1',
 						hidden: false,
@@ -49,6 +49,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					hidden: false,
 					opacity: 1,
 					zIndex: 1,
+					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
@@ -95,13 +96,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 
 		act(() => {
 			store.dispatch(
-				createLayer({
-					projectId,
-					data: { name: 'Layer 1', hidden: false, opacity: 1, zIndex: 1 },
-				}),
-			);
-
-			store.dispatch(
 				updateLayer({
 					projectId,
 					data: {
@@ -119,7 +113,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
+					projectId: expect.any(String),
 					data: {
 						id: store.getState().projects.layers[projectId][0].id,
 						zIndex: 3,
@@ -133,14 +127,15 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					id: expect.any(String),
-					name: 'Layer 1',
+					name: 'Фон',
 					hidden: false,
 					opacity: 65,
 					zIndex: 3,
+					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
-		expect(spied).toHaveBeenCalledTimes(3);
+		expect(spied).toHaveBeenCalledTimes(2);
 	});
 
 	test('Редактирование слоя без проекта', () => {
@@ -185,14 +180,18 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			store.dispatch(
 				createLayer({
 					projectId,
-					data: { name: 'Layer 1', hidden: false, opacity: 1, zIndex: 1 },
+					data: {
+						name: 'Layer 1',
+						hidden: false,
+						opacity: 100,
+						zIndex: 2,
+					},
 				}),
 			);
-
 			store.dispatch(
 				deleteLayer({
 					projectId,
-					id: store.getState().projects.layers[projectId][0].id,
+					id: store.getState().projects.layers[projectId][1].id,
 				}),
 			);
 		});
@@ -203,13 +202,24 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
+					projectId: expect.any(String),
 					id: expect.any(String),
 				}),
 			}),
 		);
 		expect(layers).toHaveProperty(projectId);
-		expect(layers[projectId]).toEqual([]);
+		expect(layers[projectId]).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					id: expect.any(String),
+					name: expect.any(String),
+					hidden: false,
+					opacity: 100,
+					zIndex: 1,
+					isBase: true,
+				}),
+			]),
+		);
 		expect(spied).toHaveBeenCalledTimes(3);
 	});
 
@@ -260,7 +270,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
+					projectId: expect.any(String),
 					data: {
 						name: 'Layer 1',
 						hidden: false,
@@ -275,16 +285,25 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					id: expect.any(String),
-					name: 'Layer 1',
+					name: expect.any(String),
+					hidden: false,
+					opacity: 100,
+					zIndex: 1,
+					isBase: true,
+				}),
+				expect.objectContaining({
+					id: expect.any(String),
+					name: expect.any(String),
 					hidden: false,
 					opacity: 1,
 					zIndex: 1,
+					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
 
 		act(() => {
-			store.dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
+			store.dispatch(setActiveLayer({ projectId, id: layers[projectId][1].id }));
 		});
 
 		const { activeLayer } = store.getState().projects;
@@ -293,18 +312,19 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
-					id: 'mocked-uuid',
+					projectId: expect.any(String),
+					id: expect.any(String),
 				}),
 			}),
 		);
 		expect(activeLayer).toEqual(
 			expect.objectContaining({
-				id: 'mocked-uuid',
-				name: 'Layer 1',
+				id: expect.any(String),
+				name: expect.any(String),
 				hidden: false,
 				opacity: 1,
 				zIndex: 1,
+				isBase: expect.any(Boolean),
 			}),
 		);
 
@@ -363,7 +383,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
+					projectId: expect.any(String),
 					id: layerId,
 				}),
 			}),
@@ -395,7 +415,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
+					projectId: expect.any(String),
 					data: {
 						name: 'Layer 1',
 						hidden: false,
@@ -410,16 +430,17 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					id: expect.any(String),
-					name: 'Layer 1',
+					name: expect.any(String),
 					hidden: false,
 					opacity: 1,
 					zIndex: 1,
+					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
 
 		act(() => {
-			store.dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
+			store.dispatch(setActiveLayer({ projectId, id: layers[projectId][1].id }));
 		});
 
 		const { activeLayer } = store.getState().projects;
@@ -428,18 +449,19 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 			expect.objectContaining({
 				type: expect.any(String),
 				payload: expect.objectContaining({
-					projectId: 'mocked-uuid',
-					id: 'mocked-uuid',
+					projectId: expect.any(String),
+					id: expect.any(String),
 				}),
 			}),
 		);
 		expect(activeLayer).toEqual(
 			expect.objectContaining({
-				id: 'mocked-uuid',
+				id: expect.any(String),
 				name: 'Layer 1',
 				hidden: false,
 				opacity: 1,
 				zIndex: 1,
+				isBase: expect.any(Boolean),
 			}),
 		);
 

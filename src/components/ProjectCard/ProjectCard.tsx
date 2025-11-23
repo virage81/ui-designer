@@ -4,8 +4,10 @@ import { Button, Card, CardActions, CardContent, CardMedia, Typography } from '@
 import type { Project } from '@shared/types/project';
 import { useState } from 'react';
 import { Placeholder } from './components';
+import { useNavigate } from 'react-router-dom';
 
-export const ProjectCard: React.FC<Project> = ({ preview, name, date }) => {
+export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
+	const navigate = useNavigate();
 	const [openModal, setOpenModal] = useState(false);
 
 	return (
@@ -50,6 +52,9 @@ export const ProjectCard: React.FC<Project> = ({ preview, name, date }) => {
 				</CardContent>
 				<CardActions sx={{ px: 2 }}>
 					<Button
+						onClick={() => {
+							navigate(`/projects/${id}`);
+						}}
 						variant='contained'
 						startIcon={<FolderOpenOutlined />}
 						sx={{

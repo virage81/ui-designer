@@ -1,25 +1,17 @@
 import { Box, Button, IconButton, Paper, Slider, Tab, Tabs, Typography } from '@mui/material';
+import type { Layer } from '@shared/types/project';
+import type { RootState } from '@store/index';
+import {
+	createLayer,
+	deleteLayer,
+	setActiveLayer,
+	sortedLayersSelector,
+	updateLayer,
+} from '@store/slices/projectsSlice';
 import { EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
-
-// Статические данные для отображения
-const MOCK_LAYERS = [
-	{ id: 1, name: 'Слой 1', visible: false, opacity: 100 },
-	{ id: 2, name: 'ФОН', visible: true, opacity: 100 },
-	{ id: 3, name: 'Слой 1', visible: true, opacity: 100 },
-	{ id: 4, name: 'ФОН', visible: true, opacity: 100 },
-	{ id: 5, name: 'Слой 1', visible: true, opacity: 100 },
-	{ id: 6, name: 'ФОН', visible: true, opacity: 100 },
-	{ id: 7, name: 'Слой 1', visible: true, opacity: 100 },
-	{ id: 8, name: 'ФОН', visible: true, opacity: 100 },
-	{ id: 9, name: 'Слой 1', visible: true, opacity: 100 },
-	{ id: 10, name: 'ФОН', visible: true, opacity: 100 },
-	{ id: 11, name: 'Слой 1', visible: true, opacity: 100 },
-	{ id: 12, name: 'ФОН', visible: true, opacity: 100 },
-	{ id: 13, name: 'Слой 1', visible: true, opacity: 100 },
-	{ id: 14, name: 'ФОН', visible: true, opacity: 100 },
-	{ id: 15, name: 'Слой 1', visible: true, opacity: 100 },
-];
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 
 const MOCK_HISTORY = [
 	{ id: 1, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
@@ -39,11 +31,33 @@ const MOCK_HISTORY = [
 	{ id: 15, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
 ];
 
+// TODO: Implement right handleCreate
+// TODO: Implement layer rename
+// TODO: Implement layer order
 export const RightSideBar: React.FC = () => {
+	const dispatch = useDispatch();
+	const { id: projectId = '' } = useParams();
+
+	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
+	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
+
 	const [activeTab, setActiveTab] = useState(0);
 
 	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setActiveTab(newValue);
+	};
+
+	const handleUpdateLayer = (name: keyof Layer, value: unknown, layerId: string) => {
+		if (!projectId) return;
+
+		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
+	};
+
+	const handleDelete = (layerId: Layer['id']) => {
+		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
+		if (layerId === activeLayer?.id) {
+			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
+		}
 	};
 
 	return (
@@ -74,7 +88,18 @@ export const RightSideBar: React.FC = () => {
 					<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
 						<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '36px' }}>
 							<Typography variant='subtitle2'>Слои</Typography>
-							<Button variant='tools' sx={{ padding: '10px' }}>
+							<Button
+								variant='tools'
+								sx={{ padding: '10px' }}
+								onClick={() => {
+									if (!projectId) return;
+									dispatch(
+										createLayer({
+											projectId: projectId,
+											data: { hidden: false, name: 'asd', opacity: 100, zIndex: layers[projectId].length + 1 },
+										}),
+									);
+								}}>
 								<PlusIcon size={16} color='var(--color)' />
 							</Button>
 						</Box>
@@ -96,10 +121,11 @@ export const RightSideBar: React.FC = () => {
 									backgroundColor: 'rgba(0,0,0,0.3)',
 								},
 							}}>
-							{MOCK_LAYERS.map(layer => (
+							{sortedLayers.map(layer => (
 								<Paper
 									key={layer.id}
 									elevation={0}
+									onClick={() => dispatch(setActiveLayer({ projectId: projectId, id: layer.id }))}
 									sx={{
 										maxHeight: 'auto',
 										p: 1.5,
@@ -113,14 +139,22 @@ export const RightSideBar: React.FC = () => {
 										'&:hover': {
 											bgcolor: 'var(--hover-bg)',
 										},
+										...(layer.id === activeLayer?.id
+											? {
+													border: '1px solid var(--active-color-primary)',
+													bgcolor: 'var(--active-bg-primary)',
+											  }
+											: {}),
 										'&:active': {
 											border: '1px solid var(--active-color-primary)',
 											bgcolor: 'var(--active-bg-primary)',
 										},
 									}}>
 									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-										<IconButton sx={{ p: 0.5, color: 'var(--color)' }}>
-											{layer.visible ? (
+										<IconButton
+											sx={{ p: 0.5, color: 'var(--color)' }}
+											onClick={() => handleUpdateLayer('hidden', !layer.hidden, layer.id)}>
+											{!layer.hidden ? (
 												<EyeIcon size={16} color='var(--color)' />
 											) : (
 												<EyeOffIcon size={16} color='var(--color)' />
@@ -129,18 +163,29 @@ export const RightSideBar: React.FC = () => {
 										<Typography variant='body2' sx={{ flex: 1 }}>
 											{layer.name}
 										</Typography>
-										<IconButton
-											size='small'
-											sx={{ p: 0.5, color: 'var(--color-muted)', '&:hover': { color: 'var(--danger)' } }}>
-											<Trash2Icon size={16} />
-										</IconButton>
+										{!layer.isBase && (
+											<IconButton
+												onClick={() => handleDelete(layer.id)}
+												size='small'
+												sx={{ p: 0.5, color: 'var(--color-muted)', '&:hover': { color: 'var(--danger)' } }}>
+												<Trash2Icon size={16} />
+											</IconButton>
+										)}
 									</Box>
 
 									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 										<Typography variant='caption' sx={{ color: 'var(--color-muted)', lineHeight: 1 }}>
 											Прозрачность:
 										</Typography>
-										<Slider value={layer.opacity} max={100} min={0} step={1} size='small' sx={{ flex: 1, p: 0.5 }} />
+										<Slider
+											onChange={(_, value) => handleUpdateLayer('opacity', value, layer.id)}
+											value={layer.opacity}
+											max={100}
+											min={0}
+											step={1}
+											size='small'
+											sx={{ flex: 1, p: 0.5 }}
+										/>
 										<Typography
 											variant='caption'
 											sx={{ color: 'var(--color-muted)', ml: 1, textAlign: 'right', lineHeight: 1 }}>
