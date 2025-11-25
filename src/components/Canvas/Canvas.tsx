@@ -14,7 +14,7 @@ export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 
 	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
-	const { tool, fillColor, strokeWidth } = useSelector((state: RootState) => state.tools);
+	const { tool, fillColor, strokeWidth, strokeStyle } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -25,8 +25,9 @@ export const Canvas: React.FC = () => {
 		() => ({
 			fill: fillColor,
 			strokeWidth,
+			strokeStyle
 		}),
-		[fillColor, strokeWidth],
+		[fillColor, strokeWidth, strokeStyle],
 	);
 
 	useEffect(() => {
