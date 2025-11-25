@@ -1,5 +1,6 @@
 import type { BrushTool } from './Brush';
 import type { RectangleTool } from './Rect';
+import type { CircleTool } from './Circle';
 
 export type Styles = {
 	strokeWidth: number;
@@ -41,4 +42,4 @@ export class Tool {
 	};
 }
 
-export type Tools = BrushTool | RectangleTool;
+export type Tools = BrushTool | RectangleTool | CircleTool;

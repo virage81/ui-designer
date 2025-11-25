@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
 import { RectangleTool } from './tools/Rect';
+import { CircleTool } from './tools/Circle';
 import type { Styles, Tools } from './tools/Tool';
 
 export const Canvas: React.FC = () => {
@@ -43,6 +44,10 @@ export const Canvas: React.FC = () => {
 			}
 			case ACTIONS.RECTANGLE: {
 				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
+				break;
+			}
+			case ACTIONS.CIRCLE: {
+				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
 				break;
 			}
 			default: {
