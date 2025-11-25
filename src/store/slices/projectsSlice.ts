@@ -31,7 +31,9 @@ const projectsSlice = createSlice({
 
 			state.projects.push({ ...action.payload, id, preview: '', date: new Date().toISOString() });
 			state.history[id] = [];
-			state.layers[id] = [{ id: generateId(), hidden: false, isBase: true, name: 'Фон', opacity: 100, zIndex: 1 }];
+			const baseLayer = { id: generateId(), hidden: false, isBase: true, name: 'Фон', opacity: 100, zIndex: 1 };
+			state.layers[id] = [baseLayer];
+			state.activeLayer = baseLayer;
 		},
 		updateProject: (state, action: PayloadAction<UpdateProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
