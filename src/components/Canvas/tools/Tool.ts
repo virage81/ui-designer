@@ -1,4 +1,5 @@
 import type { BrushTool } from './Brush';
+import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
 import type { CircleTool } from './Circle';
 
@@ -35,8 +36,8 @@ export class Tool {
 		this.ctx.lineCap = 'round';
 		this.ctx.lineJoin = 'round';
 		this.ctx.lineWidth = styles.strokeWidth;
-		this.ctx.fillStyle = styles.fill;
 		this.ctx.strokeStyle = styles.strokeStyle;
+		this.ctx.strokeStyle = styles.fill;
 	}
 
 	destroyEvents = () => {
@@ -46,4 +47,4 @@ export class Tool {
 	};
 }
 
-export type Tools = BrushTool | RectangleTool | CircleTool;
+export type Tools = BrushTool | RectangleTool | CircleTool | LineTool;

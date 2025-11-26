@@ -9,6 +9,7 @@ import { BrushTool } from './tools/Brush';
 import { RectangleTool } from './tools/Rect';
 import { CircleTool } from './tools/Circle';
 import type { Styles, Tools } from './tools/Tool';
+import { LineTool } from './tools/Line';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -22,11 +23,7 @@ export const Canvas: React.FC = () => {
 
 	const currentProject = useMemo(() => projects.find(item => item.id === projectId), [projectId, projects]);
 	const toolStyles = useMemo<Styles>(
-		() => ({
-			fill: fillColor,
-			strokeWidth,
-			strokeStyle
-		}),
+		() => ({ fill: fillColor, strokeWidth, strokeStyle }),
 		[fillColor, strokeWidth, strokeStyle],
 	);
 
@@ -49,6 +46,10 @@ export const Canvas: React.FC = () => {
 			}
 			case ACTIONS.CIRCLE: {
 				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
+				break;
+			}
+			case ACTIONS.LINE: {
+				toolRef.current = new LineTool(canvasRef.current, toolStyles);
 				break;
 			}
 			default: {
@@ -84,7 +85,7 @@ export const Canvas: React.FC = () => {
 							position: 'absolute',
 							inset: 0,
 							zIndex: layer.zIndex,
-							opacity: layer.isBase ? 100 : layer.hidden ? 0 : layer.opacity / 100,
+							opacity: layer.isBase ? 1 : layer.hidden ? 0 : layer.opacity / 100,
 							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 						}}
 					/>
