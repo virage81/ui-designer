@@ -1,18 +1,21 @@
 import type { BrushTool } from './Brush';
 import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
+import type { CircleTool } from './Circle';
 
 export type Styles = {
 	strokeWidth: number;
 	fill: string;
+	strokeStyle: string;
 };
 
 export class Tool {
 	protected canvas;
 	protected ctx;
 
-	protected strokeWidth: number = 1;
-	protected fill: string = '#000';
+	protected strokeWidth: number = 1
+	protected fill: string = '#3b78e7'
+	protected stroke: string = '#000'
 
 	protected isMouseDown: boolean = false;
 
@@ -20,6 +23,7 @@ export class Tool {
 		this.canvas = canvas;
 		this.ctx = canvas.getContext('2d');
 		this.fill = styles.fill;
+		this.stroke = styles.strokeStyle;
 		this.strokeWidth = styles.strokeWidth;
 
 		this.destroyEvents();
@@ -32,7 +36,8 @@ export class Tool {
 		this.ctx.lineCap = 'round';
 		this.ctx.lineJoin = 'round';
 		this.ctx.lineWidth = styles.strokeWidth;
-		this.ctx.strokeStyle = styles.fill;
+		this.ctx.strokeStyle = styles.strokeStyle;
+		this.ctx.fillStyle = styles.fill;
 	}
 
 	destroyEvents = () => {
@@ -42,4 +47,4 @@ export class Tool {
 	};
 }
 
-export type Tools = BrushTool | RectangleTool | LineTool;
+export type Tools = BrushTool | RectangleTool | CircleTool | LineTool;

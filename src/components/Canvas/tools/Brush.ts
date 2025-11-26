@@ -37,6 +37,7 @@ export class BrushTool extends Tool {
 
 		this.ctx.lineTo(x, y);
 		this.ctx.stroke();
+		this.ctx.strokeStyle = this.fill;
 		this.ctx.lineWidth = this.strokeWidth;
 	};
 }
