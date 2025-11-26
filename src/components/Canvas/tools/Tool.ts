@@ -37,7 +37,7 @@ export class Tool {
 		this.ctx.lineJoin = 'round';
 		this.ctx.lineWidth = styles.strokeWidth;
 		this.ctx.strokeStyle = styles.strokeStyle;
-		this.ctx.strokeStyle = styles.fill;
+		this.ctx.fillStyle = styles.fill;
 	}
 
 	destroyEvents = () => {
