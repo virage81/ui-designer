@@ -78,7 +78,7 @@ export const Canvas: React.FC = () => {
 							position: 'absolute',
 							inset: 0,
 							zIndex: layer.zIndex,
-							opacity: layer.isBase ? 100 : layer.hidden ? 0 : layer.opacity / 100,
+							opacity: layer.isBase ? 1 : layer.hidden ? 0 : layer.opacity / 100,
 							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 						}}
 					/>
