@@ -8,6 +8,7 @@ import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
 import { RectangleTool } from './tools/Rect';
 import type { Styles, Tools } from './tools/Tool';
+import { EraserTool } from './tools/Eraser';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -43,6 +44,10 @@ export const Canvas: React.FC = () => {
 			}
 			case ACTIONS.RECTANGLE: {
 				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
+				break;
+			}
+			case ACTIONS.ERASER: {
+				toolRef.current = new EraserTool(canvasRef.current, toolStyles);
 				break;
 			}
 			default: {

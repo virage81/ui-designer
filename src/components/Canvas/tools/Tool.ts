@@ -1,4 +1,5 @@
 import type { BrushTool } from './Brush';
+import type { EraserTool } from './Eraser';
 import type { RectangleTool } from './Rect';
 
 export type Styles = {
@@ -41,4 +42,4 @@ export class Tool {
 	};
 }
 
-export type Tools = BrushTool | RectangleTool;
+export type Tools = BrushTool | RectangleTool | EraserTool;
