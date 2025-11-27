@@ -2,6 +2,7 @@ import { Box, Button, IconButton, Menu, MenuItem, Paper, Slider, Tab, Tabs, Typo
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
+	clearActiveLayer,
 	createLayer,
 	deleteLayer,
 	setActiveLayer,
@@ -55,6 +56,18 @@ export const RightSideBar: React.FC = () => {
 		if (!projectId) return;
 
 		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
+	};
+	const handleClearLayer = () => {
+		if (!projectId) return;
+		if (currentLayer) {
+			dispatch(
+				clearActiveLayer({
+					projectId: projectId,
+					layerId: currentLayer.id,
+				}),
+			);
+		}
+		handleCloseMenu();
 	};
 
 	const handleDelete = (layerId: Layer['id']) => {
@@ -212,25 +225,9 @@ export const RightSideBar: React.FC = () => {
 					onClose={handleCloseMenu}
 					anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
 					transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
-					<MenuItem
-						onClick={() => {
-							if (currentLayer) {
-								console.log('Переименовать', currentLayer.id);
-							}
-							handleCloseMenu();
-						}}>
-						Переименовать
-					</MenuItem>
+					<MenuItem onClick={() => console.log('Переименовать')}>Переименовать</MenuItem>
 
-					<MenuItem
-						onClick={() => {
-							if (currentLayer) {
-								console.log('Очистить', currentLayer.id);
-							}
-							handleCloseMenu();
-						}}>
-						Очистить
-					</MenuItem>
+					<MenuItem onClick={handleClearLayer}>Очистить</MenuItem>
 
 					{currentLayer && !currentLayer.isBase && (
 						<MenuItem
