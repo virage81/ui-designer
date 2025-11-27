@@ -6,9 +6,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
+import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import type { Styles, Tools } from './tools/Tool';
-import { LineTool } from './tools/Line';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -69,7 +69,13 @@ export const Canvas: React.FC = () => {
 	}
 
 	return (
-		<Box sx={{ position: 'relative', width: currentProject.width, height: currentProject.height }}>
+		<Box
+			sx={{
+				position: 'relative',
+				width: currentProject.width,
+				height: currentProject.height,
+				cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+			}}>
 			{sortedLayers.map(layer => {
 				return (
 					<canvas
