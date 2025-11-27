@@ -6,11 +6,12 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
+import { CircleTool } from './tools/Circle';
+import { EraserTool } from './tools/Eraser';
 import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
-import { CircleTool } from './tools/Circle';
+import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import { EraserTool } from './tools/Eraser';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -56,6 +57,10 @@ export const Canvas: React.FC = () => {
 			}
 			case ACTIONS.ERASER: {
 				toolRef.current = new EraserTool(canvasRef.current, toolStyles);
+				break;
+			}
+			case ACTIONS.TEXT: {
+				toolRef.current = new TextTool(canvasRef.current, toolStyles);
 				break;
 			}
 			default: {

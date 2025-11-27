@@ -1,8 +1,9 @@
 import type { BrushTool } from './Brush';
+import type { CircleTool } from './Circle';
 import type { EraserTool } from './Eraser';
 import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
-import type { CircleTool } from './Circle';
+import type { TextTool } from './Text';
 
 export type Styles = {
 	strokeWidth: number;
@@ -14,9 +15,9 @@ export class Tool {
 	protected canvas;
 	protected ctx;
 
-	protected strokeWidth: number = 1
-	protected fill: string = '#3b78e7'
-	protected stroke: string = '#000'
+	protected strokeWidth: number = 1;
+	protected fill: string = '#3b78e7';
+	protected stroke: string = '#000';
 
 	protected isMouseDown: boolean = false;
 
@@ -41,11 +42,11 @@ export class Tool {
 		this.ctx.fillStyle = styles.fill;
 	}
 
-	destroyEvents = () => {
+	destroyEvents() {
 		this.canvas.onpointerup = null;
 		this.canvas.onpointermove = null;
 		this.canvas.onpointerdown = null;
-	};
+	}
 }
 
-export type Tools = BrushTool | RectangleTool | CircleTool | LineTool | EraserTool;
+export type Tools = BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
