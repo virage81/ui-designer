@@ -1,8 +1,9 @@
 import type { BrushTool } from './Brush';
+import type { CircleTool } from './Circle';
 import type { EraserTool } from './Eraser';
 import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
-import type { CircleTool } from './Circle';
+import type { TextTool } from './Text';
 
 export type Styles = {
 	strokeWidth: number;
@@ -25,7 +26,7 @@ export class Tool {
 
 	constructor(canvas: HTMLCanvasElement, styles: Styles) {
 		this.canvas = canvas;
-		this.ctx = canvas.getContext('2d', {willReadFrequently: true})!;
+		this.ctx = canvas.getContext('2d', { willReadFrequently: true })!;
 		this.dpr = window.devicePixelRatio || 1;
 
 		this.logicalWidth = parseInt(canvas.style.width) || canvas.width / this.dpr;
@@ -56,11 +57,11 @@ export class Tool {
 		return [x, y];
 	}
 
-	destroyEvents = () => {
+	destroyEvents() {
 		this.canvas.onpointerup = null;
 		this.canvas.onpointermove = null;
 		this.canvas.onpointerdown = null;
 	}
 }
 
-export type Tools = BrushTool | RectangleTool | CircleTool | LineTool | EraserTool;
+export type Tools = BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
