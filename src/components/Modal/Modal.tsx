@@ -16,11 +16,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import type { Project } from '@shared/types/project';
 import { useNavigate } from 'react-router-dom';
-
-interface Modal {
-	open?: boolean;
-	toggleModal: () => void;
-}
+import { toggleCreateProjectModal } from '@store/slices/modalsSlice';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
@@ -28,10 +24,11 @@ const DEFAULT_NAME = 'Проект';
 const DEFAULT_SIZE = 800;
 const NAME_PATTERN = /^[A-Za-zА-Яа-яЁё0-9\s]+$/;
 
-export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
+export const Modal: FC = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const projects = useSelector((state: RootState) => state.projects.projects);
+	const isCreateProjectModalOpen = useSelector((state: RootState) => state.modals.isCreateProjectModalOpen);
 
 	const [pendingName, setPendingName] = useState<string | null>(null);
 
@@ -53,11 +50,11 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	};
 
 	useEffect(() => {
-		if (open) {
+		if (isCreateProjectModalOpen) {
 			const id = setTimeout(resetForm, 0);
 			return (): void => clearTimeout(id);
 		}
-	}, [open]);
+	}, [isCreateProjectModalOpen]);
 
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
@@ -128,19 +125,19 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 			} else {
 				setPendingName(trimmedName);
 				dispatch(createProject(newProject));
-				toggleModal();
+				dispatch(toggleCreateProjectModal());
 			}
 		}
 	};
 
 	return (
-		<Dialog open={open} onClose={toggleModal} disableRestoreFocus>
+		<Dialog open={isCreateProjectModalOpen} onClose={() => dispatch(toggleCreateProjectModal())} disableRestoreFocus>
 			<Box sx={{ position: 'relative', paddingBottom: 2 }}>
 				<DialogTitle aria-labelledby='modal-title' sx={{ position: 'relative' }}>
 					Создать новый проект
 					<IconButton
 						aria-label='close'
-						onClick={(): void => toggleModal()}
+						onClick={() => dispatch(toggleCreateProjectModal())}
 						sx={{
 							position: 'absolute',
 							right: 10,
@@ -198,7 +195,7 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 				</DialogContent>
 				<DialogActions sx={{ paddingRight: '24px', paddingLeft: '24px' }}>
 					<Button
-						onClick={(): void => toggleModal()}
+						onClick={() => dispatch(toggleCreateProjectModal())}
 						variant='outlined'
 						sx={{
 							borderColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : 'rgb(196,196,196)'),
