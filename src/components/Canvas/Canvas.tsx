@@ -6,9 +6,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
+import { CircleTool } from './tools/Circle';
 import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
-import { CircleTool } from './tools/Circle';
+import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
 
 export const Canvas: React.FC = () => {
@@ -45,12 +46,17 @@ export const Canvas: React.FC = () => {
 				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
 				break;
 			}
+
 			case ACTIONS.CIRCLE: {
 				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
 				break;
 			}
 			case ACTIONS.LINE: {
 				toolRef.current = new LineTool(canvasRef.current, toolStyles);
+				break;
+			}
+			case ACTIONS.TEXT: {
+				toolRef.current = new TextTool(canvasRef.current, toolStyles);
 				break;
 			}
 			default: {
@@ -71,7 +77,7 @@ export const Canvas: React.FC = () => {
 
 		if (activeLayer.cleared) {
 			const ctx = canvasRef.current.getContext('2d');
-			
+
 			if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
 			dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
