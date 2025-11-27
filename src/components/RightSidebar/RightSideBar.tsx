@@ -1,4 +1,16 @@
-import { Box, Button, IconButton, Menu, MenuItem, Paper, Slider, Tab, Tabs, Typography } from '@mui/material';
+import {
+	Box,
+	Button,
+	IconButton,
+	Menu,
+	MenuItem,
+	Paper,
+	Slider,
+	Tab,
+	Tabs,
+	TextField,
+	Typography,
+} from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
@@ -45,6 +57,8 @@ export const RightSideBar: React.FC = () => {
 	const [activeTab, setActiveTab] = useState(0);
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [currentLayerId, setCurrentLayerId] = useState<string | null>(null);
+	const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
+	const [editingLayerName, setEditingLayerName] = useState('');
 	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
 	const isMenuOpen = Boolean(anchorEl);
 
@@ -70,6 +84,14 @@ export const RightSideBar: React.FC = () => {
 		handleCloseMenu();
 	};
 
+	const handleRenameLayer = (layer: Layer) => {
+		if (!projectId) return;
+		handleCloseMenu();
+		setTimeout(() => {
+			startEditing(layer.id, layer.name);
+		}, 0);
+	};
+
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
 		if (layerId === activeLayer?.id) {
@@ -84,6 +106,28 @@ export const RightSideBar: React.FC = () => {
 	const handleCloseMenu = () => {
 		setAnchorEl(null);
 		setCurrentLayerId(null);
+	};
+
+	const startEditing = (layerId: string, currentName: string) => {
+		setEditingLayerId(layerId);
+		setEditingLayerName(currentName);
+	};
+
+	const saveLayerName = (layerId: string) => {
+		if (!projectId) return;
+		dispatch(
+			updateLayer({
+				projectId,
+				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
+			}),
+		);
+		setEditingLayerId(null);
+		setEditingLayerName('');
+	};
+
+	const cancelEditing = () => {
+		setEditingLayerId(null);
+		setEditingLayerName('');
 	};
 
 	return (
@@ -122,7 +166,12 @@ export const RightSideBar: React.FC = () => {
 									dispatch(
 										createLayer({
 											projectId: projectId,
-											data: { hidden: false, name: 'asd', opacity: 100, zIndex: layers[projectId].length + 1 },
+											data: {
+												hidden: false,
+												name: `Слой ${layers[projectId].length}`,
+												opacity: 100,
+												zIndex: layers[projectId].length + 1,
+											},
 										}),
 									);
 								}}>
@@ -186,9 +235,28 @@ export const RightSideBar: React.FC = () => {
 												<EyeOffIcon size={16} color='var(--color)' />
 											)}
 										</IconButton>
-										<Typography variant='body2' sx={{ flex: 1 }}>
-											{layer.name}
-										</Typography>
+
+										{editingLayerId === layer.id ? (
+											<TextField
+												size='small'
+												value={editingLayerName}
+												onChange={e => setEditingLayerName(e.target.value)}
+												onBlur={() => saveLayerName(layer.id)}
+												onKeyDown={e => {
+													if (e.key === 'Enter') saveLayerName(layer.id);
+													if (e.key === 'Escape') cancelEditing();
+												}}
+												autoFocus
+												sx={{ flex: 1 }}
+											/>
+										) : (
+											<Typography
+												variant='body2'
+												sx={{ flex: 1, cursor: 'pointer' }}
+												onClick={() => startEditing(layer.id, layer.name)}>
+												{layer.name}
+											</Typography>
+										)}
 
 										<IconButton aria-label='more' onClick={e => handleOpenMenu(e, layer.id)} size='small'>
 											<Ellipsis size={16} />
@@ -225,7 +293,14 @@ export const RightSideBar: React.FC = () => {
 					onClose={handleCloseMenu}
 					anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
 					transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
-					<MenuItem onClick={() => console.log('Переименовать')}>Переименовать</MenuItem>
+					<MenuItem
+						onClick={() => {
+							if (currentLayer) {
+								handleRenameLayer(currentLayer);
+							}
+						}}>
+						Переименовать
+					</MenuItem>
 
 					<MenuItem onClick={handleClearLayer}>Очистить</MenuItem>
 
