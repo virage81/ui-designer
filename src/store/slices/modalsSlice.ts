@@ -4,19 +4,23 @@ interface ModalsSliceState {
 	isCreateProjectModalOpen: boolean;
 }
 
-const initialState: ModalsSliceState = {
-	isCreateProjectModalOpen: false,
-};
+const initialState: ModalsSliceState = { isCreateProjectModalOpen: false };
 
 const modalsSlice = createSlice({
 	name: 'modals',
 	initialState,
 	reducers: {
-		toggleCreateProjectModal: (state) => {
+		openCreateProjectModal: state => {
+			state.isCreateProjectModalOpen = true;
+		},
+		closeCreateProjectModal: state => {
+			state.isCreateProjectModalOpen = false;
+		},
+		toggleCreateProjectModal: state => {
 			state.isCreateProjectModalOpen = !state.isCreateProjectModalOpen;
 		},
 	},
 });
 
-export const { toggleCreateProjectModal } = modalsSlice.actions;
+export const { openCreateProjectModal, closeCreateProjectModal, toggleCreateProjectModal } = modalsSlice.actions;
 export default modalsSlice.reducer;
