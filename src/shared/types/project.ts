@@ -21,4 +21,5 @@ export interface Layer {
 	opacity: number;
 	zIndex: number;
 	hidden: boolean;
+	cleared?: boolean;
 }

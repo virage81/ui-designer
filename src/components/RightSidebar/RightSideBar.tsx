@@ -1,15 +1,28 @@
-import { Box, Button, IconButton, Paper, Slider, Tab, Tabs, Typography } from '@mui/material';
+import {
+	Box,
+	Button,
+	IconButton,
+	Menu,
+	MenuItem,
+	Paper,
+	Slider,
+	Tab,
+	Tabs,
+	TextField,
+	Typography,
+} from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
+	clearActiveLayer,
 	createLayer,
 	deleteLayer,
 	setActiveLayer,
 	sortedLayersSelector,
 	updateLayer,
 } from '@store/slices/projectsSlice';
-import { EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
+import { Ellipsis, EyeIcon, EyeOffIcon, PlusIcon } from 'lucide-react';
+import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
@@ -42,6 +55,12 @@ export const RightSideBar: React.FC = () => {
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const [activeTab, setActiveTab] = useState(0);
+	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+	const [currentLayerId, setCurrentLayerId] = useState<string | null>(null);
+	const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
+	const [editingLayerName, setEditingLayerName] = useState('');
+	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
+	const isMenuOpen = Boolean(anchorEl);
 
 	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setActiveTab(newValue);
@@ -52,12 +71,63 @@ export const RightSideBar: React.FC = () => {
 
 		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
 	};
+	const handleClearLayer = () => {
+		if (!projectId) return;
+		if (currentLayer) {
+			dispatch(
+				clearActiveLayer({
+					projectId: projectId,
+					layerId: currentLayer.id,
+				}),
+			);
+		}
+		handleCloseMenu();
+	};
+
+	const handleRenameLayer = (layer: Layer) => {
+		if (!projectId) return;
+		handleCloseMenu();
+		setTimeout(() => {
+			startEditing(layer.id, layer.name);
+		}, 0);
+	};
 
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
 		if (layerId === activeLayer?.id) {
 			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
 		}
+	};
+
+	const handleOpenMenu = (event: MouseEvent<HTMLButtonElement>, layerId?: string) => {
+		setAnchorEl(event.currentTarget);
+		setCurrentLayerId(layerId ?? null);
+	};
+	const handleCloseMenu = () => {
+		setAnchorEl(null);
+		setCurrentLayerId(null);
+	};
+
+	const startEditing = (layerId: string, currentName: string) => {
+		setEditingLayerId(layerId);
+		setEditingLayerName(currentName);
+	};
+
+	const saveLayerName = (layerId: string) => {
+		if (!projectId) return;
+		dispatch(
+			updateLayer({
+				projectId,
+				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
+			}),
+		);
+		setEditingLayerId(null);
+		setEditingLayerName('');
+	};
+
+	const cancelEditing = () => {
+		setEditingLayerId(null);
+		setEditingLayerName('');
 	};
 
 	return (
@@ -96,7 +166,12 @@ export const RightSideBar: React.FC = () => {
 									dispatch(
 										createLayer({
 											projectId: projectId,
-											data: { hidden: false, name: 'asd', opacity: 100, zIndex: layers[projectId].length + 1 },
+											data: {
+												hidden: false,
+												name: `Слой ${layers[projectId].length}`,
+												opacity: 100,
+												zIndex: layers[projectId].length + 1,
+											},
 										}),
 									);
 								}}>
@@ -160,17 +235,32 @@ export const RightSideBar: React.FC = () => {
 												<EyeOffIcon size={16} color='var(--color)' />
 											)}
 										</IconButton>
-										<Typography variant='body2' sx={{ flex: 1 }}>
-											{layer.name}
-										</Typography>
-										{!layer.isBase && (
-											<IconButton
-												onClick={() => handleDelete(layer.id)}
+
+										{editingLayerId === layer.id ? (
+											<TextField
 												size='small'
-												sx={{ p: 0.5, color: 'var(--color-muted)', '&:hover': { color: 'var(--danger)' } }}>
-												<Trash2Icon size={16} />
-											</IconButton>
+												value={editingLayerName}
+												onChange={e => setEditingLayerName(e.target.value)}
+												onBlur={() => saveLayerName(layer.id)}
+												onKeyDown={e => {
+													if (e.key === 'Enter') saveLayerName(layer.id);
+													if (e.key === 'Escape') cancelEditing();
+												}}
+												autoFocus
+												sx={{ flex: 1 }}
+											/>
+										) : (
+											<Typography
+												variant='body2'
+												sx={{ flex: 1, cursor: 'pointer' }}
+												onClick={() => startEditing(layer.id, layer.name)}>
+												{layer.name}
+											</Typography>
 										)}
+
+										<IconButton aria-label='more' onClick={e => handleOpenMenu(e, layer.id)} size='small'>
+											<Ellipsis size={16} />
+										</IconButton>
 									</Box>
 
 									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -197,6 +287,33 @@ export const RightSideBar: React.FC = () => {
 						</Box>
 					</Box>
 				)}
+				<Menu
+					anchorEl={anchorEl}
+					open={isMenuOpen}
+					onClose={handleCloseMenu}
+					anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+					transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
+					<MenuItem
+						onClick={() => {
+							if (currentLayer) {
+								handleRenameLayer(currentLayer);
+							}
+						}}>
+						Переименовать
+					</MenuItem>
+
+					<MenuItem onClick={handleClearLayer}>Очистить</MenuItem>
+
+					{currentLayer && !currentLayer.isBase && (
+						<MenuItem
+							onClick={() => {
+								handleDelete(currentLayer.id);
+								handleCloseMenu();
+							}}>
+							Удалить
+						</MenuItem>
+					)}
+				</Menu>
 
 				{activeTab === 1 && (
 					<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>

@@ -25,3 +25,8 @@ export type SetActiveLayerParams = {
 	id: Layer['id'];
 	projectId: Project['id'];
 } | null;
+
+export type ClearActiveLayer = {
+	layerId: Layer['id'];
+	projectId: Project['id'];
+} | null;
