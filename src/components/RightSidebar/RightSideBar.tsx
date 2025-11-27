@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, Paper, Slider, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Button, IconButton, Menu, MenuItem, Paper, Slider, Tab, Tabs, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
@@ -8,8 +8,8 @@ import {
 	sortedLayersSelector,
 	updateLayer,
 } from '@store/slices/projectsSlice';
-import { EyeIcon, EyeOffIcon, PlusIcon, Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
+import { Ellipsis, EyeIcon, EyeOffIcon, PlusIcon } from 'lucide-react';
+import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
@@ -42,6 +42,10 @@ export const RightSideBar: React.FC = () => {
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const [activeTab, setActiveTab] = useState(0);
+	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+	const [currentLayerId, setCurrentLayerId] = useState<string | null>(null);
+	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
+	const isMenuOpen = Boolean(anchorEl);
 
 	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setActiveTab(newValue);
@@ -58,6 +62,15 @@ export const RightSideBar: React.FC = () => {
 		if (layerId === activeLayer?.id) {
 			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
 		}
+	};
+
+	const handleOpenMenu = (event: MouseEvent<HTMLButtonElement>, layerId?: string) => {
+		setAnchorEl(event.currentTarget);
+		setCurrentLayerId(layerId ?? null);
+	};
+	const handleCloseMenu = () => {
+		setAnchorEl(null);
+		setCurrentLayerId(null);
 	};
 
 	return (
@@ -163,14 +176,10 @@ export const RightSideBar: React.FC = () => {
 										<Typography variant='body2' sx={{ flex: 1 }}>
 											{layer.name}
 										</Typography>
-										{!layer.isBase && (
-											<IconButton
-												onClick={() => handleDelete(layer.id)}
-												size='small'
-												sx={{ p: 0.5, color: 'var(--color-muted)', '&:hover': { color: 'var(--danger)' } }}>
-												<Trash2Icon size={16} />
-											</IconButton>
-										)}
+
+										<IconButton aria-label='more' onClick={e => handleOpenMenu(e, layer.id)} size='small'>
+											<Ellipsis size={16} />
+										</IconButton>
 									</Box>
 
 									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -197,6 +206,42 @@ export const RightSideBar: React.FC = () => {
 						</Box>
 					</Box>
 				)}
+				<Menu
+					anchorEl={anchorEl}
+					open={isMenuOpen}
+					onClose={handleCloseMenu}
+					anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+					transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
+					<MenuItem
+						onClick={() => {
+							if (currentLayer) {
+								console.log('Переименовать', currentLayer.id);
+							}
+							handleCloseMenu();
+						}}>
+						Переименовать
+					</MenuItem>
+
+					<MenuItem
+						onClick={() => {
+							if (currentLayer) {
+								console.log('Очистить', currentLayer.id);
+							}
+							handleCloseMenu();
+						}}>
+						Очистить
+					</MenuItem>
+
+					{currentLayer && !currentLayer.isBase && (
+						<MenuItem
+							onClick={() => {
+								handleDelete(currentLayer.id);
+								handleCloseMenu();
+							}}>
+							Удалить
+						</MenuItem>
+					)}
+				</Menu>
 
 				{activeTab === 1 && (
 					<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>

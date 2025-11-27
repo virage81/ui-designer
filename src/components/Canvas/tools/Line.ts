@@ -54,7 +54,6 @@ export class LineTool extends Tool {
 			this.ctx.beginPath();
 			this.ctx.moveTo(x1, y1);
 			this.ctx.lineWidth = this.strokeWidth;
-			this.ctx.strokeStyle = this.fill; //TODO в Tool указан, почему-то бордер
 			this.ctx.lineTo(x2, y2);
 			this.ctx.stroke();
 		};
