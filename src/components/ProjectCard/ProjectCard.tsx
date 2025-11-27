@@ -1,10 +1,10 @@
 import { DeleteConfirmModal } from '@components/DeleteConfirmModal';
-import { DeleteOutlineOutlined, FolderOpenOutlined } from '@mui/icons-material';
 import { Button, Card, CardActions, CardContent, CardMedia, Typography } from '@mui/material';
 import type { Project } from '@shared/types/project';
+import { FolderOpen, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Placeholder } from './components';
 import { useNavigate } from 'react-router-dom';
+import { Placeholder } from './components';
 
 export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 	const navigate = useNavigate();
@@ -56,7 +56,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 							navigate(`/projects/${id}`);
 						}}
 						variant='contained'
-						startIcon={<FolderOpenOutlined />}
+						startIcon={<FolderOpen size={18} />}
 						sx={{
 							textTransform: 'none',
 							flex: 3,
@@ -66,7 +66,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 					<Button
 						variant='contained'
 						color='error'
-						startIcon={<DeleteOutlineOutlined />}
+						startIcon={<Trash2 size={18} />}
 						sx={{
 							textTransform: 'none',
 							flex: 2,
