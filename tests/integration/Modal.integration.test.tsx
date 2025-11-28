@@ -1,29 +1,29 @@
 import { type RootState } from '@/store';
 import { JestStoreProvider } from '../utils/StoreProvider.tsx';
 import { Modal } from '@components/Modal';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import type {Project} from "@shared/types/project.ts";
+import { openCreateProjectModal } from '@store/slices/modalsSlice';
+import type { Project } from '@shared/types/project';
 
-describe('Modal creates a new project and updates Redux state', () => {
-	const renderModal = ({
-		open = true,
-		preloadedState,
-	}: { open?: boolean; preloadedState?: Partial<RootState> } = {}) => {
-		return JestStoreProvider(<Modal open={open} toggleModal={jest.fn()} />, { preloadedState });
+describe('Modal Component - Integration', () => {
+	const renderModal = ({ preloadedState }: { preloadedState?: Partial<RootState> } = {}) => {
+		return JestStoreProvider(<Modal />, { preloadedState });
 	};
 
-	test('new project is created and found in store', async () => {
+	test('creates new project and updates Redux store', async () => {
 		const { store } = renderModal();
+		act(() => store.dispatch(openCreateProjectModal()));
 
-		fireEvent.change(screen.getByLabelText('Название проекта'), { target: { value: 'Title of the project' } });
+		fireEvent.change(screen.getByLabelText('Название проекта'), { target: { value: 'Test Project' } });
 		fireEvent.change(screen.getByLabelText('Ширина холста (px)'), { target: { value: '500' } });
 		fireEvent.change(screen.getByLabelText('Высота холста (px)'), { target: { value: '700' } });
+
 		fireEvent.click(screen.getByRole('button', { name: /Создать/i }));
 
-		await waitFor(()=> {
+		await waitFor(() => {
 			const projects: Project[] = store.getState().projects.projects;
-			const created: Project | undefined = projects.find((p: Project) => p.name === 'Title of the project');
+			const created = projects.find(p => p.name === 'Test Project');
 
 			expect(created).toBeDefined();
 			expect(created?.width).toBe(500);
@@ -31,7 +31,7 @@ describe('Modal creates a new project and updates Redux state', () => {
 		});
 	});
 
-	test('the create button is disabled (prevents creation) if store already has a project with the same name', async () => {
+	test('prevents duplicate project creation with same name', async () => {
 		const preloadedState = {
 			projects: {
 				projects: [{ name: 'Testing', width: 900, height: 600 }],
@@ -42,20 +42,22 @@ describe('Modal creates a new project and updates Redux state', () => {
 		} as Partial<RootState>;
 
 		const { store } = renderModal({ preloadedState });
+		act(() => store.dispatch(openCreateProjectModal()));
 
 		fireEvent.change(screen.getByLabelText('Название проекта'), { target: { value: 'Testing' } });
 		fireEvent.change(screen.getByLabelText('Ширина холста (px)'), { target: { value: '500' } });
 		fireEvent.change(screen.getByLabelText('Высота холста (px)'), { target: { value: '700' } });
-		fireEvent.click(screen.getByRole('button', { name: /Создать/i }));
 
 		const createBtn = screen.getByRole('button', { name: /Создать/i });
-
-		await waitFor(() => expect(createBtn).toBeDisabled());
+		fireEvent.click(createBtn);
 
 		await waitFor(() => {
-			const projects: Project[] = store.getState().projects.projects;
-			expect(projects).toHaveLength(1);
-			expect(projects[0].name).toBe('Testing');
+			expect(screen.getByText('Проект с таким именем уже существует')).toBeInTheDocument();
+			expect(createBtn).toBeDisabled();
 		});
+
+		const projects: Project[] = store.getState().projects.projects;
+		expect(projects).toHaveLength(1);
+		expect(projects[0].name).toBe('Testing');
 	});
 });

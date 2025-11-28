@@ -1,7 +1,10 @@
 import { Add } from '@mui/icons-material';
 import { Box, Button, Typography } from '@mui/material';
+import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
+import {useDispatch} from "react-redux";
 
 export const EmptyProjectsState: React.FC = () => {
+	const dispatch = useDispatch();
 	return (
 		<Box
 			sx={{
@@ -17,7 +20,9 @@ export const EmptyProjectsState: React.FC = () => {
 				sx={{
 					textTransform: 'none',
 					mt: 2,
-				}}>
+				}}
+				onClick={() => dispatch(toggleCreateProjectModal())}
+			>
 				Создать первый проект
 			</Button>
 		</Box>
