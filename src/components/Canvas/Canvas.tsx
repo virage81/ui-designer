@@ -47,6 +47,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
 				break;
 			}
+
 			case ACTIONS.CIRCLE: {
 				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
 				break;
