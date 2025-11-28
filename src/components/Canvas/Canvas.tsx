@@ -71,7 +71,7 @@ export const Canvas: React.FC = () => {
 
 		if (activeLayer.cleared) {
 			const ctx = canvasRef.current.getContext('2d');
-			
+
 			if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
 			dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
@@ -84,7 +84,13 @@ export const Canvas: React.FC = () => {
 	}
 
 	return (
-		<Box sx={{ position: 'relative', width: currentProject.width, height: currentProject.height }}>
+		<Box
+			sx={{
+				position: 'relative',
+				width: currentProject.width,
+				height: currentProject.height,
+				cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+			}}>
 			{sortedLayers.map(layer => {
 				return (
 					<canvas
