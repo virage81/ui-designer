@@ -1,19 +1,6 @@
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import {
-	Box,
-	Button,
-	IconButton,
-	Menu,
-	MenuItem,
-	Paper,
-	Slider,
-	Tab,
-	Tabs,
-	TextField,
-	Typography,
-} from '@mui/material';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { Box, Button, Menu, MenuItem, Paper, Tab, Tabs, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
@@ -24,10 +11,11 @@ import {
 	sortedLayersSelector,
 	updateLayer,
 } from '@store/slices/projectsSlice';
-import { Ellipsis, EyeIcon, EyeOffIcon, GripVertical, PlusIcon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { SortableLayer } from './components';
 
 const MOCK_HISTORY = [
 	{ id: 1, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
@@ -46,148 +34,6 @@ const MOCK_HISTORY = [
 	{ id: 14, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
 	{ id: 15, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
 ];
-
-interface SortableLayerProps {
-	layer: Layer;
-	projectId: string;
-	isActive: boolean;
-	editingLayerId: string | null;
-	editingLayerName: string;
-	startEditing: (id: string, name: string) => void;
-	saveLayerName: (id: string) => void;
-	cancelEditing: () => void;
-	handleUpdateLayer: (name: keyof Layer, value: unknown, layerId: string) => void;
-	handleOpenMenu: (e: MouseEvent<HTMLButtonElement>, layerId?: string) => void;
-}
-
-const SortableLayer: React.FC<SortableLayerProps> = ({
-	layer,
-	projectId,
-	isActive,
-	editingLayerId,
-	editingLayerName,
-	startEditing,
-	saveLayerName,
-	cancelEditing,
-	handleUpdateLayer,
-	handleOpenMenu,
-}) => {
-	const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: layer.id });
-	const dispatch = useDispatch();
-
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-	};
-
-	const handleLayerClick = () => {
-		if (!editingLayerId) {
-			dispatch(setActiveLayer({ projectId, id: layer.id }));
-		}
-	};
-
-	return (
-		<Paper
-			ref={setNodeRef}
-			style={style}
-			elevation={0}
-			onClick={handleLayerClick}
-			sx={{
-				p: 1.5,
-				mb: 0.5,
-				borderRadius: 1,
-				bgcolor: 'var(--header-border-color)',
-				color: 'var(--color)',
-				border: isActive ? '1px solid var(--active-color-primary)' : '1px solid var(--header-border-color)',
-				cursor: 'pointer',
-				transition: 'all 0.2s ease',
-				'&:hover': {
-					bgcolor: 'var(--hover-bg)',
-				},
-			}}>
-			<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-				{!layer.isBase && (
-					<IconButton
-						sx={{
-							p: 0.5,
-							cursor: 'grab',
-							'&:active': { cursor: 'grabbing' },
-							color: 'var(--color)',
-						}}
-						{...attributes}
-						{...listeners}
-						onClick={e => e.stopPropagation()}>
-						<GripVertical size={16} />
-					</IconButton>
-				)}
-
-				<IconButton
-					sx={{ p: 0.5, color: 'var(--color)' }}
-					onClick={e => {
-						e.stopPropagation();
-						handleUpdateLayer('hidden', !layer.hidden, layer.id);
-					}}>
-					{!layer.hidden ? <EyeIcon size={16} color='var(--color)' /> : <EyeOffIcon size={16} color='var(--color)' />}
-				</IconButton>
-
-				{editingLayerId === layer.id ? (
-					<TextField
-						size='small'
-						value={editingLayerName}
-						onChange={e => startEditing(layer.id, e.target.value)}
-						onBlur={() => saveLayerName(layer.id)}
-						onKeyDown={e => {
-							if (e.key === 'Enter') saveLayerName(layer.id);
-							if (e.key === 'Escape') cancelEditing();
-						}}
-						autoFocus
-						sx={{ flex: 1 }}
-						onClick={e => e.stopPropagation()}
-					/>
-				) : (
-					<Typography
-						variant='body2'
-						sx={{ flex: 1 }}
-						onClick={e => {
-							e.stopPropagation();
-							startEditing(layer.id, layer.name);
-						}}>
-						{layer.name}
-					</Typography>
-				)}
-
-				<IconButton
-					aria-label='more'
-					size='small'
-					onClick={e => {
-						e.stopPropagation();
-						handleOpenMenu(e, layer.id);
-					}}
-					sx={{ color: 'var(--color)' }}>
-					<Ellipsis size={16} />
-				</IconButton>
-			</Box>
-
-			<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }} onClick={e => e.stopPropagation()}>
-				<Typography variant='caption' sx={{ color: 'var(--color-muted)', lineHeight: 1 }}>
-					Прозрачность:
-				</Typography>
-				<Slider
-					onChange={(_, value) => handleUpdateLayer('opacity', value, layer.id)}
-					value={layer.opacity}
-					max={100}
-					min={0}
-					step={1}
-					size='small'
-					sx={{ flex: 1, p: 0.5 }}
-				/>
-				<Typography variant='caption' sx={{ color: 'var(--color-muted)', ml: 1, textAlign: 'right', lineHeight: 1 }}>
-					{layer.opacity}%
-				</Typography>
-			</Box>
-		</Paper>
-	);
-};
 
 export const RightSideBar: React.FC = () => {
 	const dispatch = useDispatch();
@@ -326,7 +172,7 @@ export const RightSideBar: React.FC = () => {
 											projectId: projectId,
 											data: {
 												hidden: false,
-												name: `Слой ${layers[projectId].length}`,
+												name: 'Новый слой',
 												opacity: 100,
 												zIndex: layers[projectId].length + 1,
 											},
