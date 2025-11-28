@@ -1,20 +1,23 @@
 import { Box } from '@mui/material';
 import type { RootState } from '@store/index';
-import { sortedLayersSelector } from '@store/slices/projectsSlice';
+import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { useEffect, useMemo, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
+import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
+import { CircleTool } from './tools/Circle';
 import type { Styles, Tools } from './tools/Tool';
 import { EraserTool } from './tools/Eraser';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
+	const dispatch = useDispatch();
 
 	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
-	const { tool, fillColor, strokeWidth } = useSelector((state: RootState) => state.tools);
+	const { tool, fillColor, strokeWidth, strokeStyle } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -22,11 +25,8 @@ export const Canvas: React.FC = () => {
 
 	const currentProject = useMemo(() => projects.find(item => item.id === projectId), [projectId, projects]);
 	const toolStyles = useMemo<Styles>(
-		() => ({
-			fill: fillColor,
-			strokeWidth,
-		}),
-		[fillColor, strokeWidth],
+		() => ({ fill: fillColor, strokeWidth, strokeStyle }),
+		[fillColor, strokeWidth, strokeStyle],
 	);
 
 	useEffect(() => {
@@ -46,6 +46,14 @@ export const Canvas: React.FC = () => {
 				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
 				break;
 			}
+			case ACTIONS.CIRCLE: {
+				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
+				break;
+			}
+			case ACTIONS.LINE: {
+				toolRef.current = new LineTool(canvasRef.current, toolStyles);
+				break;
+			}
 			case ACTIONS.ERASER: {
 				toolRef.current = new EraserTool(canvasRef.current, toolStyles);
 				break;
@@ -63,13 +71,31 @@ export const Canvas: React.FC = () => {
 		};
 	}, [tool, activeLayer, toolStyles]);
 
+	useEffect(() => {
+		if (!canvasRef.current || !activeLayer) return;
+
+		if (activeLayer.cleared) {
+			const ctx = canvasRef.current.getContext('2d');
+
+			if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
+			dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
+		}
+	}, [activeLayer, projectId, dispatch]);
+
 	if (!currentProject) {
 		redirect('/404');
 		return;
 	}
 
 	return (
-		<Box sx={{ position: 'relative', width: currentProject.width, height: currentProject.height }}>
+		<Box
+			sx={{
+				position: 'relative',
+				width: currentProject.width,
+				height: currentProject.height,
+				cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+			}}>
 			{sortedLayers.map(layer => {
 				return (
 					<canvas
@@ -83,7 +109,7 @@ export const Canvas: React.FC = () => {
 							position: 'absolute',
 							inset: 0,
 							zIndex: layer.zIndex,
-							opacity: layer.isBase ? 100 : layer.hidden ? 0 : layer.opacity / 100,
+							opacity: layer.isBase ? 1 : layer.hidden ? 0 : layer.opacity / 100,
 							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 						}}
 					/>
