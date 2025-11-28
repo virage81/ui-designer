@@ -6,6 +6,7 @@ import type { Project } from '@shared/types/project';
 import { checkProjectExistence } from '@store/utils/projects';
 import type { RootState } from '..';
 import type {
+	ClearActiveLayer,
 	CreateLayerParams,
 	CreateProjectParams,
 	DeleteLayerParams,
@@ -31,7 +32,9 @@ const projectsSlice = createSlice({
 
 			state.projects.push({ ...action.payload, id, preview: '', date: new Date().toISOString() });
 			state.history[id] = [];
-			state.layers[id] = [{ id: generateId(), hidden: false, isBase: true, name: 'Фон', opacity: 100, zIndex: 1 }];
+			const baseLayer = { id: generateId(), hidden: false, isBase: true, name: 'Фон', opacity: 100, zIndex: 1 };
+			state.layers[id] = [baseLayer];
+			state.activeLayer = baseLayer;
 		},
 		updateProject: (state, action: PayloadAction<UpdateProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
@@ -88,6 +91,23 @@ const projectsSlice = createSlice({
 
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},
+		clearActiveLayer: (state, action: PayloadAction<ClearActiveLayer>) => {
+			const { payload } = action;
+
+			if (!payload) {
+				state.activeLayer = payload;
+				return;
+			}
+
+			if (!checkProjectExistence(state, payload.projectId))
+				throw new Error(`Project with ID ${payload.projectId} does not exist`);
+
+			const layerIndex = state.layers?.[payload.projectId]?.findIndex(item => item.id === payload.layerId);
+			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.layerId} not found`);
+
+			state.layers[payload.projectId][layerIndex].cleared = true;
+			state.activeLayer = state.layers[payload.projectId][layerIndex];
+		},
 	},
 });
 
@@ -102,7 +122,15 @@ export const sortedLayersSelector = (state: RootState, projectId: Project['id'])
 	});
 };
 
-export const { createProject, updateProject, deleteProject, createLayer, updateLayer, deleteLayer, setActiveLayer } =
-	projectsSlice.actions;
+export const {
+	createProject,
+	updateProject,
+	deleteProject,
+	createLayer,
+	updateLayer,
+	deleteLayer,
+	setActiveLayer,
+	clearActiveLayer,
+} = projectsSlice.actions;
 
 export default projectsSlice.reducer;

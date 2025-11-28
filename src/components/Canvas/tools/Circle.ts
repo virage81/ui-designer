@@ -1,14 +1,10 @@
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент линия
- */
-export class LineTool extends Tool {
+export class CircleTool extends Tool {
 	private saved: string = '';
+	private radius: number = 0;
 	private startX: number = 0;
 	private startY: number = 0;
-	private currentX: number = 0;
-	private currentY: number = 0;
 
 	constructor(canvas: HTMLCanvasElement, styles: Styles) {
 		super(canvas, styles);
@@ -21,10 +17,6 @@ export class LineTool extends Tool {
 		this.canvas.onpointerup = this.mouseUpHandler.bind(this);
 	}
 
-	mouseUpHandler() {
-		this.isMouseDown = false;
-	}
-
 	mouseDownHandler(e: PointerEvent) {
 		this.isMouseDown = true;
 
@@ -35,14 +27,23 @@ export class LineTool extends Tool {
 	}
 
 	mouseMoveHandler(e: PointerEvent) {
-		if (this.isMouseDown) {
-			this.currentX = e.layerX;
-			this.currentY = e.layerY;
-			this.draw(this.startX, this.startY, this.currentX, this.currentY);
-		}
+		if (!this.isMouseDown) return;
+
+		const currentX = e.layerX;
+		const currentY = e.layerY;
+
+		this.radius = Math.sqrt(
+			(currentX - this.startX) ** 2 + (currentY - this.startY) ** 2
+		);
+
+		this.draw(this.startX, this.startY, this.radius);
 	}
 
-	draw(x1: number, y1: number, x2: number, y2: number) {
+	mouseUpHandler() {
+		this.isMouseDown = false;
+	}
+
+	draw(x: number, y: number, radius: number) {
 		const img = new Image();
 		img.src = this.saved;
 		img.onload = () => {
@@ -50,11 +51,9 @@ export class LineTool extends Tool {
 
 			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
-
 			this.ctx.beginPath();
-			this.ctx.moveTo(x1, y1);
-			this.ctx.lineWidth = this.strokeWidth;
-			this.ctx.lineTo(x2, y2);
+			this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+			this.ctx.fill();
 			this.ctx.stroke();
 		};
 	}

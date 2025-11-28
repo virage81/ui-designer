@@ -388,7 +388,16 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 				}),
 			}),
 		);
-		expect(activeLayer).toEqual(null);
+		expect(activeLayer).toEqual(
+			expect.objectContaining({
+				id: expect.any(String),
+				name: expect.any(String),
+				hidden: false,
+				opacity: 100,
+				zIndex: 1,
+				isBase: expect.any(Boolean),
+			}),
+		);
 		expect(spied).toHaveBeenCalledTimes(2);
 	});
 
