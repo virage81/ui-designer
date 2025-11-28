@@ -1,4 +1,5 @@
 import type { BrushTool } from './Brush';
+import type { EraserTool } from './Eraser';
 import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
 import type { CircleTool } from './Circle';
@@ -62,4 +63,4 @@ export class Tool {
 	}
 }
 
-export type Tools = BrushTool | RectangleTool | CircleTool | LineTool;
+export type Tools = BrushTool | RectangleTool | CircleTool | LineTool | EraserTool;
