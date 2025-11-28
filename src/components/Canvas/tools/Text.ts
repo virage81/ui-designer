@@ -144,7 +144,7 @@ export class TextTool extends Tool {
 		this.pendingText = {
 			x: canvasX,
 			y: canvasY,
-			fontSize: this.strokeWidth,
+			fontSize: this.fontSize,
 			color: this.fill,
 		};
 
@@ -154,7 +154,7 @@ export class TextTool extends Tool {
 			top: clientY + 'px',
 			width: '200px',
 			height: 'auto',
-			fontSize: this.strokeWidth + 'px',
+			fontSize: this.fontSize + 'px',
 			color: this.fill,
 		});
 
@@ -298,7 +298,7 @@ export class TextTool extends Tool {
 	applyStyles(styles: Styles) {
 		super.applyStyles(styles);
 		if (this.textInput && this.isEditing) {
-			this.textInput.style.fontSize = styles.strokeWidth + 'px';
+			this.textInput.style.fontSize = styles.fontSize + 'px';
 			this.textInput.style.color = styles.fill;
 			this.adjustTextareaHeight();
 		}
