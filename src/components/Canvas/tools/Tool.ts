@@ -9,6 +9,7 @@ export type Styles = {
 	strokeWidth: number;
 	fill: string;
 	strokeStyle: string;
+	fontSize: number;
 };
 
 export class Tool {
@@ -18,6 +19,7 @@ export class Tool {
 	protected strokeWidth: number = 1;
 	protected fill: string = '#3b78e7';
 	protected stroke: string = '#000';
+	protected fontSize: number = 16;
 
 	protected isMouseDown: boolean = false;
 
@@ -27,6 +29,7 @@ export class Tool {
 		this.fill = styles.fill;
 		this.stroke = styles.strokeStyle;
 		this.strokeWidth = styles.strokeWidth;
+		this.fontSize = styles.fontSize;
 
 		this.destroyEvents();
 		this.applyStyles(styles);
@@ -40,6 +43,7 @@ export class Tool {
 		this.ctx.lineWidth = styles.strokeWidth;
 		this.ctx.strokeStyle = styles.strokeStyle;
 		this.ctx.fillStyle = styles.fill;
+		this.ctx.font = `${styles.fontSize}px Arial`;
 	}
 
 	destroyEvents() {

@@ -18,7 +18,7 @@ export const Canvas: React.FC = () => {
 	const dispatch = useDispatch();
 
 	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
-	const { tool, fillColor, strokeWidth, strokeStyle } = useSelector((state: RootState) => state.tools);
+	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -26,8 +26,8 @@ export const Canvas: React.FC = () => {
 
 	const currentProject = useMemo(() => projects.find(item => item.id === projectId), [projectId, projects]);
 	const toolStyles = useMemo<Styles>(
-		() => ({ fill: fillColor, strokeWidth, strokeStyle }),
-		[fillColor, strokeWidth, strokeStyle],
+		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
+		[fillColor, strokeWidth, strokeStyle, fontSize],
 	);
 
 	useEffect(() => {

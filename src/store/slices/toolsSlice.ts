@@ -15,13 +15,15 @@ interface State {
 	fillColor: string;
 	strokeWidth: number;
 	strokeStyle: string;
+	fontSize: number;
 }
 
 const initialState: State = {
 	tool: ACTIONS.SELECT,
 	fillColor: '#3b78e7',
 	strokeWidth: 1,
-	strokeStyle: '#000'
+	strokeStyle: '#000',
+	fontSize: 16,
 };
 
 const toolsSlice = createSlice({
@@ -39,10 +41,13 @@ const toolsSlice = createSlice({
 		},
 		setStrokeWidth: (state, action: PayloadAction<number>) => {
 			state.strokeWidth = action.payload;
-		}
+		},
+		setFontSize: (state, action: PayloadAction<number>) => {
+			state.fontSize = action.payload;
+		},
 	},
 });
 
-export const { setTool, setFillColor, setStrokeColor, setStrokeWidth } = toolsSlice.actions;
+export const { setTool, setFillColor, setStrokeColor, setStrokeWidth, setFontSize } = toolsSlice.actions;
 
 export default toolsSlice.reducer;
