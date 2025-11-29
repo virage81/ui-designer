@@ -20,7 +20,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 	const dispatch = useDispatch();
 
 	const handleFontSizeChange = useCallback(
-		(event: React.MouseEvent<HTMLDivElement> | Event, newValue: number) => {
+		(newValue: number) => {
 			setSelectedFontSize(newValue);
 			dispatch(setFontSize(newValue));
 		},
@@ -28,7 +28,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 	);
 
 	const handleLineSizeChange = useCallback(
-		(event: React.MouseEvent<HTMLDivElement> | Event, newValue: number) => {
+		(newValue: number) => {
 			setSelectedLineSize(newValue);
 			dispatch(setStrokeWidth(newValue));
 		},
@@ -60,7 +60,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 					</Typography>
 					<Slider
 						value={selectedFontSize}
-						onChange={handleFontSizeChange}
+						onChange={(_, value) => handleFontSizeChange(value)}
 						min={8}
 						max={72}
 						step={1}
@@ -81,7 +81,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 										bgcolor: 'var(--hover-bg)',
 									},
 								}}
-								onClick={e => handleFontSizeChange(e, size)}>
+								onClick={() => handleFontSizeChange(size)}>
 								{`${size}px`}
 							</Box>
 						))}
@@ -151,7 +151,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 					</Typography>
 					<Slider
 						value={selectedLineSize}
-						onChange={handleLineSizeChange}
+						onChange={(_, value) => handleLineSizeChange(value)}
 						min={1}
 						max={30}
 						step={1}
@@ -171,7 +171,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 										bgcolor: 'var(--hover-bg)',
 									},
 								}}
-								onClick={e => handleLineSizeChange(e, width)}>
+								onClick={() => handleLineSizeChange(width)}>
 								{`${width}px`}
 							</Box>
 						))}
