@@ -1,16 +1,6 @@
-import {
-	Box,
-	Button,
-	IconButton,
-	Menu,
-	MenuItem,
-	Paper,
-	Slider,
-	Tab,
-	Tabs,
-	TextField,
-	Typography,
-} from '@mui/material';
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { Box, Button, Menu, MenuItem, Paper, Tab, Tabs, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
@@ -21,10 +11,11 @@ import {
 	sortedLayersSelector,
 	updateLayer,
 } from '@store/slices/projectsSlice';
-import { Ellipsis, EyeIcon, EyeOffIcon, PlusIcon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { SortableLayer } from './components';
 
 const MOCK_HISTORY = [
 	{ id: 1, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
@@ -44,9 +35,6 @@ const MOCK_HISTORY = [
 	{ id: 15, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
 ];
 
-// TODO: Implement right handleCreate
-// TODO: Implement layer rename
-// TODO: Implement layer order
 export const RightSideBar: React.FC = () => {
 	const dispatch = useDispatch();
 	const { id: projectId = '' } = useParams();
@@ -62,6 +50,8 @@ export const RightSideBar: React.FC = () => {
 	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
 	const isMenuOpen = Boolean(anchorEl);
 
+	const sensors = useSensors(useSensor(PointerSensor));
+
 	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setActiveTab(newValue);
 	};
@@ -71,6 +61,7 @@ export const RightSideBar: React.FC = () => {
 
 		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
 	};
+
 	const handleClearLayer = () => {
 		if (!projectId) return;
 		if (currentLayer) {
@@ -130,6 +121,19 @@ export const RightSideBar: React.FC = () => {
 		setEditingLayerName('');
 	};
 
+	const handleDragEnd = (event: DragEndEvent) => {
+		const { active, over } = event;
+		if (!over || active.id === over.id) return;
+
+		const oldIndex = sortedLayers.findIndex(l => l.id === active.id);
+		const newIndex = sortedLayers.findIndex(l => l.id === over.id);
+		const newLayers = arrayMove(sortedLayers, oldIndex, newIndex);
+
+		newLayers.forEach((layer, index) => {
+			dispatch(updateLayer({ projectId, data: { id: layer.id, zIndex: newLayers.length - index } }));
+		});
+	};
+
 	return (
 		<Box
 			sx={{
@@ -168,7 +172,7 @@ export const RightSideBar: React.FC = () => {
 											projectId: projectId,
 											data: {
 												hidden: false,
-												name: `Слой ${layers[projectId].length}`,
+												name: 'Новый слой',
 												opacity: 100,
 												zIndex: layers[projectId].length + 1,
 											},
@@ -179,112 +183,43 @@ export const RightSideBar: React.FC = () => {
 							</Button>
 						</Box>
 
-						<Box
-							sx={{
-								overflowY: 'auto',
-								'&::-webkit-scrollbar': {
-									width: '6px',
-								},
-								'&::-webkit-scrollbar-track': {
-									background: 'transparent',
-								},
-								'&::-webkit-scrollbar-thumb': {
-									backgroundColor: 'rgba(0,0,0,0.2)',
-									borderRadius: '3px',
-								},
-								'&::-webkit-scrollbar-thumb:hover': {
-									backgroundColor: 'rgba(0,0,0,0.3)',
-								},
-							}}>
-							{sortedLayers.map(layer => (
-								<Paper
-									key={layer.id}
-									elevation={0}
-									onClick={() => dispatch(setActiveLayer({ projectId: projectId, id: layer.id }))}
+						<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+							<SortableContext items={sortedLayers.map(l => l.id)} strategy={verticalListSortingStrategy}>
+								<Box
 									sx={{
-										maxHeight: 'auto',
-										p: 1.5,
-										mb: 0.5,
-										borderRadius: 1,
-										bgcolor: 'var(--header-border-color)',
-										color: 'var(--color)',
-										border: '1px solid var(--header-border-color)',
-										cursor: 'pointer',
-										transition: 'all 0.2s ease',
-										'&:hover': {
-											bgcolor: 'var(--hover-bg)',
+										overflowY: 'auto',
+										'&::-webkit-scrollbar': {
+											width: '6px',
 										},
-										...(layer.id === activeLayer?.id
-											? {
-													border: '1px solid var(--active-color-primary)',
-													bgcolor: 'var(--active-bg-primary)',
-											  }
-											: {}),
-										'&:active': {
-											border: '1px solid var(--active-color-primary)',
-											bgcolor: 'var(--active-bg-primary)',
+										'&::-webkit-scrollbar-track': {
+											background: 'transparent',
+										},
+										'&::-webkit-scrollbar-thumb': {
+											backgroundColor: 'rgba(0,0,0,0.2)',
+											borderRadius: '3px',
+										},
+										'&::-webkit-scrollbar-thumb:hover': {
+											backgroundColor: 'rgba(0,0,0,0.3)',
 										},
 									}}>
-									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-										<IconButton
-											sx={{ p: 0.5, color: 'var(--color)' }}
-											onClick={() => handleUpdateLayer('hidden', !layer.hidden, layer.id)}>
-											{!layer.hidden ? (
-												<EyeIcon size={16} color='var(--color)' />
-											) : (
-												<EyeOffIcon size={16} color='var(--color)' />
-											)}
-										</IconButton>
-
-										{editingLayerId === layer.id ? (
-											<TextField
-												size='small'
-												value={editingLayerName}
-												onChange={e => setEditingLayerName(e.target.value)}
-												onBlur={() => saveLayerName(layer.id)}
-												onKeyDown={e => {
-													if (e.key === 'Enter') saveLayerName(layer.id);
-													if (e.key === 'Escape') cancelEditing();
-												}}
-												autoFocus
-												sx={{ flex: 1 }}
-											/>
-										) : (
-											<Typography
-												variant='body2'
-												sx={{ flex: 1, cursor: 'pointer' }}
-												onClick={() => startEditing(layer.id, layer.name)}>
-												{layer.name}
-											</Typography>
-										)}
-
-										<IconButton aria-label='more' onClick={e => handleOpenMenu(e, layer.id)} size='small'>
-											<Ellipsis size={16} />
-										</IconButton>
-									</Box>
-
-									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-										<Typography variant='caption' sx={{ color: 'var(--color-muted)', lineHeight: 1 }}>
-											Прозрачность:
-										</Typography>
-										<Slider
-											onChange={(_, value) => handleUpdateLayer('opacity', value, layer.id)}
-											value={layer.opacity}
-											max={100}
-											min={0}
-											step={1}
-											size='small'
-											sx={{ flex: 1, p: 0.5 }}
+									{sortedLayers.map(layer => (
+										<SortableLayer
+											key={layer.id}
+											layer={layer}
+											projectId={projectId}
+											isActive={layer.id === activeLayer?.id}
+											editingLayerId={editingLayerId}
+											editingLayerName={editingLayerName}
+											startEditing={startEditing}
+											saveLayerName={saveLayerName}
+											cancelEditing={cancelEditing}
+											handleUpdateLayer={handleUpdateLayer}
+											handleOpenMenu={handleOpenMenu}
 										/>
-										<Typography
-											variant='caption'
-											sx={{ color: 'var(--color-muted)', ml: 1, textAlign: 'right', lineHeight: 1 }}>
-											{layer.opacity}%
-										</Typography>
-									</Box>
-								</Paper>
-							))}
-						</Box>
+									))}
+								</Box>
+							</SortableContext>
+						</DndContext>
 					</Box>
 				)}
 				<Menu
