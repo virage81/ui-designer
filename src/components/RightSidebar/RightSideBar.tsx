@@ -1,12 +1,14 @@
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Box, Button, Menu, MenuItem, Paper, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Button, Menu, MenuItem, Tab, Tabs, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
 	clearActiveLayer,
 	createLayer,
 	deleteLayer,
+	historySelector,
+	modifyHistory,
 	setActiveLayer,
 	sortedLayersSelector,
 	updateLayer,
@@ -16,24 +18,8 @@ import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from './components';
-
-const MOCK_HISTORY = [
-	{ id: 1, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 2, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 3, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 4, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 5, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 6, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 7, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 8, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 9, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 10, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 11, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 12, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 13, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 14, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
-	{ id: 15, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
-];
+import { HistoryType } from '@store/slices/projectsSlice.enums';
+import { HistoryItem } from './components/HistoryItem';
 
 export const RightSideBar: React.FC = () => {
 	const dispatch = useDispatch();
@@ -41,6 +27,7 @@ export const RightSideBar: React.FC = () => {
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
+	const history = useSelector((state: RootState) => historySelector(state, projectId));
 
 	const [activeTab, setActiveTab] = useState(0);
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -71,6 +58,16 @@ export const RightSideBar: React.FC = () => {
 					layerId: currentLayer.id,
 				}),
 			);
+			dispatch(
+				modifyHistory({
+					projectId: projectId,
+					data: {
+						date: new Date().toUTCString(),
+						type: HistoryType.LAYER_CLEARED,
+						isActive: true,
+					},
+				}),
+			);
 		}
 		handleCloseMenu();
 	};
@@ -85,6 +82,17 @@ export const RightSideBar: React.FC = () => {
 
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
+		dispatch(
+			modifyHistory({
+				projectId: projectId,
+				data: {
+					date: new Date().toUTCString(),
+					type: HistoryType.LAYER_DELETED,
+					isActive: true,
+				},
+			}),
+		);
+
 		if (layerId === activeLayer?.id) {
 			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
 		}
@@ -175,6 +183,16 @@ export const RightSideBar: React.FC = () => {
 												name: 'Новый слой',
 												opacity: 100,
 												zIndex: layers[projectId].length + 1,
+											},
+										}),
+									);
+									dispatch(
+										modifyHistory({
+											projectId: projectId,
+											data: {
+												date: new Date().toUTCString(),
+												type: HistoryType.LAYER_ADDED,
+												isActive: true,
 											},
 										}),
 									);
@@ -274,29 +292,8 @@ export const RightSideBar: React.FC = () => {
 									backgroundColor: 'rgba(0,0,0,0.3)',
 								},
 							}}>
-							{MOCK_HISTORY.map(item => (
-								<Paper
-									key={item.id}
-									elevation={0}
-									sx={{
-										p: 1,
-										mb: 0.5,
-										borderRadius: 1,
-										bgcolor: 'var(--header-border-color)',
-										color: 'var(--color)',
-										cursor: 'pointer',
-										transition: 'all 0.2s ease',
-										'&:hover': {
-											bgcolor: 'var(--hover-bg)',
-										},
-									}}>
-									<Typography variant='body2' sx={{ color: 'var(--color)' }}>
-										{item.action}
-									</Typography>
-									<Typography variant='caption' sx={{ color: 'var(--color)', mt: 0.5, display: 'block' }}>
-										{item.timestamp.toLocaleTimeString('ru-RU')}
-									</Typography>
-								</Paper>
+							{history.map(el => (
+								<HistoryItem key={el.id} {...el} />
 							))}
 						</Box>
 					</Box>

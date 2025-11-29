@@ -1,3 +1,5 @@
+import type { HistoryType } from "@store/slices/projectsSlice.enums";
+
 export interface Project {
 	id: string;
 	name: string;
@@ -10,7 +12,7 @@ export interface Project {
 export interface History {
 	id: string;
 	date: string;
-	typeOfEntry: string;
+	type: HistoryType;
 	isActive: boolean;
 }
 

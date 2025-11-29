@@ -1,4 +1,4 @@
-import type { Layer, Project } from '@shared/types/project';
+import type { History, Layer, Project } from '@shared/types/project';
 
 export type CreateProjectParams = {} & Omit<Project, 'id' | 'preview' | 'date'>;
 
@@ -30,3 +30,8 @@ export type ClearActiveLayer = {
 	layerId: Layer['id'];
 	projectId: Project['id'];
 } | null;
+
+export type ModifyHistoryParams = {
+	projectId: Project['id'];
+	data: Omit<History, 'id'>;
+};

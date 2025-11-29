@@ -11,6 +11,7 @@ import type {
 	CreateProjectParams,
 	DeleteLayerParams,
 	DeleteProjectParams,
+	ModifyHistoryParams,
 	SetActiveLayerParams,
 	UpdateLayerParams,
 	UpdateProjectParams,
@@ -108,6 +109,13 @@ const projectsSlice = createSlice({
 			state.layers[payload.projectId][layerIndex].cleared = true;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},
+
+		modifyHistory: (state, action: PayloadAction<ModifyHistoryParams>) => {
+			const { projectId, data } = action.payload;
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
+
+			state.history[projectId].unshift({ ...data, id: generateId() })
+		},
 	},
 });
 
@@ -122,6 +130,12 @@ export const sortedLayersSelector = (state: RootState, projectId: Project['id'])
 	});
 };
 
+export const historySelector = (state: RootState, projectId: Project['id']) => {
+	const { history } = state.projects;
+
+	return [...history[projectId]];
+};
+
 export const {
 	createProject,
 	updateProject,
@@ -131,6 +145,7 @@ export const {
 	deleteLayer,
 	setActiveLayer,
 	clearActiveLayer,
+	modifyHistory
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
