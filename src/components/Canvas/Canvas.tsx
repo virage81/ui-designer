@@ -2,22 +2,23 @@ import { Box } from '@mui/material';
 import type { RootState } from '@store/index';
 import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
-import { useEffect, useMemo, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
+import { CircleTool } from './tools/Circle';
+import { EraserTool } from './tools/Eraser';
 import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
-import { CircleTool } from './tools/Circle';
+import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import { EraserTool } from './tools/Eraser';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
 
 	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
-	const { tool, fillColor, strokeWidth, strokeStyle } = useSelector((state: RootState) => state.tools);
+	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -27,8 +28,8 @@ export const Canvas: React.FC = () => {
 
 	const currentProject = useMemo(() => projects.find(item => item.id === projectId), [projectId, projects]);
 	const toolStyles = useMemo<Styles>(
-		() => ({ fill: fillColor, strokeWidth, strokeStyle }),
-		[fillColor, strokeWidth, strokeStyle],
+		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
+		[fillColor, strokeWidth, strokeStyle, fontSize],
 	);
 
 	const setupCanvasDPR = useCallback((canvas: HTMLCanvasElement) => {
@@ -68,6 +69,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
 				break;
 			}
+
 			case ACTIONS.CIRCLE: {
 				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
 				break;
@@ -78,6 +80,10 @@ export const Canvas: React.FC = () => {
 			}
 			case ACTIONS.ERASER: {
 				toolRef.current = new EraserTool(canvasRef.current, toolStyles);
+				break;
+			}
+			case ACTIONS.TEXT: {
+				toolRef.current = new TextTool(canvasRef.current, toolStyles);
 				break;
 			}
 			default: {
