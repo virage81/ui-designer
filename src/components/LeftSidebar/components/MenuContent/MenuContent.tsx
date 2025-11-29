@@ -1,5 +1,5 @@
 import { Box, Slider, Typography } from '@mui/material';
-import { COLOR_PALETTE } from '@shared/config';
+import { COLOR_PALETTE, SIZE_PRESETS, WIDTH_PRESETS } from '@shared/config';
 import type { RootState } from '@store/index';
 import { ACTIONS, setFillColor, setFontSize, setStrokeColor, setStrokeWidth } from '@store/slices/toolsSlice';
 import { useCallback, useState } from 'react';
@@ -20,7 +20,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 	const dispatch = useDispatch();
 
 	const handleFontSizeChange = useCallback(
-		(event: Event, newValue: number) => {
+		(event: React.MouseEvent<HTMLDivElement> | Event, newValue: number) => {
 			setSelectedFontSize(newValue);
 			dispatch(setFontSize(newValue));
 		},
@@ -28,7 +28,7 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 	);
 
 	const handleLineSizeChange = useCallback(
-		(event: Event, newValue: number) => {
+		(event: React.MouseEvent<HTMLDivElement> | Event, newValue: number) => {
 			setSelectedLineSize(newValue);
 			dispatch(setStrokeWidth(newValue));
 		},
@@ -67,6 +67,25 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 						valueLabelDisplay='auto'
 						sx={{ mb: 2 }}
 					/>
+					<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+						{SIZE_PRESETS.map(size => (
+							<Box
+								key={size}
+								sx={{
+									p: 1,
+									border: '1px solid var(--header-border-color)',
+									borderRadius: '5px',
+									cursor: 'pointer',
+									'&:hover': {
+										border: '1px solid var(--active-color-primary)',
+										bgcolor: 'var(--hover-bg)',
+									},
+								}}
+								onClick={e => handleFontSizeChange(e, size)}>
+								{`${size}px`}
+							</Box>
+						))}
+					</Box>
 				</Box>
 			);
 
@@ -134,10 +153,29 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 						value={selectedLineSize}
 						onChange={handleLineSizeChange}
 						min={1}
-						max={20}
+						max={30}
 						step={1}
 						valueLabelDisplay='auto'
 					/>
+					<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+						{WIDTH_PRESETS.map(width => (
+							<Box
+								key={width}
+								sx={{
+									p: 1,
+									border: '1px solid var(--header-border-color)',
+									borderRadius: '5px',
+									cursor: 'pointer',
+									'&:hover': {
+										border: '1px solid var(--active-color-primary)',
+										bgcolor: 'var(--hover-bg)',
+									},
+								}}
+								onClick={e => handleLineSizeChange(e, width)}>
+								{`${width}px`}
+							</Box>
+						))}
+					</Box>
 				</Box>
 			);
 
