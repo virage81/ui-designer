@@ -1,9 +1,12 @@
 import { LineWeight } from '@mui/icons-material';
 import { Box, Button, Menu } from '@mui/material';
+import type { RootState } from '@store/index';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { BaselineIcon, PaletteIcon, SquareDashedIcon } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { MenuContent } from '../MenuContent';
+import { ColorIndicator } from './components/ColorIndicator';
 
 const SETTING_TOOLS = [
 	{ id: ACTIONS.FONT, icon: <BaselineIcon size={16} color={'var(--color)'} />, label: 'Шрифт' },
@@ -15,6 +18,8 @@ const SETTING_TOOLS = [
 export const ToolsSettingGroup: React.FC = () => {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [currentSetting, setCurrentSetting] = useState<ACTIONS | null>(null);
+
+	const { fillColor, strokeStyle } = useSelector((state: RootState) => state.tools);
 
 	const isMenuOpen = Boolean(anchorEl);
 
@@ -34,6 +39,8 @@ export const ToolsSettingGroup: React.FC = () => {
 				{SETTING_TOOLS.map(tool => (
 					<Button key={tool.id} variant='graphic-tools' title={tool.label} onClick={e => handleOpenMenu(e, tool.id)}>
 						{tool.icon}
+						{tool.id === ACTIONS.COLOR && <ColorIndicator bgColor={fillColor} />}
+						{tool.id === ACTIONS.CONTOUR_COLOR && <ColorIndicator bgColor={strokeStyle} />}
 					</Button>
 				))}
 			</Box>
