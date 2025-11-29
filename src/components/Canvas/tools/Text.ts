@@ -167,7 +167,7 @@ export class TextTool extends Tool {
 		});
 	}
 
-	private adjustTextareaHeight = debounce(() => {
+	private adjustTextareaHeight = () => {
 		if (!this.textInput) return;
 
 		const bounds = this.getCanvasBounds();
@@ -188,7 +188,7 @@ export class TextTool extends Tool {
 		}
 
 		this.updateBorderColor(rect, bounds);
-	}, 10);
+	};
 
 	private handleKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter' && !e.shiftKey) {
