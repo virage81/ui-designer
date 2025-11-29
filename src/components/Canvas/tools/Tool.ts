@@ -6,10 +6,10 @@ import type { RectangleTool } from './Rect';
 import type { TextTool } from './Text';
 
 export type Styles = {
+	fontSize: number;
 	strokeWidth: number;
 	fill: string;
 	strokeStyle: string;
-	fontSize: number;
 };
 
 export class Tool {
@@ -19,25 +19,26 @@ export class Tool {
 	protected logicalWidth: number = 0;
 	protected logicalHeight: number = 0;
 
-	protected strokeWidth: number = 1;
-	protected fill: string = '#3b78e7';
-	protected stroke: string = '#000';
-	protected fontSize: number = 16;
+	protected fontSize: number;
+	protected strokeWidth: number;
+	protected fill: string;
+	protected stroke: string;
 
 	protected isMouseDown: boolean = false;
 
 	constructor(canvas: HTMLCanvasElement, styles: Styles) {
 		this.canvas = canvas;
+
 		this.ctx = canvas.getContext('2d', { willReadFrequently: true })!;
 		this.dpr = window.devicePixelRatio || 1;
 
 		this.logicalWidth = parseInt(canvas.style.width) || canvas.width / this.dpr;
 		this.logicalHeight = parseInt(canvas.style.height) || canvas.height / this.dpr;
 
+		this.fontSize = styles.fontSize;
+		this.strokeWidth = styles.strokeWidth;
 		this.fill = styles.fill;
 		this.stroke = styles.strokeStyle;
-		this.strokeWidth = styles.strokeWidth;
-		this.fontSize = styles.fontSize;
 
 		this.destroyEvents();
 		this.applyStyles(styles);
@@ -48,10 +49,15 @@ export class Tool {
 
 		this.ctx.lineCap = 'round';
 		this.ctx.lineJoin = 'round';
-		this.ctx.lineWidth = styles.strokeWidth;
-		this.ctx.strokeStyle = styles.strokeStyle;
-		this.ctx.fillStyle = styles.fill;
 		this.ctx.font = `${styles.fontSize}px Arial`;
+		this.ctx.lineWidth = styles.strokeWidth;
+		this.ctx.fillStyle = styles.fill;
+		this.ctx.strokeStyle = styles.strokeStyle;
+
+		this.fontSize = styles.fontSize;
+		this.strokeWidth = styles.strokeWidth;
+		this.fill = styles.fill;
+		this.stroke = styles.strokeStyle;
 	}
 
 	public getMousePos(e: PointerEvent): [number, number] {

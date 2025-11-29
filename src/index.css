@@ -14,13 +14,13 @@
 	--color-muted: #8f8f8f;
 	--color-primary: #1976d2;
 	--header-bg: white;
-	--header-border-color: #dcdcdc;
+	--header-border-color: #ebebeb;
 	--danger: #d40924;
 
 	--hover-color: black;
 	--hover-bg: #f6fafd;
 
-	--active-bg-primary: #1976d2;
+	--active-bg-primary: #e6edf5;
 	--active-color-primary: #4580ff;
 
 	--tabs-container-bg: white;
@@ -66,13 +66,13 @@ h1 {
 		--color-muted: #8f8f8f;
 		--color-primary: #1976d2;
 		--header-bg: white;
-		--header-border-color: #dcdcdc;
+		--header-border-color: #ebebeb;
 		--danger: #d40924;
 
 		--hover-color: black;
-		--hover-bg: #f6fafd;
+		--hover-bg: #edf2f7;
 
-		--active-bg-primary: #1976d2;
+		--active-bg-primary: #e6edf5;
 		--active-color-primary: #4580ff;
 
 		--tabs-container-bg: white;
@@ -97,9 +97,10 @@ h1 {
 		--color-primary: #1976d2;
 		--header-bg: #181818;
 		--header-border-color: #292929;
+		--danger: #d40924;
+
 		--hover-color: white;
 		--hover-bg: #333333;
-		--danger: #d40924;
 
 		--active-bg-primary: #212d4a;
 		--active-color-primary: #4580ff;

@@ -8,22 +8,28 @@ export enum ACTIONS {
 	ERASER = 'eraser',
 	TEXT = 'text',
 	LINE = 'line',
+	FONT = 'font',
+	LINE_SIZE = 'lineSize',
+	COLOR = 'color',
+	CONTOUR_COLOR = 'contourColor',
+	UNDO = 'undo',
+	REDO = 'redo',
 }
 
 interface State {
 	tool: ACTIONS;
-	fillColor: string;
-	strokeWidth: number;
-	strokeStyle: string;
 	fontSize: number;
+	strokeWidth: number;
+	fillColor: string;
+	strokeStyle: string;
 }
 
 const initialState: State = {
 	tool: ACTIONS.SELECT,
-	fillColor: '#3b78e7',
-	strokeWidth: 1,
-	strokeStyle: '#000',
 	fontSize: 16,
+	strokeWidth: 1,
+	fillColor: '#000000',
+	strokeStyle: '#000000',
 };
 
 const toolsSlice = createSlice({
