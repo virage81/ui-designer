@@ -33,7 +33,7 @@ export const ProjectsList: React.FC = () => {
 					}}>
 					Выберите проект для редактирования или создайте новый
 				</Typography>
-				{!projects?.length ? (
+				{!projects.length ? (
 					<EmptyProjectsState />
 				) : (
 					<Grid container spacing={3} justifyContent='center' sx={{ mt: 3 }}>

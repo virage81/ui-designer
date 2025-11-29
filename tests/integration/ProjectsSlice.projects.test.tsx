@@ -55,7 +55,7 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 		]);
 
 		act(() => {
-			store.dispatch(updateProject({ id: 'mocked-uuid', height: 100, width: 100 }));
+			store.dispatch(updateProject({ id: store.getState().projects.projects[0].id, height: 100, width: 100 }));
 		});
 
 		expect(store.getState().projects.projects).toStrictEqual([
@@ -94,7 +94,7 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 		]);
 
 		act(() => {
-			store.dispatch(deleteProject({ id: 'mocked-uuid' }));
+			store.dispatch(deleteProject({ id: store.getState().projects.projects[0].id }));
 		});
 		expect(store.getState().projects.projects).toStrictEqual([]);
 		expect(spied).toHaveBeenCalledTimes(2);

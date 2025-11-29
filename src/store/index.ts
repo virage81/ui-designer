@@ -1,12 +1,14 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import modalsReducer from '@store/slices/modalsSlice.ts';
 import projectsReducer from '@store/slices/projectsSlice';
+import toolsReducer from '@store/slices/toolsSlice';
 import { FLUSH, PAUSE, PERSIST, PURGE, REHYDRATE, persistReducer, persistStore } from 'redux-persist';
 import localStorage from 'redux-persist/lib/storage';
-import modalsReducer from '@store/slices/modalsSlice.ts'
 
 const rootReducer = combineReducers({
 	projects: projectsReducer,
-	modals: modalsReducer
+	tools: toolsReducer,
+	modals: modalsReducer,
 });
 
 const persistConfig = {
