@@ -50,6 +50,8 @@ export class LineTool extends Tool {
 		img.onload = () => {
 			if (!this.ctx) return;
 
+			this.ctx.strokeStyle = this.fill;
+
 			this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 			this.ctx.drawImage(img, 0, 0, this.logicalWidth, this.logicalHeight);
 

@@ -62,7 +62,6 @@ const shared: ThemeOptions = {
 						padding: '0',
 						textTransform: 'none',
 						':hover': { backgroundColor: 'var(--hover-bg)', color: 'var(--hover-color)' },
-						':focus': { backgroundColor: 'var(--color-primary)', color: 'var(--hover-color)' },
 					},
 				},
 			],
@@ -111,6 +110,20 @@ const shared: ThemeOptions = {
 						color: 'var(--tab-color)',
 						backgroundColor: 'var(--active-tab-bg)',
 					},
+				},
+			},
+		},
+		MuiStack: {
+			styleOverrides: {
+				root: {
+					maxHeight: '100%',
+					display: 'flex',
+					flexDirection: 'column',
+					gap: 0.5,
+					overflowY: 'auto',
+					scrollbarWidth: 'none',
+					'&::-webkit-scrollbar': { display: 'none' },
+					position: 'relative',
 				},
 			},
 		},
