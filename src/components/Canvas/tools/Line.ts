@@ -28,16 +28,18 @@ export class LineTool extends Tool {
 	mouseDownHandler(e: PointerEvent) {
 		this.isMouseDown = true;
 
-		this.ctx?.beginPath();
-		this.startX = e.layerX;
-		this.startY = e.layerY;
+		const [x, y] = this.getMousePos(e);
+		this.ctx.beginPath();
+		this.startX = x;
+		this.startY = y;
 		this.saved = this.canvas.toDataURL();
 	}
 
 	mouseMoveHandler(e: PointerEvent) {
 		if (this.isMouseDown) {
-			this.currentX = e.layerX;
-			this.currentY = e.layerY;
+			const [x, y] = this.getMousePos(e);
+			this.currentX = x;
+			this.currentY = y;
 			this.draw(this.startX, this.startY, this.currentX, this.currentY);
 		}
 	}
@@ -48,12 +50,11 @@ export class LineTool extends Tool {
 		img.onload = () => {
 			if (!this.ctx) return;
 
-			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+			this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
+			this.ctx.drawImage(img, 0, 0, this.logicalWidth, this.logicalHeight);
 
 			this.ctx.beginPath();
 			this.ctx.moveTo(x1, y1);
-			this.ctx.lineWidth = this.strokeWidth;
 			this.ctx.lineTo(x2, y2);
 			this.ctx.stroke();
 		};

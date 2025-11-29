@@ -20,17 +20,17 @@ export class CircleTool extends Tool {
 	mouseDownHandler(e: PointerEvent) {
 		this.isMouseDown = true;
 
-		this.ctx?.beginPath();
-		this.startX = e.layerX;
-		this.startY = e.layerY;
+		const [x, y] = this.getMousePos(e);
+		this.ctx.beginPath();
+		this.startX = x;
+		this.startY = y;
 		this.saved = this.canvas.toDataURL();
 	}
 
 	mouseMoveHandler(e: PointerEvent) {
 		if (!this.isMouseDown) return;
 
-		const currentX = e.layerX;
-		const currentY = e.layerY;
+		const [currentX, currentY] = this.getMousePos(e);
 
 		this.radius = Math.sqrt(
 			(currentX - this.startX) ** 2 + (currentY - this.startY) ** 2
@@ -49,8 +49,10 @@ export class CircleTool extends Tool {
 		img.onload = () => {
 			if (!this.ctx) return;
 
-			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+			this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
+			this.ctx.drawImage(img, 0, 0, this.logicalWidth, this.logicalHeight);
+
+			this.ctx.fillStyle = this.fill;
 			this.ctx.beginPath();
 			this.ctx.arc(x, y, radius, 0, Math.PI * 2);
 			this.ctx.fill();

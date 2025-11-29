@@ -1,8 +1,5 @@
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент Ластик
- */
 export class EraserTool extends Tool {
 	private erased: boolean = false;
 
@@ -22,14 +19,16 @@ export class EraserTool extends Tool {
 
 		this.isMouseDown = true;
 		this.erased = false;
+		const [x, y] = this.getMousePos(e);
 		this.ctx.beginPath();
-		this.ctx.moveTo(e.layerX, e.layerY);
+		this.ctx.moveTo(x, y);
 	};
 
-	mouseMoveHandler = (e: MouseEvent) => {
+	mouseMoveHandler = (e: PointerEvent) => {
 		if (!this.isMouseDown) return;
 
-		this.erase(e.layerX, e.layerY);
+		const [x, y] = this.getMousePos(e);
+		this.erase(x, y);
 	};
 
 	mouseUpHandler = (e: PointerEvent) => {
@@ -38,7 +37,8 @@ export class EraserTool extends Tool {
 		this.isMouseDown = false;
 
 		if (!this.erased) {
-			this.signleErase(e.layerX, e.layerY);
+			const [x, y] = this.getMousePos(e);
+			this.singleErase(x, y);
 		}
 	};
 
@@ -55,7 +55,7 @@ export class EraserTool extends Tool {
 		this.erased = true;
 	};
 
-	signleErase = (x: number, y: number) => {
+	singleErase = (x: number, y: number) => {
 		if (!this.ctx) return;
 
 		this.ctx.save();

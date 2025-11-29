@@ -2,7 +2,7 @@ import { Box } from '@mui/material';
 import type { RootState } from '@store/index';
 import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
@@ -22,6 +22,8 @@ export const Canvas: React.FC = () => {
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
+	const dprSetupsRef = useRef<Record<string, boolean>>({});
+	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
 
 	const currentProject = useMemo(() => projects.find(item => item.id === projectId), [projectId, projects]);
 	const toolStyles = useMemo<Styles>(
@@ -29,13 +31,33 @@ export const Canvas: React.FC = () => {
 		[fillColor, strokeWidth, strokeStyle],
 	);
 
+	const setupCanvasDPR = useCallback((canvas: HTMLCanvasElement) => {
+		if (!canvas || dprSetupsRef.current[canvas.id]) return;
+
+		const dpr = window.devicePixelRatio || 1;
+		const rect = canvas.getBoundingClientRect();
+
+		canvas.width = Math.floor(rect.width * dpr);
+		canvas.height = Math.floor(rect.height * dpr);
+		canvas.style.width = `${rect.width}px`;
+		canvas.style.height = `${rect.height}px`;
+
+		const ctx = canvas.getContext('2d', { willReadFrequently: true });
+		if (ctx) {
+			ctx.scale(dpr, dpr);
+			ctx.imageSmoothingEnabled = false;
+		}
+
+		dprSetupsRef.current[canvas.id] = true;
+	}, []);
+
 	useEffect(() => {
 		if (toolRef.current) {
 			toolRef.current.destroyEvents();
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current) return;
+		if (!canvasRef.current || !activeLayer) return;
 
 		switch (tool) {
 			case ACTIONS.BRUSH: {
@@ -72,20 +94,26 @@ export const Canvas: React.FC = () => {
 	}, [tool, activeLayer, toolStyles]);
 
 	useEffect(() => {
-		if (!canvasRef.current || !activeLayer) return;
+		if (!canvasRef.current || !activeLayer || !currentProject) return;
 
 		if (activeLayer.cleared) {
-			const ctx = canvasRef.current.getContext('2d');
-
-			if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-
-			dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
+			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+			if (ctx) {
+				ctx.clearRect(0, 0, currentProject.width, currentProject.height);
+				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
+			}
 		}
-	}, [activeLayer, projectId, dispatch]);
+	}, [activeLayer, currentProject, projectId, dispatch]);
+
+	useEffect(() => {
+		if (canvasRef.current) {
+			setupCanvasDPR(canvasRef.current);
+		}
+	}, [activeLayer?.id, setupCanvasDPR]);
 
 	if (!currentProject) {
 		redirect('/404');
-		return;
+		return null;
 	}
 
 	return (
@@ -96,25 +124,33 @@ export const Canvas: React.FC = () => {
 				height: currentProject.height,
 				cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
 			}}>
-			{sortedLayers.map(layer => {
-				return (
-					<canvas
-						id={layer.id}
-						key={layer.id}
-						width={currentProject.width}
-						height={currentProject.height}
-						ref={layer.id === activeLayer?.id ? canvasRef : undefined}
-						style={{
-							background: layer.isBase ? 'white' : 'transparent',
-							position: 'absolute',
-							inset: 0,
-							zIndex: layer.zIndex,
-							opacity: layer.isBase ? 1 : layer.hidden ? 0 : layer.opacity / 100,
-							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
-						}}
-					/>
-				);
-			})}
+			{sortedLayers.map(layer => (
+				<canvas
+					id={layer.id}
+					key={layer.id}
+					ref={el => {
+						if (el) {
+							canvasesRef.current[layer.id] = el;
+							if (layer.id === activeLayer?.id) {
+								canvasRef.current = el;
+								setupCanvasDPR(el);
+							}
+						} else {
+							delete canvasesRef.current[layer.id];
+						}
+					}}
+					style={{
+						background: layer.isBase ? 'white' : 'transparent',
+						position: 'absolute',
+						inset: 0,
+						zIndex: layer.zIndex,
+						opacity: layer.isBase ? 1 : layer.hidden ? 0 : layer.opacity / 100,
+						pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
+						width: `${currentProject.width}px`,
+						height: `${currentProject.height}px`,
+					}}
+				/>
+			))}
 		</Box>
 	);
 };

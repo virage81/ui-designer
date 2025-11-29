@@ -1,8 +1,5 @@
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент прямоугольник
- */
 export class RectangleTool extends Tool {
 	private saved: string = '';
 	private width: number = 0;
@@ -24,18 +21,20 @@ export class RectangleTool extends Tool {
 	mouseUpHandler() {
 		this.isMouseDown = false;
 	}
+
 	mouseDownHandler(e: PointerEvent) {
 		this.isMouseDown = true;
+		const [x, y] = this.getMousePos(e);
 
-		this.ctx?.beginPath();
-		this.startX = e.layerX;
-		this.startY = e.layerY;
+		this.ctx.beginPath();
+		this.startX = x;
+		this.startY = y;
 		this.saved = this.canvas.toDataURL();
 	}
+
 	mouseMoveHandler(e: PointerEvent) {
 		if (this.isMouseDown) {
-			const currentX = e.layerX;
-			const currentY = e.layerY;
+			const [currentX, currentY] = this.getMousePos(e);
 			this.width = currentX - this.startX;
 			this.height = currentY - this.startY;
 			this.draw(this.startX, this.startY, this.width, this.height);
@@ -48,9 +47,11 @@ export class RectangleTool extends Tool {
 		img.onload = () => {
 			if (!this.ctx) return;
 
-			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-			this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+			this.ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
+			this.ctx.drawImage(img, 0, 0, this.logicalWidth, this.logicalHeight);
+
 			this.ctx.beginPath();
+			this.ctx.fillStyle = this.fill;
 			this.ctx.rect(x, y, w, h);
 			this.ctx.fill();
 			this.ctx.stroke();
