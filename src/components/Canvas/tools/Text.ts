@@ -154,6 +154,7 @@ export class TextTool extends Tool {
 			top: clientY + 'px',
 			width: '200px',
 			height: 'auto',
+			minHeight: '1lh',
 			fontSize: this.fontSize + 'px',
 			color: this.fill,
 		});
