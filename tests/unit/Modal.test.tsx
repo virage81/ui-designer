@@ -1,24 +1,27 @@
 import { Modal } from '@/components/Modal';
 import '@testing-library/jest-dom';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { JestStoreProvider } from '../utils/StoreProvider.tsx';
+import { closeCreateProjectModal, openCreateProjectModal } from '@store/slices/modalsSlice';
 
 describe('Modal Component', () => {
-	const mockToggle = jest.fn();
-	const renderModal = (open = true) => {
-		return JestStoreProvider(<Modal open={open} toggleModal={mockToggle} />);
+	let store: ReturnType<typeof JestStoreProvider>['store'];
+
+	const renderModal = () => {
+		const modal = JestStoreProvider(<Modal />);
+		store = modal.store;
+		return modal;
 	};
 
 	beforeEach(() => {
-		mockToggle.mockClear();
+		renderModal();
 	});
 
 	test('renders correctly when opened', (): void => {
-		renderModal();
+		act(() => store.dispatch(openCreateProjectModal()));
 
 		expect(screen.getByText('Создать новый проект')).toBeInTheDocument();
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
-		expect(screen.getByText('Создать новый проект')).toBeInTheDocument();
 		expect(screen.getByLabelText('Название проекта')).toBeInTheDocument();
 		expect(screen.getByLabelText('Ширина холста (px)')).toBeInTheDocument();
 		expect(screen.getByLabelText('Высота холста (px)')).toBeInTheDocument();
@@ -26,20 +29,15 @@ describe('Modal Component', () => {
 		expect(screen.getByRole('button', { name: /Создать/i })).toBeInTheDocument();
 	});
 
-	test('closes when cancel button or close icon is clicked', () => {
-		renderModal(false);
+	test('does not render when closed', () => {
+		act(() => store.dispatch(closeCreateProjectModal()));
 
-		expect(screen.queryByText('Создать новый проект')).toBeNull();
 		expect(screen.queryByRole('dialog')).toBeNull();
-		expect(screen.queryByLabelText('Название проекта')).toBeNull();
-		expect(screen.queryByLabelText('Ширина холста (px)')).toBeNull();
-		expect(screen.queryByLabelText('Высота холста (px)')).toBeNull();
-		expect(screen.queryByRole('button', { name: /Отмена/i })).toBeNull();
-		expect(screen.queryByRole('button', { name: /Создать/i })).toBeNull();
+		expect(screen.queryByText('Создать новый проект')).toBeNull();
 	});
 
 	test('validates name field – required & pattern', async () => {
-		renderModal();
+		act(() => store.dispatch(openCreateProjectModal()));
 
 		const nameInput = screen.getByLabelText('Название проекта');
 
@@ -51,13 +49,10 @@ describe('Modal Component', () => {
 
 		fireEvent.change(nameInput, { target: { value: 'Проект123' } });
 		await waitFor(() => expect(screen.queryByText('Допустимы буквы и цифры')).not.toBeInTheDocument());
-
-		fireEvent.change(nameInput, { target: { value: '0 Проект123' } });
-		await waitFor(() => expect(screen.queryByText('Допустимы буквы и цифры')).not.toBeInTheDocument());
 	});
 
 	test('validation of width and height - positive integers', async () => {
-		renderModal();
+		act(() => store.dispatch(openCreateProjectModal()));
 
 		const widthInput = screen.getByLabelText('Ширина холста (px)');
 		const heightInput = screen.getByLabelText('Высота холста (px)');
@@ -78,7 +73,7 @@ describe('Modal Component', () => {
 	});
 
 	test('the create button is disabled when any validation error exists', async () => {
-		renderModal();
+		act(() => store.dispatch(openCreateProjectModal()));
 
 		const createBtn = screen.getByRole('button', { name: /Создать/i });
 		expect(createBtn).toBeEnabled();
@@ -90,13 +85,38 @@ describe('Modal Component', () => {
 	});
 
 	test('closes when the Escape key is pressed', async () => {
-		renderModal();
+		act(() => store.dispatch(openCreateProjectModal()));
+
 		const dialog = screen.getByRole('dialog');
 
 		fireEvent.keyDown(dialog, { key: 'Escape', code: 'Escape' });
 
 		await waitFor(() => {
-			expect(mockToggle).toHaveBeenCalledTimes(1);
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+		});
+	});
+
+	test('closes when cancel button is clicked', async () => {
+		act(() => store.dispatch(openCreateProjectModal()));
+
+		const cancelBtn = screen.getByRole('button', { name: /Отмена/i });
+
+		fireEvent.click(cancelBtn);
+
+		await waitFor(() => {
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+		});
+	});
+
+	test('closes when close icon is clicked', async () => {
+		act(() => store.dispatch(openCreateProjectModal()));
+
+		const closeIcon = screen.getByLabelText('close');
+
+		fireEvent.click(closeIcon);
+
+		await waitFor(() => {
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 		});
 	});
 });

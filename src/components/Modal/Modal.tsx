@@ -15,12 +15,8 @@ import { type ChangeEvent, type FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import type { Project } from '@shared/types/project';
-import { useNavigate } from 'react-router-dom';
-
-interface Modal {
-	open?: boolean;
-	toggleModal: () => void;
-}
+import { useLocation, useNavigate } from 'react-router-dom';
+import { closeCreateProjectModal } from '@store/slices/modalsSlice';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
@@ -28,10 +24,12 @@ const DEFAULT_NAME = 'Проект';
 const DEFAULT_SIZE = 800;
 const NAME_PATTERN = /^[A-Za-zА-Яа-яЁё0-9\s]+$/;
 
-export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
+export const Modal: FC = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const projects = useSelector((state: RootState) => state.projects.projects);
+	const isCreateProjectModalOpen = useSelector((state: RootState) => state.modals.isCreateProjectModalOpen);
 
 	const [pendingName, setPendingName] = useState<string | null>(null);
 
@@ -53,11 +51,11 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 	};
 
 	useEffect(() => {
-		if (open) {
+		if (isCreateProjectModalOpen) {
 			const id = setTimeout(resetForm, 0);
 			return (): void => clearTimeout(id);
 		}
-	}, [open]);
+	}, [isCreateProjectModalOpen]);
 
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
@@ -102,14 +100,23 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 
 		const created: Project | undefined = projects.find((p: Project) => p.name === pendingName);
 		if (created?.id) {
-			navigate(`/projects/${created.id}`);
+			if (location.pathname.startsWith('/projects')) {
+				navigate(`/projects/${created.id}`, { replace: true });
+			} else {
+				navigate(`/projects/${created.id}`);
+			}
 		}
 
 		return () => {
 			setPendingName(null);
 		};
-	}, [projects, pendingName, navigate]);
+	}, [projects, pendingName, navigate, location.pathname]);
 
+	useEffect(() => {
+		return () => {
+				dispatch(closeCreateProjectModal());
+		};
+	}, [dispatch]);
 
 	const handleCreate: () => void = (): void => {
 		if (!projectNameError && !widthError && !heightError) {
@@ -128,19 +135,20 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 			} else {
 				setPendingName(trimmedName);
 				dispatch(createProject(newProject));
-				toggleModal();
+				dispatch(closeCreateProjectModal());
 			}
 		}
 	};
 
 	return (
-		<Dialog open={open} onClose={toggleModal} disableRestoreFocus>
+		<Dialog open={isCreateProjectModalOpen} onClose={() => dispatch(closeCreateProjectModal())}
+						disableRestoreFocus key={isCreateProjectModalOpen ? 'modal-open' : 'modal-closed'}>
 			<Box sx={{ position: 'relative', paddingBottom: 2 }}>
 				<DialogTitle aria-labelledby='modal-title' sx={{ position: 'relative' }}>
 					Создать новый проект
 					<IconButton
 						aria-label='close'
-						onClick={(): void => toggleModal()}
+						onClick={() => dispatch(closeCreateProjectModal())}
 						sx={{
 							position: 'absolute',
 							right: 10,
@@ -198,7 +206,7 @@ export const Modal: FC<Modal> = ({ open = false, toggleModal }) => {
 				</DialogContent>
 				<DialogActions sx={{ paddingRight: '24px', paddingLeft: '24px' }}>
 					<Button
-						onClick={(): void => toggleModal()}
+						onClick={() => dispatch(closeCreateProjectModal())}
 						variant='outlined'
 						sx={{
 							borderColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : 'rgb(196,196,196)'),

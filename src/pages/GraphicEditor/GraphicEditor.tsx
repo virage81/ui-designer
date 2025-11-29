@@ -7,6 +7,7 @@ import type {RootState} from "@/store";
 import {Navigate, useParams} from "react-router-dom";
 import {useSelector} from "react-redux";
 import {checkProjectExistence} from "@store/utils/projects.ts";
+import {Modal} from "@components/Modal";
 
 export const GraphicEditor: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
@@ -38,6 +39,7 @@ export const GraphicEditor: React.FC = () => {
 				</Box>
 				<RightSideBar />
 			</Box>
+			<Modal />
 		</div>
 	);
 };
