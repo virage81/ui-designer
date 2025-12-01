@@ -1,3 +1,4 @@
+import type { RootState } from '@/store';
 import CloseIcon from '@mui/icons-material/Close';
 import {
 	Box,
@@ -10,13 +11,12 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
+import type { Project } from '@shared/types/project';
+import { closeCreateProjectModal } from '@store/slices/modalsSlice';
 import { createProject } from '@store/slices/projectsSlice';
 import { type ChangeEvent, type FC, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import type { RootState } from '@/store';
-import type { Project } from '@shared/types/project';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { closeCreateProjectModal } from '@store/slices/modalsSlice';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
@@ -114,7 +114,7 @@ export const Modal: FC = () => {
 
 	useEffect(() => {
 		return () => {
-				dispatch(closeCreateProjectModal());
+			dispatch(closeCreateProjectModal());
 		};
 	}, [dispatch]);
 
@@ -141,8 +141,11 @@ export const Modal: FC = () => {
 	};
 
 	return (
-		<Dialog open={isCreateProjectModalOpen} onClose={() => dispatch(closeCreateProjectModal())}
-						disableRestoreFocus key={isCreateProjectModalOpen ? 'modal-open' : 'modal-closed'}>
+		<Dialog
+			open={isCreateProjectModalOpen}
+			onClose={() => dispatch(closeCreateProjectModal())}
+			disableRestoreFocus
+			key={isCreateProjectModalOpen ? 'modal-open' : 'modal-closed'}>
 			<Box sx={{ position: 'relative', paddingBottom: 2 }}>
 				<DialogTitle aria-labelledby='modal-title' sx={{ position: 'relative' }}>
 					Создать новый проект
@@ -168,7 +171,7 @@ export const Modal: FC = () => {
 						fullWidth
 						margin='normal'
 						value={projectName}
-						autoComplete="off"
+						autoComplete='off'
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}

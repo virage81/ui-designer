@@ -1,10 +1,10 @@
 import { type RootState } from '@/store';
-import { JestStoreProvider } from '../utils/StoreProvider.tsx';
 import { Modal } from '@components/Modal';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { openCreateProjectModal } from '@store/slices/modalsSlice';
 import type { Project } from '@shared/types/project';
+import { openCreateProjectModal } from '@store/slices/modalsSlice';
+import '@testing-library/jest-dom';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { JestStoreProvider } from '../utils/StoreProvider.tsx';
 
 describe('Modal Component - Integration', () => {
 	const renderModal = ({ preloadedState }: { preloadedState?: Partial<RootState> } = {}) => {

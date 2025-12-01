@@ -1,8 +1,8 @@
 import { Modal } from '@/components/Modal';
+import { closeCreateProjectModal, openCreateProjectModal } from '@store/slices/modalsSlice';
 import '@testing-library/jest-dom';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { JestStoreProvider } from '../utils/StoreProvider.tsx';
-import { closeCreateProjectModal, openCreateProjectModal } from '@store/slices/modalsSlice';
 
 describe('Modal Component', () => {
 	let store: ReturnType<typeof JestStoreProvider>['store'];
