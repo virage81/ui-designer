@@ -8,6 +8,7 @@ import { Placeholder } from './components';
 
 export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 	const navigate = useNavigate();
+
 	const [openModal, setOpenModal] = useState(false);
 
 	return (
@@ -76,7 +77,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 					</Button>
 				</CardActions>
 			</Card>
-			<DeleteConfirmModal open={openModal} handleClose={() => setOpenModal(false)} projectName={name} />
+			<DeleteConfirmModal open={openModal} handleClose={() => setOpenModal(false)} projectName={name} projectId={id} />
 		</>
 	);
 };
