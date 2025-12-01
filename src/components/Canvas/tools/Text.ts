@@ -60,7 +60,7 @@ export class TextTool extends Tool {
 			resize: 'both',
 			background: 'transparent',
 			outline: 'none',
-			zIndex: '1',
+			zIndex: '9999',
 			whiteSpace: 'pre',
 			scrollbarWidth: 'none',
 			lineHeight: '1.2',
@@ -228,21 +228,17 @@ export class TextTool extends Tool {
 		const realCanvasY = canvasY * scaleY;
 
 		const maxWidth = this.canvas.width - realCanvasX - 10;
-		const maxHeight = this.canvas.height - realCanvasY - 10;
 
 		const lineHeight = fontSize * 1.2;
 
 		const lines = this.wrapText(text, maxWidth);
 
-		const maxLines = Math.floor(maxHeight / lineHeight);
-		const clippedLines = lines.slice(0, maxLines);
-
-		for (let i = 0; i < clippedLines.length; i++) {
+		for (let i = 0; i < lines.length; i++) {
 			const lineY = realCanvasY + i * lineHeight;
 
 			if (lineY + lineHeight > this.canvas.height) break;
 
-			this.ctx.fillText(clippedLines[i], realCanvasX, lineY);
+			this.ctx.fillText(lines[i], realCanvasX, lineY);
 		}
 
 		this.cleanup();
@@ -251,35 +247,58 @@ export class TextTool extends Tool {
 	private wrapText(text: string, maxWidth: number): string[] {
 		if (!this.ctx) return [text];
 
-		const newlineSplit = text.split('\n');
-		const resultLines: string[] = [];
+		const lines: string[] = [];
+		const paragraphs = text.split('\n');
 
-		for (const line of newlineSplit) {
-			if (line === '') {
-				resultLines.push('');
+		for (const paragraph of paragraphs) {
+			if (!paragraph.trim()) {
+				lines.push('');
 				continue;
 			}
 
-			const words = line.split(' ');
-			let currentLine = words[0] || '';
+			const words = paragraph.split(/\s+/);
+			let currentLine = '';
 
-			for (let i = 1; i < words.length; i++) {
-				const word = words[i];
-				const testLine = currentLine + ' ' + word;
-				const testWidth = this.ctx!.measureText(testLine).width;
+			for (const word of words) {
+				const testLine = currentLine ? `${currentLine} ${word}` : word;
+				const width = this.ctx.measureText(testLine).width;
 
-				if (testWidth > maxWidth && currentLine !== '') {
-					resultLines.push(currentLine);
+				if (width > maxWidth && currentLine === '') {
+					const broken = this.breakLongWord(word, maxWidth);
+					lines.push(...broken);
+					continue;
+				}
+
+				if (width > maxWidth) {
+					lines.push(currentLine);
 					currentLine = word;
 				} else {
 					currentLine = testLine;
 				}
 			}
 
-			if (currentLine) resultLines.push(currentLine);
+			if (currentLine) lines.push(currentLine);
 		}
 
-		return resultLines;
+		return lines;
+	}
+
+	private breakLongWord(word: string, maxWidth: number): string[] {
+		const parts: string[] = [];
+		let current = '';
+
+		for (const char of word) {
+			const test = current + char;
+			if (this.ctx!.measureText(test).width > maxWidth) {
+				parts.push(current);
+				current = char;
+			} else {
+				current = test;
+			}
+		}
+
+		if (current) parts.push(current);
+		return parts;
 	}
 
 	private cancelEditing = () => {

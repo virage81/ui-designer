@@ -32,9 +32,7 @@ export class CircleTool extends Tool {
 
 		const [currentX, currentY] = this.getMousePos(e);
 
-		this.radius = Math.sqrt(
-			(currentX - this.startX) ** 2 + (currentY - this.startY) ** 2
-		);
+		this.radius = Math.sqrt((currentX - this.startX) ** 2 + (currentY - this.startY) ** 2);
 
 		this.draw(this.startX, this.startY, this.radius);
 	}

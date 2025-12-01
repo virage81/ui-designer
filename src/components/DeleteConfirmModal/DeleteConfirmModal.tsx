@@ -1,4 +1,7 @@
 import { Box, Button, DialogActions, Modal, Typography } from '@mui/material';
+import type { Project } from '@shared/types/project';
+import { deleteProject } from '@store/slices/projectsSlice';
+import { useDispatch } from 'react-redux';
 
 const style = {
 	position: 'absolute',
@@ -16,10 +19,18 @@ const style = {
 interface DeleteConfirmModalProps {
 	open: boolean;
 	handleClose: () => void;
-	projectName: string;
-} //TODO удалить (для теста)
+	projectName: Project['name'];
+	projectId: Project['id'];
+}
 
-export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({ open, handleClose, projectName }) => {
+export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
+	open,
+	handleClose,
+	projectName,
+	projectId,
+}) => {
+	const dispatch = useDispatch();
+
 	return (
 		<Modal
 			open={open}
@@ -59,6 +70,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({ open, ha
 					<Button
 						variant='contained'
 						color='error'
+						onClick={() => dispatch(deleteProject({ id: projectId }))}
 						sx={{
 							textTransform: 'none',
 							fontWeight: 600,

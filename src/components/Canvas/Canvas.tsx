@@ -130,6 +130,17 @@ export const Canvas: React.FC = () => {
 				height: currentProject.height,
 				cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
 			}}>
+			<canvas
+				style={{
+					background: 'white',
+					position: 'absolute',
+					inset: 0,
+					zIndex: 0,
+					pointerEvents: 'none',
+					width: `${currentProject.width}px`,
+					height: `${currentProject.height}px`,
+				}}
+			/>
 			{sortedLayers.map(layer => (
 				<canvas
 					id={layer.id}
@@ -146,11 +157,11 @@ export const Canvas: React.FC = () => {
 						}
 					}}
 					style={{
-						background: layer.isBase ? 'white' : 'transparent',
+						background: 'transparent',
 						position: 'absolute',
 						inset: 0,
 						zIndex: layer.zIndex,
-						opacity: layer.isBase ? 1 : layer.hidden ? 0 : layer.opacity / 100,
+						opacity: layer.hidden ? 0 : layer.opacity / 100,
 						pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 						width: `${currentProject.width}px`,
 						height: `${currentProject.height}px`,

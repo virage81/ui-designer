@@ -17,7 +17,6 @@ export interface History {
 export interface Layer {
 	id: string;
 	name: string;
-	isBase: boolean;
 	opacity: number;
 	zIndex: number;
 	hidden: boolean;

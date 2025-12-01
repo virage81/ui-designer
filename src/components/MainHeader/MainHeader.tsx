@@ -1,7 +1,7 @@
 import { Add } from '@mui/icons-material';
 import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material';
-import {useDispatch} from "react-redux";
-import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
+import { toggleCreateProjectModal } from '@store/slices/modalsSlice.ts';
+import { useDispatch } from 'react-redux';
 
 export const MainHeader: React.FC = () => {
 	const dispatch = useDispatch();
@@ -16,7 +16,11 @@ export const MainHeader: React.FC = () => {
 							</Typography>
 						</Box>
 
-						<Button variant='contained' startIcon={<Add />} sx={{ textTransform: 'none' }} onClick={() => dispatch(toggleCreateProjectModal())}>
+						<Button
+							variant='contained'
+							startIcon={<Add />}
+							sx={{ textTransform: 'none' }}
+							onClick={() => dispatch(toggleCreateProjectModal())}>
 							Создать проект
 						</Button>
 					</Toolbar>

@@ -46,4 +46,3 @@ export class BrushTool extends Tool {
 		this.ctx.moveTo(x, y);
 	};
 }
-
