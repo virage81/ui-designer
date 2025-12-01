@@ -1,8 +1,7 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
 import type { ProjectsSliceState } from '@shared/types/projectsSliceState';
 
-import type { Project } from '@shared/types/project';
 import { checkProjectExistence } from '@store/utils/projects';
 import type { RootState } from '..';
 import type {
@@ -111,16 +110,23 @@ const projectsSlice = createSlice({
 	},
 });
 
-export const sortedLayersSelector = (state: RootState, projectId: Project['id']) => {
-	const { layers } = state.projects;
+export const sortedLayersSelector = createSelector(
+	[(state: RootState) => state.projects.layers, (_, projectId: string) => projectId],
+	(layers = {}, projectId) => {
+		return [...layers[projectId]].sort((a, b) => {
+			if (a.isBase && !b.isBase) return 1;
+			if (!a.isBase && b.isBase) return -1;
 
-	return [...layers[projectId]].sort((a, b) => {
-		if (a.isBase && !b.isBase) return 1;
-		if (!a.isBase && b.isBase) return -1;
+			return b.zIndex - a.zIndex;
+		});
+	},
+);
 
-		return b.zIndex - a.zIndex;
-	});
-};
+export const selectProjectById = createSelector(
+	(state: RootState) => state.projects.projects,
+	(_: RootState, id: string) => id,
+	(projects, id) => projects.find(p => p.id === id),
+);
 
 export const {
 	createProject,
