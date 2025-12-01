@@ -60,7 +60,7 @@ export class TextTool extends Tool {
 			resize: 'both',
 			background: 'transparent',
 			outline: 'none',
-			zIndex: '1',
+			zIndex: '9999',
 			whiteSpace: 'pre',
 			scrollbarWidth: 'none',
 			lineHeight: '1.2',
