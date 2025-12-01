@@ -41,6 +41,7 @@ export class Tool {
 		this.stroke = styles.strokeStyle;
 
 		this.destroyEvents();
+		this.setupEvents();
 		this.applyStyles(styles);
 	}
 
@@ -67,10 +68,18 @@ export class Tool {
 		return [x, y];
 	}
 
+	setupEvents() {
+		this.canvas.onmouseleave = () => {
+			this.isMouseDown = false;
+			this.ctx.closePath();
+		};
+	}
+
 	destroyEvents() {
 		this.canvas.onpointerup = null;
 		this.canvas.onpointermove = null;
 		this.canvas.onpointerdown = null;
+		this.canvas.onmouseleave = null;
 	}
 }
 
