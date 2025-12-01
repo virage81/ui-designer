@@ -125,49 +125,63 @@ export const Canvas: React.FC = () => {
 	return (
 		<Box
 			sx={{
-				position: 'relative',
-				width: currentProject.width,
-				height: currentProject.height,
-				cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				justifyContent: 'center',
+				flexGrow: 1,
+				gap: '0.5rem',
+				width: '63px',
+				padding: '8px 8px',
+				backgroundColor: 'var(--main-bg)',
+				overflow: 'auto',
 			}}>
-			<canvas
-				style={{
-					background: 'white',
-					position: 'absolute',
-					inset: 0,
-					zIndex: 0,
-					pointerEvents: 'none',
-					width: `${currentProject.width}px`,
-					height: `${currentProject.height}px`,
-				}}
-			/>
-			{sortedLayers.map(layer => (
+			<Box
+				sx={{
+					position: 'relative',
+					width: currentProject.width,
+					height: currentProject.height,
+					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+				}}>
 				<canvas
-					id={layer.id}
-					key={layer.id}
-					ref={el => {
-						if (el) {
-							canvasesRef.current[layer.id] = el;
-							if (layer.id === activeLayer?.id) {
-								canvasRef.current = el;
-								setupCanvasDPR(el);
-							}
-						} else {
-							delete canvasesRef.current[layer.id];
-						}
-					}}
 					style={{
-						background: 'transparent',
+						background: 'white',
 						position: 'absolute',
 						inset: 0,
-						zIndex: layer.zIndex,
-						opacity: layer.hidden ? 0 : layer.opacity / 100,
-						pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
+						zIndex: 0,
+						pointerEvents: 'none',
 						width: `${currentProject.width}px`,
 						height: `${currentProject.height}px`,
 					}}
 				/>
-			))}
+				{sortedLayers.map(layer => (
+					<canvas
+						id={layer.id}
+						key={layer.id}
+						ref={el => {
+							if (el) {
+								canvasesRef.current[layer.id] = el;
+								if (layer.id === activeLayer?.id) {
+									canvasRef.current = el;
+									setupCanvasDPR(el);
+								}
+							} else {
+								delete canvasesRef.current[layer.id];
+							}
+						}}
+						style={{
+							background: 'transparent',
+							position: 'absolute',
+							inset: 0,
+							zIndex: layer.zIndex,
+							opacity: layer.hidden ? 0 : layer.opacity / 100,
+							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
+							width: `${currentProject.width}px`,
+							height: `${currentProject.height}px`,
+						}}
+					/>
+				))}
+			</Box>
 		</Box>
 	);
 };
