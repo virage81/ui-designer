@@ -239,7 +239,7 @@ export const RightSideBar: React.FC = () => {
 
 					<MenuItem onClick={handleClearLayer}>Очистить</MenuItem>
 
-					{currentLayer && !currentLayer.isBase && (
+					{currentLayer && (
 						<MenuItem
 							onClick={() => {
 								handleDelete(currentLayer.id);
