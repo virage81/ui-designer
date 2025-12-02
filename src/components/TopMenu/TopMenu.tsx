@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { type RootState } from '@store/index';
 import { updateProject } from '@store/slices/projectsSlice';
 import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
+import { useExportPNG } from '@shared/hooks/useExport';
 
 export const TopMenu: React.FC = () => {
 	const dispatch = useDispatch();
@@ -94,14 +95,13 @@ export const TopMenu: React.FC = () => {
 	};
 
 	const handleSave = () => {
-		console.log('Экспортировать');
-		//todo: экспорт проекта
+		//todo: сохранение проекта
 		handleFileMenuClose();
 	};
 
+	const exportPNG = useExportPNG();
 	const handleExportPng = () => {
-		console.log('Сохранить в png');
-		//todo: сохранение в png
+		exportPNG();
 		handleFileMenuClose();
 	};
 
