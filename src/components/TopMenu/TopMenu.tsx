@@ -2,13 +2,15 @@ import { AppBar, Box, Button, Menu, MenuItem, Toolbar, Typography } from '@mui/m
 import { useProject } from '@shared/hooks/useProject';
 import { useExportPNG } from '@shared/hooks/useExport';
 import { House } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams} from 'react-router-dom';
 import { useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { type RootState } from '@store/index';
 import { updateProject } from '@store/slices/projectsSlice';
 import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
 import { validateProjectName } from '@shared/utils/projectNameValidation';
+import {useCanvasContext} from "@/contexts/CanvasContext.tsx";
+import type {Layer} from "@shared/types/project.ts";
 
 export const TopMenu: React.FC = () => {
 	const dispatch = useDispatch();
@@ -16,6 +18,10 @@ export const TopMenu: React.FC = () => {
 	const currentProject = useProject();
 	const projects = useSelector((state: RootState) => state.projects.projects);
 	const exportPNG = useExportPNG();
+
+	const { id: projectId } = useParams<{ id: string }>(); // Add this
+	const { canvases } = useCanvasContext(); // Add this
+	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 
 	const [fileAnchorEl, setFileAnchorEl] = useState<null | HTMLElement>(null);
 	const fileMenuOpen = Boolean(fileAnchorEl);
@@ -81,10 +87,69 @@ export const TopMenu: React.FC = () => {
 		handleFileMenuClose();
 	};
 
-	const handleSave = () => {
-		//todo: сохранение проекта
+	const handleSave = async () => {
+		if (!currentProject || !projectId) return;
+
+		const projectLayers = layersByProject[projectId] ?? [];
+		if (!projectLayers.length) {
+			handleFileMenuClose();
+			return;
+		}
+
+		const canvasesRef: Record<string, HTMLCanvasElement> = {};
+		projectLayers.forEach((layer: Layer) => {
+			const canvas = canvases[layer.id];
+			if (canvas) canvasesRef[layer.id] = canvas;
+		});
+
+		if (!Object.keys(canvasesRef).length) {
+			handleFileMenuClose();
+			return;
+		}
+
+		const tempCanvas = document.createElement('canvas');
+		const dpr = window.devicePixelRatio || 1;
+		const PREVIEW_SIZE = 300;
+		const previewScale = Math.min(PREVIEW_SIZE / currentProject.width, PREVIEW_SIZE / currentProject.height);
+		const previewWidth = currentProject.width * previewScale;
+		const previewHeight = currentProject.height * previewScale;
+
+		tempCanvas.width = Math.floor(previewWidth * dpr);
+		tempCanvas.height = Math.floor(previewHeight * dpr);
+		tempCanvas.style.width = `${previewWidth}px`;
+		tempCanvas.style.height = `${previewHeight}px`;
+
+		const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
+		if (!ctx) return;
+
+		ctx.scale(dpr, dpr);
+		ctx.imageSmoothingEnabled = false;
+		ctx.imageSmoothingQuality = 'high';
+		ctx.fillStyle = 'white';
+		ctx.fillRect(0, 0, previewWidth, previewHeight);
+
+		const visibleLayers = projectLayers
+			.filter(l => !l.hidden && canvasesRef[l.id])
+			.sort((a, b) => a.zIndex - b.zIndex);
+
+		visibleLayers.forEach(layer => {
+			const canvas = canvasesRef[layer.id];
+			ctx.save();
+			ctx.globalAlpha = layer.opacity / 100;
+			ctx.drawImage(canvas, 0, 0, previewWidth, previewHeight);
+			ctx.restore();
+		});
+
+		const previewDataUrl = tempCanvas.toDataURL('image/png', 0.5);
+
+		dispatch(updateProject({
+			id: currentProject.id,
+			preview: previewDataUrl
+		}));
+
 		handleFileMenuClose();
 	};
+
 
 	const handleExportPng = () => {
 		exportPNG();
