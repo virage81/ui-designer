@@ -81,10 +81,14 @@ export const TopMenu: React.FC = () => {
 	};
 
 	return (
-		<AppBar position='static'>
+		<AppBar position='static' sx={{ "& .MuiToolbar-root": { pr: '10px', pl: 0 } }}>
 			<Toolbar variant='dense'>
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexGrow: 1 }}>
-					<Button variant='graphic-tools' disableElevation onClick={() => navigate('/')}>
+				<Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+					<Button
+						sx={{ width: '63px'}}
+						variant='graphic-tools'
+									disableElevation
+						onClick={() => navigate('/')}>
 						<House />
 					</Button>
 					<Button variant='tools' disableElevation>
