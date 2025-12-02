@@ -3,11 +3,12 @@ import { useProject } from '@shared/hooks/useProject';
 import { useExportPNG } from '@shared/hooks/useExport';
 import { House } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState, type KeyboardEvent, type FocusEvent, useEffect, type MouseEvent } from 'react';
+import { useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { type RootState } from '@store/index';
 import { updateProject } from '@store/slices/projectsSlice';
 import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
+import { validateProjectName } from '@shared/utils/projectNameValidation';
 
 export const TopMenu: React.FC = () => {
 	const dispatch = useDispatch();
@@ -24,13 +25,6 @@ export const TopMenu: React.FC = () => {
 	const [projectNameError, setProjectNameError] = useState('');
 	const [originalName, setOriginalName] = useState(currentProject.name);
 
-	useEffect(() => {
-		setProjectName(currentProject.name);
-		setOriginalName(currentProject.name);
-		setProjectNameError('');
-		setIsEditing(false);
-	}, [currentProject.name]);
-
 	const startEditing = () => {
 		setOriginalName(currentProject.name);
 		setProjectName(currentProject.name);
@@ -38,18 +32,10 @@ export const TopMenu: React.FC = () => {
 		setIsEditing(true);
 	};
 
-	const validateName = (name: string) => {
-		const trimmed = name.trim();
-		if (trimmed.length === 0) {
-			setProjectNameError('Название обязательно');
-			return false;
-		}
-		if (projects.some(p => p.name === trimmed && p.id !== currentProject.id)) {
-			setProjectNameError('Проект с таким именем уже существует');
-			return false;
-		}
-		setProjectNameError('');
-		return true;
+	const validateName = (name: string): boolean => {
+		const error = validateProjectName(name, projects, currentProject.id);
+		setProjectNameError(error);
+		return error === '';
 	};
 
 	const saveName = () => {
@@ -74,7 +60,7 @@ export const TopMenu: React.FC = () => {
 		}
 	};
 
-	const handleBlur = (_e: FocusEvent<HTMLInputElement>) => {
+	const handleBlur = () => {
 		if (validateName(projectName)) {
 			saveName();
 		} else {

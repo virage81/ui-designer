@@ -18,19 +18,19 @@ import { type ChangeEvent, type FC, useCallback, useEffect, useState } from 'rea
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getNewProjectName } from './utils';
+import { validateProjectName } from '@shared/utils/projectNameValidation';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
 const DEFAULT_NAME = 'Проект';
 const DEFAULT_SIZE = 800;
-const NAME_PATTERN = /^[A-Za-zА-Яа-яЁё0-9\s]+$/;
 
 export const Modal: FC = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const projects = useSelector((state: RootState) => state.projects.projects);
-	const newProjectName = getNewProjectName(DEFAULT_NAME, projects)
+	const newProjectName = getNewProjectName(DEFAULT_NAME, projects);
 	const isCreateProjectModalOpen = useSelector((state: RootState) => state.modals.isCreateProjectModalOpen);
 
 	const [pendingName, setPendingName] = useState<string | null>(null);
@@ -62,14 +62,11 @@ export const Modal: FC = () => {
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
 			case 'projectName': {
-				if (value.length === 0) {
-					setProjectNameError('Название обязательно');
-				} else if (!NAME_PATTERN.test(value)) {
-					setProjectNameError('Допустимы буквы и цифры');
-				} else {
-					setProjectNameError('');
+				const error = validateProjectName(value, projects);
+				setProjectNameError(error);
+				if (!error) {
+					setProjectName(value);
 				}
-				setProjectName(value);
 				break;
 			}
 			case 'width': {
