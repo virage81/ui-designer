@@ -19,9 +19,6 @@ export const TopMenu: React.FC = () => {
 						<Button variant='tools' disableElevation>
 							Файл
 						</Button>
-						<Button variant='tools' disableElevation>
-							Правка
-						</Button>
 					</Box>
 					<Box>
 						<Typography noWrap sx={{ color: 'var(--color-muted)' }}>
