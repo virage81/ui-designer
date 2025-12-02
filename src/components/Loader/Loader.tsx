@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Stack } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 
 export const Loader: React.FC = () => {
 	return (
@@ -11,9 +11,7 @@ export const Loader: React.FC = () => {
 				maxWidth: '100%',
 				bgcolor: 'var(--main-bg)',
 			}}>
-			<Stack direction='column' spacing={1} alignItems='center'>
-				<CircularProgress size={50} />
-			</Stack>
+			<CircularProgress size={50} />
 		</Box>
 	);
 };
