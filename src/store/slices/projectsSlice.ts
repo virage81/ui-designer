@@ -29,7 +29,7 @@ const projectsSlice = createSlice({
 		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
 			const id = generateId();
 
-			state.projects.push({ ...action.payload, id, preview: '', date: new Date().toISOString() });
+			state.projects.push({ ...action.payload, id, preview: '', date: new Date().getTime() });
 			state.history[id] = [];
 			const layer = { id: generateId(), hidden: false, name: 'Фон', opacity: 100, zIndex: 1 };
 			state.layers[id] = [layer];
@@ -42,7 +42,7 @@ const projectsSlice = createSlice({
 			state.projects[projectIndex] = {
 				...state.projects[projectIndex],
 				...action.payload,
-				date: new Date().toISOString(),
+				date: new Date().getTime(),
 			};
 		},
 		deleteProject: (state, action: PayloadAction<DeleteProjectParams>) => {
