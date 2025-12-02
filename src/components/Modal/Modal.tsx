@@ -14,9 +14,10 @@ import {
 import type { Project } from '@shared/types/project';
 import { closeCreateProjectModal } from '@store/slices/modalsSlice';
 import { createProject } from '@store/slices/projectsSlice';
-import { type ChangeEvent, type FC, useEffect, useState } from 'react';
+import { type ChangeEvent, type FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getNewProjectName } from './utils';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
@@ -29,11 +30,12 @@ export const Modal: FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const projects = useSelector((state: RootState) => state.projects.projects);
+	const newProjectName = getNewProjectName(DEFAULT_NAME, projects)
 	const isCreateProjectModalOpen = useSelector((state: RootState) => state.modals.isCreateProjectModalOpen);
 
 	const [pendingName, setPendingName] = useState<string | null>(null);
 
-	const [projectName, setProjectName] = useState<string>(DEFAULT_NAME);
+	const [projectName, setProjectName] = useState<string>(newProjectName);
 	const [width, setWidth] = useState<number | string>(DEFAULT_SIZE);
 	const [height, setHeight] = useState<number | string>(DEFAULT_SIZE);
 
@@ -41,21 +43,21 @@ export const Modal: FC = () => {
 	const [widthError, setWidthError] = useState<string>('');
 	const [heightError, setHeightError] = useState<string>('');
 
-	const resetForm: () => void = (): void => {
-		setProjectName(DEFAULT_NAME);
+	const resetForm: () => void = useCallback((): void => {
+		setProjectName(newProjectName);
 		setWidth(DEFAULT_SIZE);
 		setHeight(DEFAULT_SIZE);
 		setProjectNameError('');
 		setWidthError('');
 		setHeightError('');
-	};
+	}, [newProjectName]);
 
 	useEffect(() => {
 		if (isCreateProjectModalOpen) {
 			const id = setTimeout(resetForm, 0);
 			return (): void => clearTimeout(id);
 		}
-	}, [isCreateProjectModalOpen]);
+	}, [isCreateProjectModalOpen, resetForm]);
 
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
