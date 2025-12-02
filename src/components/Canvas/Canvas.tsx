@@ -12,10 +12,12 @@ import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
+import {useCanvasContext} from "@/contexts/CanvasContext.tsx";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
+	const { register, unregister } = useCanvasContext();
 
 	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
@@ -165,8 +167,10 @@ export const Canvas: React.FC = () => {
 									canvasRef.current = el;
 									setupCanvasDPR(el);
 								}
+								register(layer.id, el);
 							} else {
 								delete canvasesRef.current[layer.id];
+								unregister(layer.id);
 							}
 						}}
 						style={{

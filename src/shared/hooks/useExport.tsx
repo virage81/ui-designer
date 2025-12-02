@@ -1,13 +1,15 @@
-import {useCallback} from 'react';
-import {useParams} from 'react-router-dom';
-import {useSelector} from 'react-redux';
-import type {RootState} from '@store/index';
-import {type Layer} from '@shared/types/project';
+import { useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@store/index';
+import type { Layer } from '@shared/types/project';
+import {useCanvasContext} from "@/contexts/CanvasContext.tsx";
 
 export const useExportPNG = () => {
 	const { id: projectId } = useParams<{ id: string }>();
 	const projects = useSelector((state: RootState) => state.projects.projects);
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
+	const { canvases } = useCanvasContext();
 
 	return useCallback(async () => {
 		if (!projectId) return;
@@ -15,25 +17,20 @@ export const useExportPNG = () => {
 		const currentProject = projects.find(p => p.id === projectId);
 		if (!currentProject) return;
 
-		const projectLayers = layersByProject[projectId] || [];
-		if (projectLayers.length === 0) return;
+		const projectLayers = layersByProject[projectId] ?? [];
+		if (!projectLayers.length) return;
 
-		const allCanvases = Array.from(document.querySelectorAll('canvas[id]') as NodeListOf<HTMLCanvasElement>);
 		const canvasesRef: Record<string, HTMLCanvasElement> = {};
-
 		projectLayers.forEach((layer: Layer) => {
-			const canvas = allCanvases.find(c => c.id.includes(layer.id));
-			if (canvas) {
-				canvasesRef[layer.id] = canvas;
-			}
+			const canvas = canvases[layer.id];
+			if (canvas) canvasesRef[layer.id] = canvas;
 		});
 
-		if (Object.keys(canvasesRef).length === 0) return;
+		if (!Object.keys(canvasesRef).length) return;
 
 		const tempCanvas = document.createElement('canvas');
 		const dpr = window.devicePixelRatio || 1;
-		const width = currentProject.width;
-		const height = currentProject.height;
+		const { width, height } = currentProject;
 
 		tempCanvas.width = Math.floor(width * dpr);
 		tempCanvas.height = Math.floor(height * dpr);
@@ -45,15 +42,14 @@ export const useExportPNG = () => {
 
 		ctx.scale(dpr, dpr);
 		ctx.imageSmoothingEnabled = false;
-
 		ctx.fillStyle = 'white';
 		ctx.fillRect(0, 0, width, height);
 
 		const visibleLayers = projectLayers
-			.filter((layer: Layer) => !layer.hidden && canvasesRef[layer.id])
-			.sort((a: Layer, b: Layer) => a.zIndex - b.zIndex);
+			.filter(l => !l.hidden && canvasesRef[l.id])
+			.sort((a, b) => a.zIndex - b.zIndex);
 
-		visibleLayers.forEach((layer: Layer) => {
+		visibleLayers.forEach(layer => {
 			const canvas = canvasesRef[layer.id];
 			ctx.save();
 			ctx.globalAlpha = layer.opacity / 100;
@@ -66,15 +62,14 @@ export const useExportPNG = () => {
 		const filename = `${currentProject.name || 'project'}.png`;
 
 		if ('showSaveFilePicker' in window) {
-				const fileHandle = await window.showSaveFilePicker({
-					suggestedName: filename,
-					types: [{ description: 'PNG Images', accept: { 'image/png': ['.png'] } }],
-				});
-
-				const writable = await fileHandle.createWritable();
-				await writable.write(blob);
-				await writable.close();
-				return;
+			const fileHandle = await window.showSaveFilePicker({
+				suggestedName: filename,
+				types: [{ description: 'PNG Images', accept: { 'image/png': ['.png'] } }],
+			});
+			const writable = await fileHandle.createWritable();
+			await writable.write(blob);
+			await writable.close();
+			return;
 		}
 
 		const link = document.createElement('a');
@@ -83,5 +78,5 @@ export const useExportPNG = () => {
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
-	}, [projectId, projects, layersByProject]);
+	}, [projectId, projects, layersByProject, canvases]);
 };
