@@ -66,7 +66,7 @@ export const useExportPNG = () => {
 		const filename = `${currentProject.name || 'project'}.png`;
 
 		if ('showSaveFilePicker' in window) {
-				const fileHandle = await (window as any).showSaveFilePicker({
+				const fileHandle = await window.showSaveFilePicker({
 					suggestedName: filename,
 					types: [{ description: 'PNG Images', accept: { 'image/png': ['.png'] } }],
 				});
@@ -83,6 +83,5 @@ export const useExportPNG = () => {
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
-		URL.revokeObjectURL(dataUrl);
 	}, [projectId, projects, layersByProject]);
 };

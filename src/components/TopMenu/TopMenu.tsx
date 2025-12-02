@@ -1,5 +1,6 @@
 import { AppBar, Box, Button, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
 import { useProject } from '@shared/hooks/useProject';
+import { useExportPNG } from '@shared/hooks/useExport';
 import { House } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, type KeyboardEvent, type FocusEvent, useEffect, type MouseEvent } from 'react';
@@ -7,13 +8,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { type RootState } from '@store/index';
 import { updateProject } from '@store/slices/projectsSlice';
 import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
-import { useExportPNG } from '@shared/hooks/useExport';
 
 export const TopMenu: React.FC = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const currentProject = useProject();
 	const projects = useSelector((state: RootState) => state.projects.projects);
+	const exportPNG = useExportPNG();
 
 	const [fileAnchorEl, setFileAnchorEl] = useState<null | HTMLElement>(null);
 	const fileMenuOpen = Boolean(fileAnchorEl);
@@ -99,7 +100,6 @@ export const TopMenu: React.FC = () => {
 		handleFileMenuClose();
 	};
 
-	const exportPNG = useExportPNG();
 	const handleExportPng = () => {
 		exportPNG();
 		handleFileMenuClose();
