@@ -2,14 +2,14 @@ import {useCallback} from 'react';
 import {useParams} from 'react-router-dom';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@store/index';
-import {type Layer} from '@shared/types/project'
+import {type Layer} from '@shared/types/project';
 
 export const useExportPNG = () => {
 	const { id: projectId } = useParams<{ id: string }>();
 	const projects = useSelector((state: RootState) => state.projects.projects);
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 
-	return useCallback(() => {
+	return useCallback(async () => {
 		if (!projectId) return;
 
 		const currentProject = projects.find(p => p.id === projectId);
@@ -19,7 +19,6 @@ export const useExportPNG = () => {
 		if (projectLayers.length === 0) return;
 
 		const allCanvases = Array.from(document.querySelectorAll('canvas[id]') as NodeListOf<HTMLCanvasElement>);
-
 		const canvasesRef: Record<string, HTMLCanvasElement> = {};
 
 		projectLayers.forEach((layer: Layer) => {
@@ -62,9 +61,28 @@ export const useExportPNG = () => {
 			ctx.restore();
 		});
 
+		const dataUrl = tempCanvas.toDataURL('image/png');
+		const blob = await (await fetch(dataUrl)).blob();
+		const filename = `${currentProject.name || 'project'}.png`;
+
+		if ('showSaveFilePicker' in window) {
+				const fileHandle = await (window as any).showSaveFilePicker({
+					suggestedName: filename,
+					types: [{ description: 'PNG Images', accept: { 'image/png': ['.png'] } }],
+				});
+
+				const writable = await fileHandle.createWritable();
+				await writable.write(blob);
+				await writable.close();
+				return;
+		}
+
 		const link = document.createElement('a');
-		link.download = `${currentProject.name || 'project'}.png`;
-		link.href = tempCanvas.toDataURL('image/png');
+		link.download = filename;
+		link.href = dataUrl;
+		document.body.appendChild(link);
 		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(dataUrl);
 	}, [projectId, projects, layersByProject]);
 };
