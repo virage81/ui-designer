@@ -2,7 +2,7 @@ import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolki
 import { generateId } from '@shared/helpers';
 import type { ProjectsSliceState } from '@shared/types/projectsSliceState';
 
-import { checkProjectExistence } from '@store/utils/projects';
+import { checkProjectExistence, getFormatedDate } from '@store/utils';
 import type { RootState } from '..';
 import type {
 	ClearActiveLayer,
@@ -29,7 +29,7 @@ const projectsSlice = createSlice({
 		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
 			const id = generateId();
 
-			state.projects.push({ ...action.payload, id, preview: '', date: new Date().toISOString() });
+			state.projects.push({ ...action.payload, id, preview: '', date: getFormatedDate() });
 			state.history[id] = [];
 			const layer = { id: generateId(), hidden: false, name: 'Фон', opacity: 100, zIndex: 1 };
 			state.layers[id] = [layer];
@@ -39,7 +39,7 @@ const projectsSlice = createSlice({
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
 			if (projectIndex === -1) throw new Error(`Project with ID ${action.payload.id} not found`);
 
-			state.projects[projectIndex] = { ...state.projects[projectIndex], ...action.payload };
+			state.projects[projectIndex] = { ...state.projects[projectIndex], ...action.payload, date: getFormatedDate() };
 		},
 		deleteProject: (state, action: PayloadAction<DeleteProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
