@@ -13,13 +13,15 @@ import { RectangleTool } from './tools/Rect';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
 import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
+import {useSaveProjectPreview} from "@shared/hooks/useSavePreview.tsx";
+import {useProject} from "@shared/hooks/useProject.tsx";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
 	const { register, unregister } = useCanvasContext();
 
-	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
+	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
@@ -28,7 +30,14 @@ export const Canvas: React.FC = () => {
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
 
-	const currentProject = useMemo(() => projects.find(item => item.id === projectId), [projectId, projects]);
+	const currentProject = useProject()
+
+	const { canvases } = useCanvasContext();
+	const layersByProject = useSelector((state: RootState) => state.projects.layers);
+	const projectLayers = layersByProject[projectId ?? ''] ?? []
+	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
+
+
 	const toolStyles = useMemo<Styles>(
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
 		[fillColor, strokeWidth, strokeStyle, fontSize],
@@ -55,45 +64,12 @@ export const Canvas: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
-		const loadLayerData = async () => {
-			if (!currentProject || !projectId || !canvasRef.current) return;
+		const saveInterval = setInterval(() => {
+			saveProjectPreview()
+		}, 1000);
 
-			sortedLayers.forEach((layer) => {
-				const canvas = canvasesRef.current[layer.id];
-				if (!canvas || !layer.canvasData) return;
-
-				const ctx = canvas.getContext('2d', { willReadFrequently: true });
-				if (!ctx) return;
-
-				const dpr = window.devicePixelRatio || 1;
-				const rect = canvas.getBoundingClientRect();
-				const logicalWidth = rect.width;
-				const logicalHeight = rect.height;
-
-				if (!dprSetupsRef.current[canvas.id]) {
-					canvas.width = Math.floor(logicalWidth * dpr);
-					canvas.height = Math.floor(logicalHeight * dpr);
-					canvas.style.width = `${logicalWidth}px`;
-					canvas.style.height = `${logicalHeight}px`;
-					ctx.scale(dpr, dpr);
-					ctx.imageSmoothingEnabled = false;
-					dprSetupsRef.current[canvas.id] = true;
-				}
-
-				const img = new Image();
-				img.onload = () => {
-					ctx.clearRect(0, 0, logicalWidth, logicalHeight);
-					ctx.globalAlpha = layer.opacity / 100;
-
-					ctx.drawImage(img, 0, 0, logicalWidth, logicalHeight);
-					ctx.globalAlpha = 1;
-				};
-				img.src = layer.canvasData;
-			});
-		};
-
-		loadLayerData();
-	}, [currentProject, projectId, sortedLayers]);
+		return () => clearInterval(saveInterval);
+	}, [ saveProjectPreview]);
 
 	useEffect(() => {
 		if (toolRef.current) {

@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { updateProject } from '@store/slices/projectsSlice';
-import type { Layer, Project } from '@shared/types/project';
+import {useCallback} from 'react';
+import {useDispatch} from 'react-redux';
+import {updateProject} from '@store/slices/projectsSlice';
+import type {Layer, Project} from '@shared/types/project';
 
 export const useSaveProjectPreview = (
 	currentProject: Project,
@@ -10,7 +10,7 @@ export const useSaveProjectPreview = (
 ) => {
 	const dispatch = useDispatch();
 
-	const savePreview = useCallback(() => {
+	return useCallback(() => {
 		if (!currentProject || !projectLayers.length) return;
 
 		const canvasesRef: Record<string, HTMLCanvasElement> = {};
@@ -42,9 +42,7 @@ export const useSaveProjectPreview = (
 		ctx.fillStyle = 'white';
 		ctx.fillRect(0, 0, previewWidth, previewHeight);
 
-		const visibleLayers = projectLayers
-			.filter(l => !l.hidden && canvasesRef[l.id])
-			.sort((a, b) => a.zIndex - b.zIndex);
+		const visibleLayers = projectLayers.filter(l => !l.hidden && canvasesRef[l.id]).sort((a, b) => a.zIndex - b.zIndex);
 
 		visibleLayers.forEach(layer => {
 			const canvas = canvasesRef[layer.id];
@@ -56,11 +54,6 @@ export const useSaveProjectPreview = (
 
 		const previewDataUrl = tempCanvas.toDataURL('image/png', 0.5);
 
-		dispatch(updateProject({
-			id: currentProject.id,
-			preview: previewDataUrl
-		}));
+		dispatch(updateProject({ id: currentProject.id, preview: previewDataUrl }));
 	}, [currentProject, projectLayers, canvases, dispatch]);
-
-	return savePreview;
 };
