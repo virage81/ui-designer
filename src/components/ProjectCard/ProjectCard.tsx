@@ -5,6 +5,7 @@ import { FolderOpen, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Placeholder } from './components';
+import { getFormatedDate } from './utils';
 
 export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 	const navigate = useNavigate();
@@ -48,7 +49,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 						{name}
 					</Typography>
 					<Typography variant='body2' sx={{ fontSize: '0.87rem', color: 'var(--color-dark)' }}>
-						Обновлено: {date}
+						Обновлено: {getFormatedDate(date)}
 					</Typography>
 				</CardContent>
 				<CardActions sx={{ px: 2 }}>
