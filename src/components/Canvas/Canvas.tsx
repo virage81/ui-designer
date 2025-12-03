@@ -12,7 +12,7 @@ import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import {useCanvasContext} from "@/contexts/CanvasContext.tsx";
+import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();

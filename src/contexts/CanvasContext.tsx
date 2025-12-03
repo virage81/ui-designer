@@ -1,36 +1,27 @@
-import { createContext, useContext, useRef, type ReactNode } from 'react';
-
-type CanvasMap = Record<string, HTMLCanvasElement>;
-
-interface CanvasRegistry {
-	register: (layerId: string, canvas: HTMLCanvasElement) => void;
-	unregister: (layerId: string) => void;
-	canvases: CanvasMap;
-}
-
-const CanvasContext = createContext<CanvasRegistry | null>(null);
-
-export const useCanvasContext = () => {
-	const ctx = useContext(CanvasContext);
-	if (!ctx) throw new Error('CanvasContext not found');
-	return ctx;
-};
+import { type ReactNode, useRef, useCallback, useMemo } from 'react';
+import { CanvasContext, type CanvasMap, type CanvasRegistry } from './canvasContext.types';
 
 export const CanvasContextProvider = ({ children }: { children: ReactNode }) => {
 	const canvasesRef = useRef<CanvasMap>({});
 
-	const register = (layerId: string, canvas: HTMLCanvasElement) => {
+	const register = useCallback((layerId: string, canvas: HTMLCanvasElement) => {
 		canvasesRef.current[layerId] = canvas;
-	};
+	}, []);
 
-	const unregister = (layerId: string) => {
+	const unregister = useCallback((layerId: string) => {
 		delete canvasesRef.current[layerId];
-	};
+	}, []);
+
+	const contextValue = useMemo<CanvasRegistry>(() => ({
+		register,
+		unregister,
+		get canvases() {
+			return canvasesRef.current;
+		},
+	}), [register, unregister]);
 
 	return (
-		<CanvasContext.Provider
-			value={{ register, unregister, canvases: canvasesRef.current }}
-		>
+		<CanvasContext.Provider value={contextValue}>
 			{children}
 		</CanvasContext.Provider>
 	);

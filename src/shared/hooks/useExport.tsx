@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@store/index';
 import type { Layer } from '@shared/types/project';
-import {useCanvasContext} from "@/contexts/CanvasContext.tsx";
+import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
 
 export const useExportPNG = () => {
 	const { id: projectId } = useParams<{ id: string }>();
