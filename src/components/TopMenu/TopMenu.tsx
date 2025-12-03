@@ -11,6 +11,7 @@ import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
 import { validateProjectName } from '@shared/utils/projectNameValidation';
 import {useSaveProjectPreview} from "@shared/hooks/useSavePreview.tsx";
 import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
+import {useSaveProject} from "@shared/hooks/useSaveProject.ts";
 
 export const TopMenu: React.FC = () => {
 	const dispatch = useDispatch();
@@ -18,6 +19,7 @@ export const TopMenu: React.FC = () => {
 	const currentProject = useProject();
 	const projects = useSelector((state: RootState) => state.projects.projects);
 	const exportPNG = useExportPNG();
+	const saveProject = useSaveProject();
 
 	const { id: projectId } = useParams<{ id: string }>();
 	const { canvases } = useCanvasContext();
@@ -93,7 +95,7 @@ export const TopMenu: React.FC = () => {
 
 	const handleSave = async () => {
 		saveProjectPreview();
-		//todo: сохранять проект
+		await saveProject();
 		handleFileMenuClose();
 	};
 

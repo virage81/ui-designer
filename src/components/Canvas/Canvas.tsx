@@ -55,6 +55,47 @@ export const Canvas: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
+		const loadLayerData = async () => {
+			if (!currentProject || !projectId || !canvasRef.current) return;
+
+			sortedLayers.forEach((layer) => {
+				const canvas = canvasesRef.current[layer.id];
+				if (!canvas || !layer.canvasData) return;
+
+				const ctx = canvas.getContext('2d', { willReadFrequently: true });
+				if (!ctx) return;
+
+				const dpr = window.devicePixelRatio || 1;
+				const rect = canvas.getBoundingClientRect();
+				const logicalWidth = rect.width;
+				const logicalHeight = rect.height;
+
+				if (!dprSetupsRef.current[canvas.id]) {
+					canvas.width = Math.floor(logicalWidth * dpr);
+					canvas.height = Math.floor(logicalHeight * dpr);
+					canvas.style.width = `${logicalWidth}px`;
+					canvas.style.height = `${logicalHeight}px`;
+					ctx.scale(dpr, dpr);
+					ctx.imageSmoothingEnabled = false;
+					dprSetupsRef.current[canvas.id] = true;
+				}
+
+				const img = new Image();
+				img.onload = () => {
+					ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+					ctx.globalAlpha = layer.opacity / 100;
+
+					ctx.drawImage(img, 0, 0, logicalWidth, logicalHeight);
+					ctx.globalAlpha = 1;
+				};
+				img.src = layer.canvasData;
+			});
+		};
+
+		loadLayerData();
+	}, [currentProject, projectId, sortedLayers]);
+
+	useEffect(() => {
 		if (toolRef.current) {
 			toolRef.current.destroyEvents();
 			toolRef.current = null;

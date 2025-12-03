@@ -90,6 +90,19 @@ const projectsSlice = createSlice({
 
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},
+		saveLayerCanvasData: (
+			state,
+			action: PayloadAction<{ projectId: string; layerId: string; canvasData: string }>
+		) => {
+			const { projectId, layerId, canvasData } = action.payload;
+			const projectLayers = state.layers[projectId];
+			if (!projectLayers) return;
+
+			const layerIndex = projectLayers.findIndex(l => l.id === layerId);
+			if (layerIndex === -1) return;
+
+			projectLayers[layerIndex].canvasData = canvasData;
+		},
 		clearActiveLayer: (state, action: PayloadAction<ClearActiveLayer>) => {
 			const { payload } = action;
 
@@ -132,6 +145,7 @@ export const {
 	deleteLayer,
 	setActiveLayer,
 	clearActiveLayer,
+	saveLayerCanvasData
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
