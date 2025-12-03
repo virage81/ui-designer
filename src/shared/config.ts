@@ -3,6 +3,7 @@ export const SIZE_PRESETS = [8, 10, 12, 14, 16, 18, 20, 24, 28, 36, 48, 72];
 
 export const COLOR_PALETTE = [
 	'#000000',
+	'#222222',
 	'#434343',
 	'#666666',
 	'#999999',
@@ -11,7 +12,6 @@ export const COLOR_PALETTE = [
 	'#d9d9d9',
 	'#efefef',
 	'#ffffff',
-	'rgba(0, 0, 0, 0)',
 	'#980000',
 	'#ff0000',
 	'#ff9900',
