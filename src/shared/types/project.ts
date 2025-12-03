@@ -1,4 +1,5 @@
-import type { HistoryType } from "@store/slices/projectsSlice.enums";
+import type { HISTORY_ACTIONS } from "@store/slices/projectsSlice.enums";
+import type { ACTIONS } from "@store/slices/toolsSlice";
 
 export interface Project {
 	id: string;
@@ -9,11 +10,16 @@ export interface Project {
 	preview: string;
 }
 
+export interface Stack {
+	history: History[];
+	pointer: number;
+}
 export interface History {
-	id: string;
+	id: number;
 	date: string;
-	type: HistoryType;
-	isActive: boolean;
+	layers: Layer[],
+	type: HISTORY_ACTIONS | ACTIONS;
+	uniqId: string;
 }
 
 export interface Layer {
@@ -24,4 +30,5 @@ export interface Layer {
 	zIndex: number;
 	hidden: boolean;
 	cleared?: boolean;
+	canvasDataURL?: string;
 }

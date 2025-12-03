@@ -1,6 +1,12 @@
 import { Box } from '@mui/material';
 import type { RootState } from '@store/index';
-import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
+import {
+	addToStack,
+	loadStackElement,
+	saveLayersSnaps,
+	sortedLayersSelector,
+	updateLayer,
+} from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -69,7 +75,6 @@ export const Canvas: React.FC = () => {
 				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
 				break;
 			}
-
 			case ACTIONS.CIRCLE: {
 				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
 				break;
@@ -117,6 +122,16 @@ export const Canvas: React.FC = () => {
 		}
 	}, [activeLayer?.id, setupCanvasDPR]);
 
+	useEffect(() => {
+		if (!projectId) return;
+
+		dispatch(
+			loadStackElement({
+				projectId: projectId,
+			}),
+		);
+	}, [projectId, dispatch]);
+
 	if (!currentProject) {
 		redirect('/404');
 		return null;
@@ -154,6 +169,23 @@ export const Canvas: React.FC = () => {
 						pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 						width: `${currentProject.width}px`,
 						height: `${currentProject.height}px`,
+					}}
+					onMouseUp={() => {
+						dispatch(
+							addToStack({
+								projectId: projectId,
+								data: {
+									layers: sortedLayers,
+									type: tool,
+								},
+							}),
+						);
+						// @TODO: найти лучшее место для сохранения
+						dispatch(
+							saveLayersSnaps({
+								projectId: projectId,
+							}),
+						);
 					}}
 				/>
 			))}

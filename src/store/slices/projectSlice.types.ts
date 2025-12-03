@@ -1,4 +1,6 @@
-import type { History, Layer, Project } from '@shared/types/project';
+import type { Layer, Project } from '@shared/types/project';
+import type { HISTORY_ACTIONS } from './projectsSlice.enums';
+import type { ACTIONS } from './toolsSlice';
 
 export type CreateProjectParams = {} & Omit<Project, 'id' | 'preview' | 'date'>;
 
@@ -31,7 +33,19 @@ export type ClearActiveLayer = {
 	projectId: Project['id'];
 } | null;
 
-export type ModifyHistoryParams = {
+export type ModifyStackParams = {
 	projectId: Project['id'];
-	data: Omit<History, 'id'>;
+	data: {
+		layers: Layer[],
+		type: HISTORY_ACTIONS | ACTIONS;
+	};
+};
+
+export type LoadStackParams = {
+	projectId: Project['id'];
+};
+
+export type UndoRedoStackParams = {
+	projectId: Project['id'];
+	pointer?: number;
 };

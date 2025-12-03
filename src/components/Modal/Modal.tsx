@@ -114,7 +114,7 @@ export const Modal: FC = () => {
 
 	useEffect(() => {
 		return () => {
-				dispatch(closeCreateProjectModal());
+			dispatch(closeCreateProjectModal());
 		};
 	}, [dispatch]);
 
@@ -126,7 +126,8 @@ export const Modal: FC = () => {
 				width: Number(width),
 				height: Number(height),
 				preview: '',
-				history: [],
+				// history: [],
+				stack: null,
 				layers: [],
 			} as Omit<Project, 'id' | 'date'>;
 
@@ -141,8 +142,11 @@ export const Modal: FC = () => {
 	};
 
 	return (
-		<Dialog open={isCreateProjectModalOpen} onClose={() => dispatch(closeCreateProjectModal())}
-						disableRestoreFocus key={isCreateProjectModalOpen ? 'modal-open' : 'modal-closed'}>
+		<Dialog
+			open={isCreateProjectModalOpen}
+			onClose={() => dispatch(closeCreateProjectModal())}
+			disableRestoreFocus
+			key={isCreateProjectModalOpen ? 'modal-open' : 'modal-closed'}>
 			<Box sx={{ position: 'relative', paddingBottom: 2 }}>
 				<DialogTitle aria-labelledby='modal-title' sx={{ position: 'relative' }}>
 					Создать новый проект
@@ -168,7 +172,7 @@ export const Modal: FC = () => {
 						fullWidth
 						margin='normal'
 						value={projectName}
-						autoComplete="off"
+						autoComplete='off'
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}

@@ -1,24 +1,25 @@
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Box, Button, Menu, MenuItem, Tab, Tabs, Typography } from '@mui/material';
-import type { Layer } from '@shared/types/project';
+import type { History, Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
 import {
 	clearActiveLayer,
 	createLayer,
 	deleteLayer,
-	historySelector,
-	modifyHistory,
 	setActiveLayer,
 	sortedLayersSelector,
 	updateLayer,
+	historySelector,
+	addToStack,
+	pointerSelector,
 } from '@store/slices/projectsSlice';
 import { PlusIcon } from 'lucide-react';
 import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from './components';
-import { HistoryType } from '@store/slices/projectsSlice.enums';
+import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 import { HistoryItem } from './components/HistoryItem';
 
 export const RightSideBar: React.FC = () => {
@@ -26,8 +27,9 @@ export const RightSideBar: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
+	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
+	const stack = useSelector((state: RootState) => historySelector(state, projectId));
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
-	const history = useSelector((state: RootState) => historySelector(state, projectId));
 
 	const [activeTab, setActiveTab] = useState(0);
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -47,6 +49,16 @@ export const RightSideBar: React.FC = () => {
 		if (!projectId) return;
 
 		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
+
+		dispatch(
+			addToStack({
+				projectId,
+				data: {
+					layers: sortedLayers,
+					type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
+				},
+			}),
+		);
 	};
 
 	const handleClearLayer = () => {
@@ -59,12 +71,11 @@ export const RightSideBar: React.FC = () => {
 				}),
 			);
 			dispatch(
-				modifyHistory({
-					projectId: projectId,
+				addToStack({
+					projectId,
 					data: {
-						date: new Date().toUTCString(),
-						type: HistoryType.LAYER_CLEARED,
-						isActive: true,
+						layers: sortedLayers,
+						type: HISTORY_ACTIONS.LAYER_CLEAR,
 					},
 				}),
 			);
@@ -83,18 +94,32 @@ export const RightSideBar: React.FC = () => {
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
 		dispatch(
-			modifyHistory({
-				projectId: projectId,
+			addToStack({
+				projectId,
 				data: {
-					date: new Date().toUTCString(),
-					type: HistoryType.LAYER_DELETED,
-					isActive: true,
+					layers: sortedLayers,
+					type: HISTORY_ACTIONS.LAYER_DELETE,
 				},
 			}),
 		);
 
 		if (layerId === activeLayer?.id) {
 			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
+		}
+	};
+
+	const handleLayerClick = (id: string) => {
+		if (!editingLayerId) {
+			dispatch(setActiveLayer({ projectId, id }));
+			dispatch(
+				addToStack({
+					projectId,
+					data: {
+						layers: sortedLayers,
+						type: HISTORY_ACTIONS.LAYER_ACTIVE,
+					},
+				}),
+			);
 		}
 	};
 
@@ -120,6 +145,15 @@ export const RightSideBar: React.FC = () => {
 				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
 			}),
 		);
+		dispatch(
+			addToStack({
+				projectId,
+				data: {
+					layers: sortedLayers,
+					type: HISTORY_ACTIONS.LAYER_RENAME,
+				},
+			}),
+		);
 		setEditingLayerId(null);
 		setEditingLayerName('');
 	};
@@ -140,6 +174,15 @@ export const RightSideBar: React.FC = () => {
 		newLayers.forEach((layer, index) => {
 			dispatch(updateLayer({ projectId, data: { id: layer.id, zIndex: newLayers.length - index } }));
 		});
+		dispatch(
+			addToStack({
+				projectId,
+				data: {
+					layers: sortedLayers,
+					type: HISTORY_ACTIONS.LAYER_ORDER,
+				},
+			}),
+		);
 	};
 
 	return (
@@ -187,12 +230,11 @@ export const RightSideBar: React.FC = () => {
 										}),
 									);
 									dispatch(
-										modifyHistory({
+										addToStack({
 											projectId: projectId,
 											data: {
-												date: new Date().toUTCString(),
-												type: HistoryType.LAYER_ADDED,
-												isActive: true,
+												layers: sortedLayers,
+												type: HISTORY_ACTIONS.LAYER_ADD,
 											},
 										}),
 									);
@@ -224,7 +266,6 @@ export const RightSideBar: React.FC = () => {
 										<SortableLayer
 											key={layer.id}
 											layer={layer}
-											projectId={projectId}
 											isActive={layer.id === activeLayer?.id}
 											editingLayerId={editingLayerId}
 											editingLayerName={editingLayerName}
@@ -233,6 +274,7 @@ export const RightSideBar: React.FC = () => {
 											cancelEditing={cancelEditing}
 											handleUpdateLayer={handleUpdateLayer}
 											handleOpenMenu={handleOpenMenu}
+											handleLayerClick={handleLayerClick}
 										/>
 									))}
 								</Box>
@@ -292,8 +334,8 @@ export const RightSideBar: React.FC = () => {
 									backgroundColor: 'rgba(0,0,0,0.3)',
 								},
 							}}>
-							{history.map(el => (
-								<HistoryItem key={el.id} {...el} />
+							{stack.reverse().map((el: History) => (
+								<HistoryItem key={el.uniqId} {...el} isActive={el?.id <= pointer} />
 							))}
 						</Box>
 					</Box>
