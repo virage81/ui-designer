@@ -161,6 +161,7 @@ export const Canvas: React.FC = () => {
 					width: currentProject.width,
 					height: currentProject.height,
 					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
 				}}>
 				<canvas
 					style={{

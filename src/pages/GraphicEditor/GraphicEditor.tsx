@@ -5,7 +5,7 @@ import { Modal } from '@components/Modal';
 import { RightSideBar } from '@components/RightSidebar';
 import { TopMenu } from '@components/TopMenu';
 import { Box } from '@mui/material';
-import { checkProjectExistence } from '@store/utils/projects.ts';
+import { checkProjectExistence } from '@store/utils';
 import { useSelector } from 'react-redux';
 import { Navigate, useParams } from 'react-router-dom';
 import { CanvasContextProvider } from '@/contexts/CanvasContext.tsx';

@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { type RootState } from '@store/index';
 import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
 import { Placeholder } from './components';
+import { getFormatedDate } from './utils';
 
 export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 	const navigate = useNavigate();
@@ -110,8 +111,8 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 							)}
 						</Box>
 					</Box>
-					<Typography variant='body2' sx={{ fontSize: '0.87rem', color: 'var(--color-dark)', mt: 0.5 }}>
-						Обновлено: {date}
+					<Typography variant='body2' sx={{ fontSize: '0.87rem', color: 'var(--color-dark)' }}>
+						Обновлено: {getFormatedDate(date)}
 					</Typography>
 				</CardContent>
 
