@@ -2,19 +2,17 @@ import { AppBar, Box, Button, Menu, MenuItem, Toolbar, Typography } from '@mui/m
 import { useProject } from '@shared/hooks/useProject';
 import { useExportPNG } from '@shared/hooks/useExport';
 import { House } from 'lucide-react';
-import { useNavigate, useParams} from 'react-router-dom';
-import { useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useState, type MouseEvent } from 'react';
+import { useSelector } from 'react-redux';
 import { type RootState } from '@store/index';
-import { updateProject } from '@store/slices/projectsSlice';
-import {toggleCreateProjectModal} from "@store/slices/modalsSlice.ts";
-import { validateProjectName } from '@shared/utils/projectNameValidation';
-import {useSaveProjectPreview} from "@shared/hooks/useSavePreview.tsx";
-import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
-import {useSaveProject} from "@shared/hooks/useSaveProject.ts";
+import { toggleCreateProjectModal } from '@store/slices/modalsSlice.ts';
+import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
+import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
+import { useSaveProject } from '@shared/hooks/useSaveProject.ts';
+import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
 
 export const TopMenu: React.FC = () => {
-	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const currentProject = useProject();
 	const projects = useSelector((state: RootState) => state.projects.projects);
@@ -24,61 +22,17 @@ export const TopMenu: React.FC = () => {
 	const { id: projectId } = useParams<{ id: string }>();
 	const { canvases } = useCanvasContext();
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
-
-	const projectLayers = layersByProject[projectId ?? ''] ?? []
+	const projectLayers = layersByProject[projectId ?? ''] ?? [];
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 
+	const editing = useProjectNameEditing({
+		projectId: currentProject.id,
+		initialName: currentProject.name,
+		projects
+	});
 
 	const [fileAnchorEl, setFileAnchorEl] = useState<null | HTMLElement>(null);
 	const fileMenuOpen = Boolean(fileAnchorEl);
-
-	const [isEditing, setIsEditing] = useState(false);
-	const [projectName, setProjectName] = useState(currentProject.name);
-	const [projectNameError, setProjectNameError] = useState('');
-	const [originalName, setOriginalName] = useState(currentProject.name);
-
-	const startEditing = () => {
-		setOriginalName(currentProject.name);
-		setProjectName(currentProject.name);
-		setProjectNameError('');
-		setIsEditing(true);
-	};
-
-	const validateName = (name: string): boolean => {
-		const error = validateProjectName(name, projects, currentProject.id);
-		setProjectNameError(error);
-		return error === '';
-	};
-
-	const saveName = () => {
-		if (!validateName(projectName)) return;
-		if (projectName.trim() !== currentProject.name) {
-			dispatch(updateProject({ id: currentProject.id, name: projectName.trim() }));
-		}
-		setIsEditing(false);
-	};
-
-	const cancelEditing = () => {
-		setProjectName(originalName);
-		setProjectNameError('');
-		setIsEditing(false);
-	};
-
-	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter') {
-			saveName();
-		} else if (e.key === 'Escape') {
-			cancelEditing();
-		}
-	};
-
-	const handleBlur = () => {
-		if (validateName(projectName)) {
-			saveName();
-		} else {
-			cancelEditing();
-		}
-	};
 
 	const handleFileMenuClick = (event: MouseEvent<HTMLButtonElement>) => {
 		setFileAnchorEl(event.currentTarget);
@@ -89,7 +43,7 @@ export const TopMenu: React.FC = () => {
 	};
 
 	const handleNewProject = () => {
-		dispatch(toggleCreateProjectModal())
+		toggleCreateProjectModal();
 		handleFileMenuClose();
 	};
 
@@ -98,7 +52,6 @@ export const TopMenu: React.FC = () => {
 		await saveProject();
 		handleFileMenuClose();
 	};
-
 
 	const handleExportPng = () => {
 		exportPNG();
@@ -129,38 +82,40 @@ export const TopMenu: React.FC = () => {
 					</Box>
 
 					<Box sx={{ maxWidth: 300 }}>
-						{isEditing ? (
+						{editing.isEditing ? (
 							<>
 								<input
 									type='text'
-									value={projectName}
+									value={editing.projectName}
 									onChange={(e) => {
-										setProjectName(e.target.value);
-										if (projectNameError) validateName(e.target.value);
+										editing.setProjectName(e.target.value);
+										if (editing.projectNameError) editing.validateName(e.target.value);
 									}}
-									onKeyDown={handleKeyDown}
-									onBlur={handleBlur}
+									onKeyDown={editing.handleKeyDown}
+									onBlur={editing.handleBlur}
 									autoFocus
 									style={{
 										fontSize: '1rem',
-										color: projectNameError ? 'red' : 'var(--color-muted)',
+										fontFamily: 'inherit',
+										letterSpacing: 'inherit',
+										color: editing.projectNameError ? 'red' : 'var(--color-muted)',
 										backgroundColor: 'transparent',
 										border: 'none',
-										borderBottom: projectNameError ? '2px solid red' : '1px solid var(--color-muted)',
+										borderBottom: editing.projectNameError ? '2px solid red' : '1px solid var(--color-muted)',
 										outline: 'none',
 										width: '100%',
 										cursor: 'text'
 									}}
-									aria-invalid={!!projectNameError}
+									aria-invalid={!!editing.projectNameError}
 									aria-describedby='project-name-error'
 								/>
-								{projectNameError && (
+								{editing.projectNameError && (
 									<Typography
 										id='project-name-error'
 										variant='caption'
 										sx={{ color: 'red', userSelect: 'none', mt: 0.3, display: 'block' }}
 									>
-										{projectNameError}
+										{editing.projectNameError}
 									</Typography>
 								)}
 							</>
@@ -168,7 +123,7 @@ export const TopMenu: React.FC = () => {
 							<Typography
 								noWrap
 								sx={{ color: 'var(--color-muted)', cursor: 'pointer', paddingLeft: '20px' }}
-								onClick={startEditing}
+								onClick={editing.startEditing}
 								title="Нажмите для редактирования"
 							>
 								{currentProject?.name}
@@ -182,14 +137,8 @@ export const TopMenu: React.FC = () => {
 				anchorEl={fileAnchorEl}
 				open={fileMenuOpen}
 				onClose={handleFileMenuClose}
-				anchorOrigin={{
-					vertical: 'bottom',
-					horizontal: 'left',
-				}}
-				transformOrigin={{
-					vertical: 'top',
-					horizontal: 'left',
-				}}
+				anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+				transformOrigin={{ vertical: 'top', horizontal: 'left' }}
 				sx={{
 					mt: '11px',
 					ml: '1px',
@@ -204,15 +153,9 @@ export const TopMenu: React.FC = () => {
 					},
 				}}
 			>
-				<MenuItem onClick={handleNewProject}>
-					Новый проект
-				</MenuItem>
-				<MenuItem onClick={handleSave}>
-					Сохранить
-				</MenuItem>
-				<MenuItem onClick={handleExportPng}>
-					Экспортировать в png
-				</MenuItem>
+				<MenuItem onClick={handleNewProject}>Новый проект</MenuItem>
+				<MenuItem onClick={handleSave}>Сохранить</MenuItem>
+				<MenuItem onClick={handleExportPng}>Экспортировать в png</MenuItem>
 			</Menu>
 		</>
 	);
