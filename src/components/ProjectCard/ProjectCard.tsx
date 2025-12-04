@@ -18,8 +18,17 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 
 	return (
 		<>
-			<Card sx={{ maxWidth: 290, borderRadius: 3, border: '1px solid var(--header-border-color)', backgroundColor: 'var(--header-bg)', paddingBottom: 3 }}>
-				{!preview ? <Placeholder /> : (
+			<Card
+				sx={{
+					maxWidth: 290,
+					borderRadius: 3,
+					border: '1px solid var(--header-border-color)',
+					backgroundColor: 'var(--header-bg)',
+					paddingBottom: 3,
+				}}>
+				{!preview ? (
+					<Placeholder />
+				) : (
 					<CardMedia
 						sx={{ borderTopLeftRadius: 8, borderTopRightRadius: 8 }}
 						component='img'
@@ -38,18 +47,14 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 								flexDirection: 'column',
 								justifyContent: 'center',
 								px: 0.5,
-								py: 1
-							}}
-						>
+								py: 1,
+							}}>
 							{editing.isEditing ? (
 								<>
 									<input
 										type='text'
 										value={editing.projectName}
-										onChange={(e) => {
-											editing.setProjectName(e.target.value);
-											if (editing.projectNameError) editing.validateName(e.target.value);
-										}}
+										onChange={editing.handleChange}
 										onKeyDown={editing.handleKeyDown}
 										onBlur={editing.handleBlur}
 										autoFocus
@@ -70,7 +75,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 											appearance: 'none',
 											WebkitAppearance: 'none',
 											padding: 0,
-											margin: 0
+											margin: 0,
 										}}
 										aria-invalid={!!editing.projectNameError}
 										aria-describedby='project-name-error'
@@ -79,14 +84,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 										<Typography
 											id='project-name-error'
 											variant='caption'
-											sx={{
-												color: 'red',
-												userSelect: 'none',
-												mt: 0,
-												lineHeight: 1,
-												minHeight: '16px'
-											}}
-										>
+											sx={{ color: 'red', userSelect: 'none', mt: 0, lineHeight: 1, minHeight: '16px' }}>
 											{editing.projectNameError}
 										</Typography>
 									)}
@@ -100,10 +98,13 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 										color: 'var(--color)',
 										cursor: 'pointer',
 										lineHeight: 1.2,
+										whiteSpace: 'nowrap',
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										maxWidth: '100%',
 									}}
 									onClick={editing.startEditing}
-									title="Нажмите для редактирования"
-								>
+									title='Нажмите для редактирования'>
 									{name}
 								</Typography>
 							)}
@@ -119,8 +120,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 						onClick={() => navigate(`/projects/${id}`)}
 						variant='contained'
 						startIcon={<FolderOpen size={18} />}
-						sx={{ textTransform: 'none', flex: 3 }}
-					>
+						sx={{ textTransform: 'none', flex: 3 }}>
 						Открыть
 					</Button>
 					<Button
@@ -128,8 +128,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 						color='error'
 						startIcon={<Trash2 size={18} />}
 						sx={{ textTransform: 'none', flex: 2 }}
-						onClick={() => setOpenModal(true)}
-					>
+						onClick={() => setOpenModal(true)}>
 						Удалить
 					</Button>
 				</CardActions>

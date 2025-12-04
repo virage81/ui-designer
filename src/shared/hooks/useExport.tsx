@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@store/index';
 import type { Layer } from '@shared/types/project';
-import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
+import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
+import { renderProjectCanvas } from '@shared/utils/canvasRenderer';
 
 export const useExportPNG = () => {
 	const { id: projectId } = useParams<{ id: string }>();
@@ -28,36 +29,14 @@ export const useExportPNG = () => {
 
 		if (!Object.keys(canvasesRef).length) return;
 
-		const tempCanvas = document.createElement('canvas');
-		const dpr = window.devicePixelRatio || 1;
-		const { width, height } = currentProject;
+		const canvas = renderProjectCanvas(
+			currentProject.width,
+			currentProject.height,
+			projectLayers,
+			canvasesRef
+		);
 
-		tempCanvas.width = Math.floor(width * dpr);
-		tempCanvas.height = Math.floor(height * dpr);
-		tempCanvas.style.width = `${width}px`;
-		tempCanvas.style.height = `${height}px`;
-
-		const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
-		if (!ctx) return;
-
-		ctx.scale(dpr, dpr);
-		ctx.imageSmoothingEnabled = false;
-		ctx.fillStyle = 'white';
-		ctx.fillRect(0, 0, width, height);
-
-		const visibleLayers = projectLayers
-			.filter(l => !l.hidden && canvasesRef[l.id])
-			.sort((a, b) => a.zIndex - b.zIndex);
-
-		visibleLayers.forEach(layer => {
-			const canvas = canvasesRef[layer.id];
-			ctx.save();
-			ctx.globalAlpha = layer.opacity / 100;
-			ctx.drawImage(canvas, 0, 0, width, height);
-			ctx.restore();
-		});
-
-		const dataUrl = tempCanvas.toDataURL('image/png');
+		const dataUrl = canvas.toDataURL('image/png');
 		const blob = await (await fetch(dataUrl)).blob();
 		const filename = `${currentProject.name || 'project'}.png`;
 

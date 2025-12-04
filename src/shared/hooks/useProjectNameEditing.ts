@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import { type ChangeEvent, type KeyboardEvent, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { type RootState } from '@store/index';
 import { updateProject } from '@store/slices/projectsSlice';
@@ -16,10 +16,8 @@ export const useProjectNameEditing = ({ projectId, initialName, projects }: UseP
 	const [isEditing, setIsEditing] = useState(false);
 	const [projectName, setProjectName] = useState(initialName);
 	const [projectNameError, setProjectNameError] = useState('');
-	const [originalName, setOriginalName] = useState(initialName);
 
 	const startEditing = () => {
-		setOriginalName(initialName);
 		setProjectName(initialName);
 		setProjectNameError('');
 		setIsEditing(true);
@@ -32,32 +30,38 @@ export const useProjectNameEditing = ({ projectId, initialName, projects }: UseP
 	};
 
 	const saveName = () => {
-		if (!validateName(projectName)) return;
-		if (projectName.trim() !== initialName) {
-			dispatch(updateProject({ id: projectId, name: projectName.trim() }));
+		const trimmedName = projectName.trim();
+		if (validateName(trimmedName)) {
+			if (trimmedName !== initialName) {
+				dispatch(updateProject({ id: projectId, name: trimmedName }));
+			}
+			setIsEditing(false);
 		}
-		setIsEditing(false);
 	};
 
-	const cancelEditing = () => {
-		setProjectName(originalName);
-		setProjectNameError('');
-		setIsEditing(false);
+	const handleBlur = () => {
+		if (projectNameError === '') {
+			saveName();
+		} else {
+			setProjectName(initialName);
+			setProjectNameError('');
+			setIsEditing(false);
+		}
+	};
+
+	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const newValue = e.target.value;
+		setProjectName(newValue);
+		validateName(newValue);
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === 'Enter') {
 			saveName();
 		} else if (e.key === 'Escape') {
-			cancelEditing();
-		}
-	};
-
-	const handleBlur = () => {
-		if (validateName(projectName)) {
-			saveName();
-		} else {
-			cancelEditing();
+			setProjectName(initialName);
+			setProjectNameError('');
+			setIsEditing(false);
 		}
 	};
 
@@ -67,7 +71,7 @@ export const useProjectNameEditing = ({ projectId, initialName, projects }: UseP
 		projectNameError,
 		setProjectName,
 		startEditing,
-		validateName,
+		handleChange,
 		handleKeyDown,
 		handleBlur,
 	};

@@ -87,10 +87,7 @@ export const TopMenu: React.FC = () => {
 								<input
 									type='text'
 									value={editing.projectName}
-									onChange={(e) => {
-										editing.setProjectName(e.target.value);
-										if (editing.projectNameError) editing.validateName(e.target.value);
-									}}
+									onChange={editing.handleChange}
 									onKeyDown={editing.handleKeyDown}
 									onBlur={editing.handleBlur}
 									autoFocus
