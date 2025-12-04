@@ -20,7 +20,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 		<>
 			<Card
 				sx={{
-					maxWidth: 290,
+					width: 290,
 					borderRadius: 3,
 					border: '1px solid var(--header-border-color)',
 					backgroundColor: 'var(--header-bg)',
@@ -39,7 +39,7 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 				)}
 
 				<CardContent sx={{ pb: 0.2 }}>
-					<Box sx={{ maxWidth: 250 }}>
+					<Box sx={{ width: 250 }}>
 						<Box
 							sx={{
 								minHeight: '44px',

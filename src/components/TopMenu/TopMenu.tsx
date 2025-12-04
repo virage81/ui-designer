@@ -9,7 +9,6 @@ import { type RootState } from '@store/index';
 import { toggleCreateProjectModal } from '@store/slices/modalsSlice.ts';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
-import { useSaveProject } from '@shared/hooks/useSaveProject.ts';
 import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
 
 export const TopMenu: React.FC = () => {
@@ -17,8 +16,6 @@ export const TopMenu: React.FC = () => {
 	const currentProject = useProject();
 	const projects = useSelector((state: RootState) => state.projects.projects);
 	const exportPNG = useExportPNG();
-	const saveProject = useSaveProject();
-
 	const { id: projectId } = useParams<{ id: string }>();
 	const { canvases } = useCanvasContext();
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
@@ -47,9 +44,8 @@ export const TopMenu: React.FC = () => {
 		handleFileMenuClose();
 	};
 
-	const handleSave = async () => {
+	const handleSave = () => {
 		saveProjectPreview();
-		await saveProject();
 		handleFileMenuClose();
 	};
 

@@ -53,7 +53,24 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 						color: 'var(--color-dark)',
 						fontSize: '1rem',
 					}}>
-					Вы уверены, что хотите удалить проект: "{projectName}"? Это действие нельзя отменить
+					Вы уверены, что хотите удалить проект:{' '}
+					<Typography
+						component='span'
+						sx={{
+							fontWeight: 'inherit',
+							color: 'inherit',
+							whiteSpace: 'nowrap',
+							overflow: 'hidden',
+							textOverflow: 'ellipsis',
+							display: 'inline-block',
+							maxWidth: '300px',
+							verticalAlign: 'middle',
+							title: projectName,
+						}}
+					>
+						"{projectName}
+					</Typography>
+					"? Это действие нельзя отменить.
 				</Typography>
 				<DialogActions>
 					<Button
