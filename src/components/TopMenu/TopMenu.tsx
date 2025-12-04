@@ -4,7 +4,7 @@ import { useExportPNG } from '@shared/hooks/useExport';
 import { House } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, type MouseEvent } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { type RootState } from '@store/index';
 import { toggleCreateProjectModal } from '@store/slices/modalsSlice.ts';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
@@ -13,6 +13,7 @@ import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
 
 export const TopMenu: React.FC = () => {
 	const navigate = useNavigate();
+	const dispatch = useDispatch();
 	const currentProject = useProject();
 	const projects = useSelector((state: RootState) => state.projects.projects);
 	const exportPNG = useExportPNG();
@@ -40,11 +41,12 @@ export const TopMenu: React.FC = () => {
 	};
 
 	const handleNewProject = () => {
-		toggleCreateProjectModal();
+		dispatch(toggleCreateProjectModal());
 		handleFileMenuClose();
 	};
 
 	const handleSave = () => {
+		//todo: сохранить проект
 		saveProjectPreview();
 		handleFileMenuClose();
 	};
