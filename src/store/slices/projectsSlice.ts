@@ -20,6 +20,7 @@ const initialState: ProjectsSliceState = {
 	history: {},
 	layers: {},
 	activeLayer: null,
+	zoom: 1,
 };
 
 const projectsSlice = createSlice({
@@ -111,6 +112,9 @@ const projectsSlice = createSlice({
 			state.layers[payload.projectId][layerIndex].cleared = true;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},
+		setZoom: (state, action: PayloadAction<number>) => {
+			state.zoom = action.payload;
+		},
 	},
 });
 
@@ -136,6 +140,7 @@ export const {
 	deleteLayer,
 	setActiveLayer,
 	clearActiveLayer,
+	setZoom,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;

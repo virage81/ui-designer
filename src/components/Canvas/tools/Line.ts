@@ -1,8 +1,5 @@
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент линия
- */
 export class LineTool extends Tool {
 	private saved: string = '';
 	private startX: number = 0;
@@ -10,8 +7,8 @@ export class LineTool extends Tool {
 	private currentX: number = 0;
 	private currentY: number = 0;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
-		super(canvas, styles);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+		super(canvas, styles, zoom);
 		this.listen();
 	}
 

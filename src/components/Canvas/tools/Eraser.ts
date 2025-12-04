@@ -3,8 +3,8 @@ import { Tool, type Styles } from './Tool';
 export class EraserTool extends Tool {
 	private erased: boolean = false;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
-		super(canvas, styles);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+		super(canvas, styles, zoom);
 		this.listen();
 	}
 

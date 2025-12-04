@@ -1,9 +1,6 @@
 import { debounce } from '@shared/debounce';
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент Текст
- */
 interface CanvasBounds {
 	left: number;
 	top: number;
@@ -26,8 +23,8 @@ export class TextTool extends Tool {
 	} | null = null;
 	private resizeObserver: ResizeObserver | null = null;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
-		super(canvas, styles);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+		super(canvas, styles, zoom);
 		this.createTextInput();
 		this.listen();
 	}
