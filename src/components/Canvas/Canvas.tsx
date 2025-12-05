@@ -12,12 +12,16 @@ import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
+import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
+import {useSaveProjectPreview} from "@shared/hooks/useSavePreview.tsx";
+import {useProject} from "@shared/hooks/useProject.tsx";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
+	const { register, unregister } = useCanvasContext();
 
-	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
+	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
@@ -27,7 +31,14 @@ export const Canvas: React.FC = () => {
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
 
-	const currentProject = useMemo(() => projects.find(item => item.id === projectId), [projectId, projects]);
+	const currentProject = useProject()
+
+	const { canvases } = useCanvasContext();
+	const layersByProject = useSelector((state: RootState) => state.projects.layers);
+	const projectLayers = layersByProject[projectId ?? ''] ?? []
+	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
+	const saveProjectPreviewRef = useRef(saveProjectPreview);
+
 	const toolStyles = useMemo<Styles>(
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
 		[fillColor, strokeWidth, strokeStyle, fontSize],
@@ -54,12 +65,24 @@ export const Canvas: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
+		saveProjectPreviewRef.current = saveProjectPreview;
+	}, [saveProjectPreview]);
+
+	useEffect(() => {
+		const saveInterval = setInterval(() => {
+			saveProjectPreviewRef.current();
+		}, 3000);
+
+		return () => clearInterval(saveInterval);
+	}, []);
+
+	useEffect(() => {
 		if (toolRef.current) {
 			toolRef.current.destroyEvents();
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !activeLayer) return;
+		if (!canvasRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
 			case ACTIONS.BRUSH: {
@@ -98,7 +121,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
-	}, [tool, activeLayer, toolStyles, zoom]);
+	}, [tool, activeLayer, toolStyles, currentProject.id,  zoom]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
@@ -165,8 +188,10 @@ export const Canvas: React.FC = () => {
 									canvasRef.current = el;
 									setupCanvasDPR(el);
 								}
+								register(layer.id, el);
 							} else {
 								delete canvasesRef.current[layer.id];
+								unregister(layer.id);
 							}
 						}}
 						style={{

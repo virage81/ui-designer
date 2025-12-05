@@ -21,4 +21,5 @@ export interface Layer {
 	zIndex: number;
 	hidden: boolean;
 	cleared?: boolean;
+	canvasData?: string;
 }

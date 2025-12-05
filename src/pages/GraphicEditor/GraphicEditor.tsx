@@ -9,6 +9,7 @@ import { Box } from '@mui/material';
 import { checkProjectExistence } from '@store/utils';
 import { useSelector } from 'react-redux';
 import { Navigate, useParams } from 'react-router-dom';
+import { CanvasContextProvider } from '@/contexts/CanvasContext.tsx';
 
 export const GraphicEditor: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
@@ -20,14 +21,16 @@ export const GraphicEditor: React.FC = () => {
 
 	return (
 		<div>
-			<TopMenu />
-			<Box sx={{ display: 'flex', height: 'calc(100vh - 89px)', width: '100%' }}>
-				<LeftSidebar />
-				<Canvas />
-				<RightSideBar />
-			</Box>
-			<ZoomBar />
-			<Modal />
+			<CanvasContextProvider>
+				<TopMenu />
+				<Box sx={{ display: 'flex', height: 'calc(100vh - 89px)', width: '100%' }}>
+					<LeftSidebar />
+					<Canvas />
+					<RightSideBar />
+				</Box>
+				<ZoomBar />
+				<Modal />
+			</CanvasContextProvider>
 		</div>
 	);
 };

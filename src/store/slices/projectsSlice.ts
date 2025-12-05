@@ -110,6 +110,7 @@ const projectsSlice = createSlice({
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.layerId} not found`);
 
 			state.layers[payload.projectId][layerIndex].cleared = true;
+			state.layers[payload.projectId][layerIndex].canvasData = undefined;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},
 		setZoom: (state, action: PayloadAction<number>) => {
@@ -140,7 +141,7 @@ export const {
 	deleteLayer,
 	setActiveLayer,
 	clearActiveLayer,
-	setZoom,
+	setZoom
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
