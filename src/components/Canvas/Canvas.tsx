@@ -24,6 +24,7 @@ export const Canvas: React.FC = () => {
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
+	const zoom = useSelector((state: RootState) => state.projects.zoom);
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
@@ -85,28 +86,28 @@ export const Canvas: React.FC = () => {
 
 		switch (tool) {
 			case ACTIONS.BRUSH: {
-				toolRef.current = new BrushTool(canvasRef.current, toolStyles);
+				toolRef.current = new BrushTool(canvasRef.current, toolStyles, zoom);
 				break;
 			}
 			case ACTIONS.RECTANGLE: {
-				toolRef.current = new RectangleTool(canvasRef.current, toolStyles);
+				toolRef.current = new RectangleTool(canvasRef.current, toolStyles, zoom);
 				break;
 			}
 
 			case ACTIONS.CIRCLE: {
-				toolRef.current = new CircleTool(canvasRef.current, toolStyles);
+				toolRef.current = new CircleTool(canvasRef.current, toolStyles, zoom);
 				break;
 			}
 			case ACTIONS.LINE: {
-				toolRef.current = new LineTool(canvasRef.current, toolStyles);
+				toolRef.current = new LineTool(canvasRef.current, toolStyles, zoom);
 				break;
 			}
 			case ACTIONS.ERASER: {
-				toolRef.current = new EraserTool(canvasRef.current, toolStyles);
+				toolRef.current = new EraserTool(canvasRef.current, toolStyles, zoom);
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles);
+				toolRef.current = new TextTool(canvasRef.current, toolStyles, zoom);
 				break;
 			}
 			default: {
@@ -120,7 +121,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
-	}, [tool, activeLayer, toolStyles, currentProject.id]);
+	}, [tool, activeLayer, toolStyles, currentProject.id,  zoom]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
@@ -148,13 +149,8 @@ export const Canvas: React.FC = () => {
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-				justifyContent: 'center',
-				flexGrow: 1,
-				gap: '0.5rem',
-				width: '63px',
+				m: '0 auto',
+				width: '100%',
 				padding: '8px 8px',
 				backgroundColor: 'var(--main-bg)',
 				overflow: 'auto',
@@ -162,10 +158,13 @@ export const Canvas: React.FC = () => {
 			<Box
 				sx={{
 					position: 'relative',
+					m: `${zoom <= 1.2 ? '0 auto' : '0'}`,
 					width: currentProject.width,
 					height: currentProject.height,
 					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
 					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
+					transform: `scale(${zoom})`,
+					transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`
 				}}>
 				<canvas
 					style={{

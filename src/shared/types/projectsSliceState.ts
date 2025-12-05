@@ -5,4 +5,5 @@ export interface ProjectsSliceState {
 	history: Record<Project['id'], History[]>;
 	layers: Record<Project['id'], Layer[]>;
 	activeLayer: Layer | null;
+	zoom: number;
 }

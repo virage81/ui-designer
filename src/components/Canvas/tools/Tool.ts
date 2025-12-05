@@ -26,7 +26,9 @@ export class Tool {
 
 	protected isMouseDown: boolean = false;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
+	protected zoom: number = 1;
+
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
 		this.canvas = canvas;
 
 		this.ctx = canvas.getContext('2d', { willReadFrequently: true })!;
@@ -39,6 +41,8 @@ export class Tool {
 		this.strokeWidth = styles.strokeWidth;
 		this.fill = styles.fill;
 		this.stroke = styles.strokeStyle;
+
+		this.zoom = zoom;
 
 		this.destroyEvents();
 		this.setupEvents();
@@ -63,8 +67,8 @@ export class Tool {
 
 	public getMousePos(e: PointerEvent): [number, number] {
 		const rect = this.canvas.getBoundingClientRect();
-		const x = e.clientX - rect.left;
-		const y = e.clientY - rect.top;
+		const x = (e.clientX - rect.left) / this.zoom;
+		const y = (e.clientY - rect.top) / this.zoom;
 		return [x, y];
 	}
 

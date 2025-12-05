@@ -72,8 +72,8 @@ export const Modal: FC = () => {
 			case 'width': {
 				const num: number = Number(value);
 				setWidth(value);
-				if (!Number.isInteger(num) || num < 1) {
-					setWidthError('Введите целое положительное число');
+				if (!Number.isInteger(num) || num < 100) {
+					setWidthError('Минимальная ширина холста: 100px');
 				} else {
 					setWidthError('');
 				}
@@ -82,8 +82,8 @@ export const Modal: FC = () => {
 			case 'height': {
 				const num: number = Number(value);
 				setHeight(value);
-				if (!Number.isInteger(num) || num < 1) {
-					setHeightError('Введите целое положительное число');
+				if (!Number.isInteger(num) || num < 100) {
+					setHeightError('Минимальная высота холста: 100px');
 				} else {
 					setHeightError('');
 				}
@@ -184,7 +184,7 @@ export const Modal: FC = () => {
 						fullWidth
 						margin='normal'
 						value={width}
-						slotProps={{ htmlInput: { min: 0 } }}
+						slotProps={{ htmlInput: { min: 100 } }}
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}
@@ -198,7 +198,7 @@ export const Modal: FC = () => {
 						fullWidth
 						margin='normal'
 						value={height}
-						slotProps={{ htmlInput: { min: 0 } }}
+						slotProps={{ htmlInput: { min: 100 } }}
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}

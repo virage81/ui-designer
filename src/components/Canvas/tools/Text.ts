@@ -1,9 +1,6 @@
 import { debounce } from '@shared/debounce';
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент Текст
- */
 interface CanvasBounds {
 	left: number;
 	top: number;
@@ -26,8 +23,8 @@ export class TextTool extends Tool {
 	} | null = null;
 	private resizeObserver: ResizeObserver | null = null;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
-		super(canvas, styles);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+		super(canvas, styles, zoom);
 		this.createTextInput();
 		this.listen();
 	}
@@ -208,45 +205,35 @@ export class TextTool extends Tool {
 			return;
 		}
 
-		const textareaRect = this.textInput.getBoundingClientRect();
-		const canvasRect = this.canvas.getBoundingClientRect();
+		const { x: canvasX, y: canvasY, fontSize, color } = this.pendingText;
+		const ctx = this.ctx;
+		ctx.save();
+		ctx.resetTransform();
 
-		const canvasX = textareaRect.left - canvasRect.left;
-		const canvasY = textareaRect.top - canvasRect.top;
+		const physicalX = canvasX * this.dpr;
+		const physicalY = canvasY * this.dpr;
+		const physicalFontSize = fontSize * this.dpr;
+		const physicalMaxWidth = (this.logicalWidth - canvasX - 10) * this.dpr;
+		const physicalLineHeight = physicalFontSize * 1.2;
 
-		const scaleX = this.canvas.width / canvasRect.width;
-		const scaleY = this.canvas.height / canvasRect.height;
+		ctx.font = `normal ${physicalFontSize}px Arial, sans-serif`;
+		ctx.fillStyle = color;
+		ctx.textBaseline = 'top';
+		ctx.textAlign = 'left';
 
-		const { fontSize, color } = this.pendingText;
-
-		this.ctx.font = `${fontSize}px Arial`;
-		this.ctx.fillStyle = color;
-		this.ctx.textBaseline = 'top';
-		this.ctx.textAlign = 'left';
-
-		const realCanvasX = canvasX * scaleX;
-		const realCanvasY = canvasY * scaleY;
-
-		const maxWidth = this.canvas.width - realCanvasX - 10;
-
-		const lineHeight = fontSize * 1.2;
-
-		const lines = this.wrapText(text, maxWidth);
+		const lines = this.wrapTextPhysical(ctx, text, physicalMaxWidth);
 
 		for (let i = 0; i < lines.length; i++) {
-			const lineY = realCanvasY + i * lineHeight;
-
-			if (lineY + lineHeight > this.canvas.height) break;
-
-			this.ctx.fillText(lines[i], realCanvasX, lineY);
+			const lineY = physicalY + i * physicalLineHeight;
+			if (lineY > this.canvas.height) break;
+			ctx.fillText(lines[i], physicalX, lineY);
 		}
 
+		ctx.restore();
 		this.cleanup();
 	}
 
-	private wrapText(text: string, maxWidth: number): string[] {
-		if (!this.ctx) return [text];
-
+	private wrapTextPhysical(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
 		const lines: string[] = [];
 		const paragraphs = text.split('\n');
 
@@ -261,10 +248,10 @@ export class TextTool extends Tool {
 
 			for (const word of words) {
 				const testLine = currentLine ? `${currentLine} ${word}` : word;
-				const width = this.ctx.measureText(testLine).width;
+				const width = ctx.measureText(testLine).width;
 
 				if (width > maxWidth && currentLine === '') {
-					const broken = this.breakLongWord(word, maxWidth);
+					const broken = this.breakLongWordPhysical(ctx, word, maxWidth);
 					lines.push(...broken);
 					continue;
 				}
@@ -283,13 +270,13 @@ export class TextTool extends Tool {
 		return lines;
 	}
 
-	private breakLongWord(word: string, maxWidth: number): string[] {
+	private breakLongWordPhysical(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
 		const parts: string[] = [];
 		let current = '';
 
 		for (const char of word) {
 			const test = current + char;
-			if (this.ctx!.measureText(test).width > maxWidth) {
+			if (ctx.measureText(test).width > maxWidth) {
 				parts.push(current);
 				current = char;
 			} else {
