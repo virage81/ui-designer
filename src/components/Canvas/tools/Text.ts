@@ -33,14 +33,11 @@ export class TextTool extends Tool {
 		this.canvas.onclick = this.clickHandler.bind(this);
 	};
 
-	clickHandler = (e: MouseEvent) => {
+	clickHandler = (e: PointerEvent) => {
 		if (this.isEditing) return;
 
-		const rect = this.canvas.getBoundingClientRect();
-		const canvasX = e.clientX - rect.left;
-		const canvasY = e.clientY - rect.top;
-
-		this.startTextInput(e.clientX, e.clientY, canvasX, canvasY);
+		const [logicalX, logicalY] = this.getMousePos(e);
+		this.startTextInput(e.clientX, e.clientY, logicalX, logicalY);
 	};
 
 	private createTextInput() {
@@ -134,13 +131,13 @@ export class TextTool extends Tool {
 		this.textInput.style.borderColor = isOutOfBounds ? 'red' : '#007bff';
 	}
 
-	private startTextInput(clientX: number, clientY: number, canvasX: number, canvasY: number) {
+	private startTextInput(clientX: number, clientY: number, logicalX: number, logicalY: number) {
 		if (!this.ctx) return;
 
 		this.isEditing = true;
 		this.pendingText = {
-			x: canvasX,
-			y: canvasY,
+			x: logicalX,
+			y: logicalY,
 			fontSize: this.fontSize,
 			color: this.fill,
 		};
@@ -205,16 +202,17 @@ export class TextTool extends Tool {
 			return;
 		}
 
-		const { x: canvasX, y: canvasY, fontSize, color } = this.pendingText;
+		const { x: logicalX, y: logicalY, fontSize, color } = this.pendingText;
+
+		const physicalX = logicalX * this.dpr;
+		const physicalY = logicalY * this.dpr;
+		const physicalFontSize = fontSize * this.dpr;
+		const physicalMaxWidth = (this.logicalWidth - logicalX - 10) * this.dpr;
+		const physicalLineHeight = physicalFontSize * 1.2;
+
 		const ctx = this.ctx;
 		ctx.save();
 		ctx.resetTransform();
-
-		const physicalX = canvasX * this.dpr;
-		const physicalY = canvasY * this.dpr;
-		const physicalFontSize = fontSize * this.dpr;
-		const physicalMaxWidth = (this.logicalWidth - canvasX - 10) * this.dpr;
-		const physicalLineHeight = physicalFontSize * 1.2;
 
 		ctx.font = `normal ${physicalFontSize}px Arial, sans-serif`;
 		ctx.fillStyle = color;
