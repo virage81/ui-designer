@@ -63,13 +63,19 @@ export const Canvas: React.FC = () => {
 		dprSetupsRef.current[canvas.id] = true;
 	}, []);
 
+	const saveProjectPreviewRef = useRef(saveProjectPreview);
+
+	useEffect(() => {
+		saveProjectPreviewRef.current = saveProjectPreview;
+	}, [saveProjectPreview]);
+
 	useEffect(() => {
 		const saveInterval = setInterval(() => {
-			saveProjectPreview()
-		}, 1000);
+			saveProjectPreviewRef.current();
+		}, 3000);
 
 		return () => clearInterval(saveInterval);
-	}, [ saveProjectPreview]);
+	}, []);
 
 	useEffect(() => {
 		if (toolRef.current) {
