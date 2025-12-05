@@ -43,6 +43,7 @@ export const TopMenu: React.FC = () => {
 	const handleNewProject = () => {
 		dispatch(toggleCreateProjectModal());
 		handleFileMenuClose();
+		saveProjectPreview();
 	};
 
 	const handleSave = () => {

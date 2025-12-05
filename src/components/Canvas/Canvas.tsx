@@ -36,7 +36,7 @@ export const Canvas: React.FC = () => {
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 	const projectLayers = layersByProject[projectId ?? ''] ?? []
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
-
+	const saveProjectPreviewRef = useRef(saveProjectPreview);
 
 	const toolStyles = useMemo<Styles>(
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
@@ -63,8 +63,6 @@ export const Canvas: React.FC = () => {
 		dprSetupsRef.current[canvas.id] = true;
 	}, []);
 
-	const saveProjectPreviewRef = useRef(saveProjectPreview);
-
 	useEffect(() => {
 		saveProjectPreviewRef.current = saveProjectPreview;
 	}, [saveProjectPreview]);
@@ -83,7 +81,7 @@ export const Canvas: React.FC = () => {
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !activeLayer) return;
+		if (!canvasRef.current || !activeLayer || !currentProject) return;
 
 		switch (tool) {
 			case ACTIONS.BRUSH: {
@@ -122,7 +120,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
-	}, [tool, activeLayer, toolStyles]);
+	}, [tool, activeLayer, toolStyles, currentProject]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
