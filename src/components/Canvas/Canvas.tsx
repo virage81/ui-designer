@@ -81,7 +81,7 @@ export const Canvas: React.FC = () => {
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !activeLayer || !currentProject) return;
+		if (!canvasRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
 			case ACTIONS.BRUSH: {
@@ -120,7 +120,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
-	}, [tool, activeLayer, toolStyles, currentProject]);
+	}, [tool, activeLayer, toolStyles, currentProject.id]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
