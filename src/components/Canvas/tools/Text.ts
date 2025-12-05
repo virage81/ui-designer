@@ -1,9 +1,6 @@
 import { debounce } from '@shared/debounce';
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент Текст
- */
 interface CanvasBounds {
 	left: number;
 	top: number;
@@ -26,8 +23,8 @@ export class TextTool extends Tool {
 	} | null = null;
 	private resizeObserver: ResizeObserver | null = null;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
-		super(canvas, styles);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+		super(canvas, styles, zoom);
 		this.createTextInput();
 		this.listen();
 	}
@@ -60,7 +57,7 @@ export class TextTool extends Tool {
 			resize: 'both',
 			background: 'transparent',
 			outline: 'none',
-			zIndex: '1',
+			zIndex: '9999',
 			whiteSpace: 'pre',
 			scrollbarWidth: 'none',
 			lineHeight: '1.2',
@@ -208,78 +205,87 @@ export class TextTool extends Tool {
 			return;
 		}
 
-		const textareaRect = this.textInput.getBoundingClientRect();
-		const canvasRect = this.canvas.getBoundingClientRect();
+		const { x: canvasX, y: canvasY, fontSize, color } = this.pendingText;
+		const ctx = this.ctx;
+		ctx.save();
+		ctx.resetTransform();
 
-		const canvasX = textareaRect.left - canvasRect.left;
-		const canvasY = textareaRect.top - canvasRect.top;
+		const physicalX = canvasX * this.dpr;
+		const physicalY = canvasY * this.dpr;
+		const physicalFontSize = fontSize * this.dpr;
+		const physicalMaxWidth = (this.logicalWidth - canvasX - 10) * this.dpr;
+		const physicalLineHeight = physicalFontSize * 1.2;
 
-		const scaleX = this.canvas.width / canvasRect.width;
-		const scaleY = this.canvas.height / canvasRect.height;
+		ctx.font = `normal ${physicalFontSize}px Arial, sans-serif`;
+		ctx.fillStyle = color;
+		ctx.textBaseline = 'top';
+		ctx.textAlign = 'left';
 
-		const { fontSize, color } = this.pendingText;
+		const lines = this.wrapTextPhysical(ctx, text, physicalMaxWidth);
 
-		this.ctx.font = `${fontSize}px Arial`;
-		this.ctx.fillStyle = color;
-		this.ctx.textBaseline = 'top';
-		this.ctx.textAlign = 'left';
-
-		const realCanvasX = canvasX * scaleX;
-		const realCanvasY = canvasY * scaleY;
-
-		const maxWidth = this.canvas.width - realCanvasX - 10;
-		const maxHeight = this.canvas.height - realCanvasY - 10;
-
-		const lineHeight = fontSize * 1.2;
-
-		const lines = this.wrapText(text, maxWidth);
-
-		const maxLines = Math.floor(maxHeight / lineHeight);
-		const clippedLines = lines.slice(0, maxLines);
-
-		for (let i = 0; i < clippedLines.length; i++) {
-			const lineY = realCanvasY + i * lineHeight;
-
-			if (lineY + lineHeight > this.canvas.height) break;
-
-			this.ctx.fillText(clippedLines[i], realCanvasX, lineY);
+		for (let i = 0; i < lines.length; i++) {
+			const lineY = physicalY + i * physicalLineHeight;
+			if (lineY > this.canvas.height) break;
+			ctx.fillText(lines[i], physicalX, lineY);
 		}
 
+		ctx.restore();
 		this.cleanup();
 	}
 
-	private wrapText(text: string, maxWidth: number): string[] {
-		if (!this.ctx) return [text];
+	private wrapTextPhysical(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+		const lines: string[] = [];
+		const paragraphs = text.split('\n');
 
-		const newlineSplit = text.split('\n');
-		const resultLines: string[] = [];
-
-		for (const line of newlineSplit) {
-			if (line === '') {
-				resultLines.push('');
+		for (const paragraph of paragraphs) {
+			if (!paragraph.trim()) {
+				lines.push('');
 				continue;
 			}
 
-			const words = line.split(' ');
-			let currentLine = words[0] || '';
+			const words = paragraph.split(/\s+/);
+			let currentLine = '';
 
-			for (let i = 1; i < words.length; i++) {
-				const word = words[i];
-				const testLine = currentLine + ' ' + word;
-				const testWidth = this.ctx!.measureText(testLine).width;
+			for (const word of words) {
+				const testLine = currentLine ? `${currentLine} ${word}` : word;
+				const width = ctx.measureText(testLine).width;
 
-				if (testWidth > maxWidth && currentLine !== '') {
-					resultLines.push(currentLine);
+				if (width > maxWidth && currentLine === '') {
+					const broken = this.breakLongWordPhysical(ctx, word, maxWidth);
+					lines.push(...broken);
+					continue;
+				}
+
+				if (width > maxWidth) {
+					lines.push(currentLine);
 					currentLine = word;
 				} else {
 					currentLine = testLine;
 				}
 			}
 
-			if (currentLine) resultLines.push(currentLine);
+			if (currentLine) lines.push(currentLine);
 		}
 
-		return resultLines;
+		return lines;
+	}
+
+	private breakLongWordPhysical(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
+		const parts: string[] = [];
+		let current = '';
+
+		for (const char of word) {
+			const test = current + char;
+			if (ctx.measureText(test).width > maxWidth) {
+				parts.push(current);
+				current = char;
+			} else {
+				current = test;
+			}
+		}
+
+		if (current) parts.push(current);
+		return parts;
 	}
 
 	private cancelEditing = () => {

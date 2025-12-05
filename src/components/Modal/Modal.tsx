@@ -1,3 +1,4 @@
+import type { RootState } from '@/store';
 import CloseIcon from '@mui/icons-material/Close';
 import {
 	Box,
@@ -10,30 +11,31 @@ import {
 	TextField,
 	Typography,
 } from '@mui/material';
-import { createProject } from '@store/slices/projectsSlice';
-import { type ChangeEvent, type FC, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import type { RootState } from '@/store';
 import type { Project } from '@shared/types/project';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { closeCreateProjectModal } from '@store/slices/modalsSlice';
+import { createProject } from '@store/slices/projectsSlice';
+import { type ChangeEvent, type FC, useCallback, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getNewProjectName } from './utils';
+import { validateProjectName } from '@shared/utils/projectNameValidation';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
 const DEFAULT_NAME = 'Проект';
 const DEFAULT_SIZE = 800;
-const NAME_PATTERN = /^[A-Za-zА-Яа-яЁё0-9\s]+$/;
 
 export const Modal: FC = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const projects = useSelector((state: RootState) => state.projects.projects);
+	const newProjectName = getNewProjectName(DEFAULT_NAME, projects);
 	const isCreateProjectModalOpen = useSelector((state: RootState) => state.modals.isCreateProjectModalOpen);
 
 	const [pendingName, setPendingName] = useState<string | null>(null);
 
-	const [projectName, setProjectName] = useState<string>(DEFAULT_NAME);
+	const [projectName, setProjectName] = useState<string>(newProjectName);
 	const [width, setWidth] = useState<number | string>(DEFAULT_SIZE);
 	const [height, setHeight] = useState<number | string>(DEFAULT_SIZE);
 
@@ -41,40 +43,37 @@ export const Modal: FC = () => {
 	const [widthError, setWidthError] = useState<string>('');
 	const [heightError, setHeightError] = useState<string>('');
 
-	const resetForm: () => void = (): void => {
-		setProjectName(DEFAULT_NAME);
+	const resetForm: () => void = useCallback((): void => {
+		setProjectName(newProjectName);
 		setWidth(DEFAULT_SIZE);
 		setHeight(DEFAULT_SIZE);
 		setProjectNameError('');
 		setWidthError('');
 		setHeightError('');
-	};
+	}, [newProjectName]);
 
 	useEffect(() => {
 		if (isCreateProjectModalOpen) {
 			const id = setTimeout(resetForm, 0);
 			return (): void => clearTimeout(id);
 		}
-	}, [isCreateProjectModalOpen]);
+	}, [isCreateProjectModalOpen, resetForm]);
 
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
 			case 'projectName': {
-				if (value.length === 0) {
-					setProjectNameError('Название обязательно');
-				} else if (!NAME_PATTERN.test(value)) {
-					setProjectNameError('Допустимы буквы и цифры');
-				} else {
-					setProjectNameError('');
+				const error = validateProjectName(value, projects);
+				setProjectNameError(error);
+				if (!error) {
+					setProjectName(value);
 				}
-				setProjectName(value);
 				break;
 			}
 			case 'width': {
 				const num: number = Number(value);
 				setWidth(value);
-				if (!Number.isInteger(num) || num < 1) {
-					setWidthError('Введите целое положительное число');
+				if (!Number.isInteger(num) || num < 100) {
+					setWidthError('Минимальная ширина холста: 100px');
 				} else {
 					setWidthError('');
 				}
@@ -83,8 +82,8 @@ export const Modal: FC = () => {
 			case 'height': {
 				const num: number = Number(value);
 				setHeight(value);
-				if (!Number.isInteger(num) || num < 1) {
-					setHeightError('Введите целое положительное число');
+				if (!Number.isInteger(num) || num < 100) {
+					setHeightError('Минимальная высота холста: 100px');
 				} else {
 					setHeightError('');
 				}
@@ -185,7 +184,7 @@ export const Modal: FC = () => {
 						fullWidth
 						margin='normal'
 						value={width}
-						slotProps={{ htmlInput: { min: 0 } }}
+						slotProps={{ htmlInput: { min: 100 } }}
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}
@@ -199,7 +198,7 @@ export const Modal: FC = () => {
 						fullWidth
 						margin='normal'
 						value={height}
-						slotProps={{ htmlInput: { min: 0 } }}
+						slotProps={{ htmlInput: { min: 100 } }}
 						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 							validateInput(e.target.value, e.target.name)
 						}

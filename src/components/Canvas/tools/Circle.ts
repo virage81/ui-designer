@@ -6,8 +6,8 @@ export class CircleTool extends Tool {
 	private startX: number = 0;
 	private startY: number = 0;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
-		super(canvas, styles);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+		super(canvas, styles, zoom);
 		this.listen();
 	}
 
@@ -32,9 +32,7 @@ export class CircleTool extends Tool {
 
 		const [currentX, currentY] = this.getMousePos(e);
 
-		this.radius = Math.sqrt(
-			(currentX - this.startX) ** 2 + (currentY - this.startY) ** 2
-		);
+		this.radius = Math.sqrt((currentX - this.startX) ** 2 + (currentY - this.startY) ** 2);
 
 		this.draw(this.startX, this.startY, this.radius);
 	}

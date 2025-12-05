@@ -21,6 +21,7 @@ const initialState: ProjectsSliceState = {
 	history: {},
 	layers: {},
 	activeLayer: null,
+	zoom: 1,
 };
 
 const projectsSlice = createSlice({
@@ -28,19 +29,19 @@ const projectsSlice = createSlice({
 	initialState,
 	reducers: {
 		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
-			const projectId = generateId();
+			const id = generateId();
 
-			state.projects.push({ ...action.payload, id: projectId, preview: '', date: new Date().toISOString() });
+			state.projects.push({ ...action.payload, id, preview: '', date: new Date().getTime() });
 			const layer = { id: generateId(), hidden: false, name: 'Фон', opacity: 100, zIndex: 1 };
-			state.layers[projectId] = [layer];
+			state.layers[id] = [layer];
 			state.activeLayer = layer;
-			state.history[projectId] = {
+			state.history[id] = {
 				/**
 				 * тут заполняем историю нулевым элементом с базовым слоем.
 				 * Он не будет показываться, но на данный момент нужен для работы приложения
 				 */
 				history: [{
-					layers: [...state.layers[projectId]],
+					layers: [...state.layers[id]],
 					type: HISTORY_ACTIONS.LAYER_ADD,
 					id: '',
 					date: new Date().toUTCString()
@@ -57,7 +58,11 @@ const projectsSlice = createSlice({
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
 			if (projectIndex === -1) throw new Error(`Project with ID ${action.payload.id} not found`);
 
-			state.projects[projectIndex] = { ...state.projects[projectIndex], ...action.payload };
+			state.projects[projectIndex] = {
+				...state.projects[projectIndex],
+				...action.payload,
+				date: new Date().getTime(),
+			};
 		},
 
 		deleteProject: (state, action: PayloadAction<DeleteProjectParams>) => {
@@ -86,6 +91,7 @@ const projectsSlice = createSlice({
 
 		deleteLayer: (state, action: PayloadAction<DeleteLayerParams>) => {
 			const { id, projectId } = action.payload;
+
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 			if (state.layers[projectId].length === 1) throw new Error('Cannot delete the last remaining layer');
 
@@ -127,7 +133,11 @@ const projectsSlice = createSlice({
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.layerId} not found`);
 
 			state.layers[payload.projectId][layerIndex].canvasDataURL = '';
+			state.layers[payload.projectId][layerIndex].canvasData = undefined;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
+		},
+		setZoom: (state, action: PayloadAction<number>) => {
+			state.zoom = action.payload;
 		},
 	},
 
@@ -246,6 +256,12 @@ export const sortedLayersSelector = createSelector(
 	},
 );
 
+export const selectProjectById = createSelector(
+	(state: RootState) => state.projects.projects,
+	(_: RootState, id: string) => id,
+	(projects, id) => projects.find(p => p.id === id),
+);
+
 // тут определяем активность элемента меню "Отменить"
 export const isUndoActiveSelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
@@ -285,6 +301,7 @@ export const {
 	deleteLayer,
 	setActiveLayer,
 	clearActiveLayer,
+	setZoom
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;

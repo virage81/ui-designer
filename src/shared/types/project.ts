@@ -4,7 +4,7 @@ import type { ACTIONS } from "@store/slices/toolsSlice";
 export interface Project {
 	id: string;
 	name: string;
-	date: string;
+	date: number;
 	width: number;
 	height: number;
 	preview: string;
@@ -28,6 +28,7 @@ export interface Layer {
 	zIndex: number;
 	hidden: boolean;
 	canvasDataURL?: string;
+	canvasData?: string;
 }
 
 export interface AddToHistoryPayload {

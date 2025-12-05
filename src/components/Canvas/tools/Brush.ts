@@ -1,11 +1,8 @@
 import { Tool, type Styles } from './Tool';
 
-/**
- * Инструмент Кисть
- */
 export class BrushTool extends Tool {
-	constructor(canvas: HTMLCanvasElement, styles: Styles) {
-		super(canvas, styles);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+		super(canvas, styles, zoom);
 		this.listen();
 	}
 
@@ -46,4 +43,3 @@ export class BrushTool extends Tool {
 		this.ctx.moveTo(x, y);
 	};
 }
-

@@ -214,7 +214,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					hidden: false,
 					opacity: 100,
 					zIndex: 1,
-					isBase: true,
 				}),
 			]),
 		);
@@ -287,7 +286,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					hidden: false,
 					opacity: 100,
 					zIndex: 1,
-					isBase: true,
 				}),
 				expect.objectContaining({
 					id: expect.any(String),
@@ -473,5 +471,44 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 
 		expect(store.getState().projects.activeLayer).toEqual(null);
 		expect(spied).toHaveBeenCalledTimes(4);
+	});
+
+	test('Удаление последнего слоя', () => {
+		const { store } = JestStoreProvider(<div />);
+
+		const spied = jest.spyOn(store, 'dispatch');
+
+		act(() => {
+			store.dispatch(createProject({ name: 'test', width: 200, height: 200 }));
+		});
+
+		const layers = store.getState().projects.layers;
+		const projectId = store.getState().projects.projects[0].id;
+
+		act(() => {
+			expect(() =>
+				store.dispatch(
+					deleteLayer({
+						projectId: store.getState().projects.projects[0].id,
+						id: layers[projectId][0].id,
+					}),
+				),
+			).toThrow();
+		});
+
+		expect(layers).toHaveProperty(projectId);
+		expect(layers[projectId]).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					id: expect.any(String),
+					name: expect.any(String),
+					hidden: expect.any(Boolean),
+					opacity: expect.any(Number),
+					zIndex: expect.any(Number),
+				}),
+			]),
+		);
+
+		expect(spied).toHaveBeenCalledTimes(2);
 	});
 });

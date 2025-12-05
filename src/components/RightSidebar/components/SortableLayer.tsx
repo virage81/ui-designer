@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Box, IconButton, Paper, Slider, TextField, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import { Ellipsis, EyeIcon, EyeOffIcon, GripVertical } from 'lucide-react';
-import { type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 
 interface SortableLayerProps {
 	layer: Layer;
@@ -32,15 +32,12 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 }) => {
 	const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: layer.id });
 
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-	};
+	const [opacity, setOpacity] = useState(layer.opacity);
 
 	return (
 		<Paper
 			ref={setNodeRef}
-			style={style}
+			style={{ transform: CSS.Transform.toString(transform), transition }}
 			elevation={0}
 			onClick={() => handleLayerClick(layer.id)}
 			sx={{
@@ -130,8 +127,9 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 					Прозрачность:
 				</Typography>
 				<Slider
-					onChange={(_, value) => handleUpdateLayer('opacity', value, layer.id)}
-					value={layer.opacity}
+					onChange={(_, value) => setOpacity(value)}
+					onChangeCommitted={(_, value) => handleUpdateLayer('opacity', value, layer.id)}
+					value={opacity}
 					max={100}
 					min={0}
 					step={1}
@@ -139,7 +137,7 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 					sx={{ flex: 1, p: 0.5 }}
 				/>
 				<Typography variant='caption' sx={{ color: 'var(--color-muted)', ml: 1, textAlign: 'right', lineHeight: 1 }}>
-					{layer.opacity}%
+					{opacity}%
 				</Typography>
 			</Box>
 		</Paper>
