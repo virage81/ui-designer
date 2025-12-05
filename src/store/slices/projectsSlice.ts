@@ -35,12 +35,20 @@ const projectsSlice = createSlice({
 			state.layers[projectId] = [layer];
 			state.activeLayer = layer;
 			state.history[projectId] = {
+				/**
+				 * тут заполняем историю нулевым элементом с базовым слоем.
+				 * Он не будет показываться, но на данный момент нужен для работы приложения
+				 */
 				history: [{
 					layers: [...state.layers[projectId]],
 					type: HISTORY_ACTIONS.LAYER_ADD,
-					id: 0,
+					id: '',
 					date: new Date().toUTCString()
 				}],
+				/**
+				 * pointer - общий указатель для истории, начнём с 0
+				 * первый элемент истории также 0го индекса
+				 */
 				pointer: 0,
 			};
 		},
@@ -124,61 +132,92 @@ const projectsSlice = createSlice({
 	},
 
 	extraReducers: (builder) => {
+		// тут добавляем события в историю
 		builder.addCase(addToHistory, (state, action) => {
 			const { projectId, type } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
+			// pointer - общий указатель для истории
 			const pointer = state.history[projectId].pointer;
 
+			/**
+			* если длина истории больше указателя
+			* и добавляем новый элемент истории -> значит,
+			* нужно удалить неактивные элементы истории.
+			*
+			* То есть это кейс, когда мы сделали 10 действий,
+			* отменили 5 действий и сделали новое действие ->
+			* теперь у нас 6 действий, а старые 5 не нужны
+			*/
 			if (state.history[projectId].history.length - 1 > pointer) {
 				const diff = state.history[projectId].history.length - pointer;
 				state.history[projectId].history.splice(pointer + 1, diff);
 			}
 
+			// тут увеличиваем указатель на шаг
 			const newPointer = ++state.history[projectId].pointer;
+			// и добавляем новый элемент в историю
 			state.history[projectId].history[newPointer] = {
 				layers: [...state.layers[projectId]],
 				type,
-				id: newPointer,
+				id: generateId(),
 				date: new Date().toUTCString()
 			}
 		});
 
+		// тут отменяем историю на шаг
 		builder.addCase(undoHistory, (state, action) => {
 			const { projectId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
 			const pointer = --state.history[projectId].pointer;
-			state.layers[projectId] = state.history[projectId].history[pointer].layers;
+			state.layers[projectId] = [...state.history[projectId].history[pointer].layers];
 		});
 
+		// тут возвращаем историю на шаг
 		builder.addCase(redoHistory, (state, action) => {
 			const { projectId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
 			const pointer = ++state.history[projectId].pointer;
-			state.layers[projectId] = state.history[projectId].history[pointer].layers;
+			state.layers[projectId] = [...state.history[projectId].history[pointer].layers];
 		});
 
+		// тут выставляем историю при клике на список истории
 		builder.addCase(setHistory, (state, action) => {
-			const { projectId, pointer } = action.payload;
+			const { projectId, id } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
-			if (pointer < 0) throw new Error(`Pointer can't be lower than 0. Pointer is ${pointer}`);
+			if (!id) throw new Error(`History with ID ${id} does not exist`);
 
-			if (pointer <= state.history[projectId].pointer) {
-				state.history[projectId].pointer = pointer - 1;
+			const clickedElIdx = state.history[projectId].history.findIndex(h => h.id === id);
+
+			/**
+			 * если кликнули на активный элемент истории,
+			 * выставляем указатель на этот элемент минус 1
+			 * для того, чтобы сделать кликнутый элемент
+			 * и все элементы после него (после = позже)
+			 * неактивными
+			 */
+			if (clickedElIdx <= state.history[projectId].pointer) {
+				state.history[projectId].pointer = clickedElIdx - 1;
 				const newPointer = state.history[projectId].pointer;
 				state.layers[projectId] = [...state.history[projectId].history[newPointer].layers];
 
 				return;
 			}
 
-			if (pointer > state.history[projectId].pointer) {
-				state.history[projectId].pointer = pointer;
-				state.layers[projectId] = state.history[projectId].history[pointer].layers;
+			/**
+			 * если кликнули на неактивный элемент истории,
+			 * активируем (возвращаем) все элементы включая
+			 * тот, на который кликнули
+			 */
+			if (clickedElIdx > state.history[projectId].pointer) {
+				state.history[projectId].pointer = clickedElIdx;
+				state.layers[projectId] = [...state.history[projectId].history[clickedElIdx].layers];
 			}
 		});
 
+		// тут сохраняем snapshot слоя
 		builder.addCase(saveHistorySnapshot, (state, action) => {
 			const { projectId, layerId, canvasDataURL } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
@@ -207,6 +246,7 @@ export const sortedLayersSelector = createSelector(
 	},
 );
 
+// тут определяем активность элемента меню "Отменить"
 export const isUndoActiveSelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
 	const pointer = history[projectId].pointer;
@@ -214,6 +254,7 @@ export const isUndoActiveSelector = (state: RootState, projectId: Project['id'])
 	return pointer > 0 ? true : false;
 }
 
+// тут определяем активность элемента меню "Вернуть"
 export const isRedoActiveSelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
 	const pointer = history[projectId].pointer;
@@ -221,12 +262,14 @@ export const isRedoActiveSelector = (state: RootState, projectId: Project['id'])
 	return pointer <= history[projectId].history.length - 2 ? true : false;
 }
 
+// тут достаём указатель
 export const pointerSelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
 
 	return history[projectId].pointer;
 };
 
+// тут достаём историю
 export const historySelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
 

@@ -7,6 +7,10 @@ interface CaptureCanvasParams {
 	canvasRef: HTMLCanvasElement;
 }
 
+/**
+ * это middleware для слайса - внутри сохранение изображения слоя
+ * в строку и в параметр слоя canvasDataURL
+ */
 export const captureCanvasAndSaveToHistory = createAsyncThunk<void, CaptureCanvasParams>(
 	'projects/captureCanvasAndSave',
 	async (

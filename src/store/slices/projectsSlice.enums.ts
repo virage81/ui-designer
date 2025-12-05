@@ -18,6 +18,7 @@ export enum HISTORY_ACTIONS {
 	LAYER_HIDE = 'hide',
 }
 
+// Названия для истории
 /**
  * 	SELECT = 'Выбор',
  *	BRUSH = 'Кисть',
