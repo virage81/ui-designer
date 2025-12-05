@@ -1,12 +1,6 @@
 import { Box } from '@mui/material';
 import type { RootState } from '@store/index';
-import {
-	addToStack,
-	loadStackElement,
-	saveLayersSnaps,
-	sortedLayersSelector,
-	updateLayer,
-} from '@store/slices/projectsSlice';
+import { addToHistory, sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,10 +12,15 @@ import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
+import { captureCanvasAndSaveToHistory } from './thunks/captureCanvasSnapshot';
+import { redrawCanvas } from '@store/utils/canvasRedraw';
+import { useThunkDispatch } from '@store/utils/thunkDispatch';
+import { debounce, type DebouncedFunc } from 'lodash';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
+	const thunkDispatch = useThunkDispatch();
 
 	const { activeLayer, projects } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
@@ -37,6 +36,7 @@ export const Canvas: React.FC = () => {
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
 		[fillColor, strokeWidth, strokeStyle, fontSize],
 	);
+	const saveSnapshotDebouncedRef = useRef<DebouncedFunc<() => void> | null>(null);
 
 	const setupCanvasDPR = useCallback((canvas: HTMLCanvasElement) => {
 		if (!canvas || dprSetupsRef.current[canvas.id]) return;
@@ -107,14 +107,16 @@ export const Canvas: React.FC = () => {
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
 
-		if (activeLayer.cleared) {
+		if (activeLayer.canvasDataURL) {
 			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
 			if (ctx) {
 				ctx.clearRect(0, 0, currentProject.width, currentProject.height);
-				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
+				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, canvasDataURL: '' } }));
 			}
 		}
-	}, [activeLayer, currentProject, projectId, dispatch]);
+
+		redrawCanvas(canvasRef.current, sortedLayers);
+	}, [activeLayer, currentProject, projectId, canvasRef, sortedLayers, dispatch]);
 
 	useEffect(() => {
 		if (canvasRef.current) {
@@ -123,14 +125,47 @@ export const Canvas: React.FC = () => {
 	}, [activeLayer?.id, setupCanvasDPR]);
 
 	useEffect(() => {
-		if (!projectId) return;
+		if (!canvasRef.current || !activeLayer) return;
 
+		const saveSnapshot = () => {
+			if (!canvasRef.current) return;
+
+			thunkDispatch(
+				captureCanvasAndSaveToHistory({
+					projectId: projectId,
+					layerId: activeLayer.id,
+					canvasRef: canvasRef.current,
+				}),
+			);
+		};
+
+		saveSnapshotDebouncedRef.current = debounce(saveSnapshot, 200);
+
+		return () => {
+			if (saveSnapshotDebouncedRef.current) {
+				saveSnapshotDebouncedRef.current.cancel();
+			}
+		};
+	}, [projectId, activeLayer, thunkDispatch]);
+
+	useEffect(() => {
+		if (!projectId || !canvasRef.current) return;
+
+		redrawCanvas(canvasRef.current, sortedLayers);
+	}, [projectId, sortedLayers]);
+
+	const handleCanvasDraw = () => {
 		dispatch(
-			loadStackElement({
+			addToHistory({
 				projectId: projectId,
+				type: tool,
 			}),
 		);
-	}, [projectId, dispatch]);
+
+		if (saveSnapshotDebouncedRef.current) {
+			saveSnapshotDebouncedRef.current();
+		}
+	};
 
 	if (!currentProject) {
 		redirect('/404');
@@ -161,32 +196,16 @@ export const Canvas: React.FC = () => {
 						}
 					}}
 					style={{
-						background: layer.isBase ? 'white' : 'transparent',
+						background: 'transparent',
 						position: 'absolute',
 						inset: 0,
 						zIndex: layer.zIndex,
-						opacity: layer.isBase ? 1 : layer.hidden ? 0 : layer.opacity / 100,
+						opacity: layer.hidden ? 0 : layer.opacity / 100,
 						pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 						width: `${currentProject.width}px`,
 						height: `${currentProject.height}px`,
 					}}
-					onMouseUp={() => {
-						dispatch(
-							addToStack({
-								projectId: projectId,
-								data: {
-									layers: sortedLayers,
-									type: tool,
-								},
-							}),
-						);
-						// @TODO: найти лучшее место для сохранения
-						dispatch(
-							saveLayersSnaps({
-								projectId: projectId,
-							}),
-						);
-					}}
+					onMouseUp={handleCanvasDraw}
 				/>
 			))}
 		</Box>

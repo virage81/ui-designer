@@ -49,7 +49,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					hidden: false,
 					opacity: 1,
 					zIndex: 1,
-					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
@@ -131,7 +130,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					hidden: false,
 					opacity: 65,
 					zIndex: 3,
-					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
@@ -297,7 +295,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					hidden: false,
 					opacity: 1,
 					zIndex: 1,
-					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
@@ -324,7 +321,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 				hidden: false,
 				opacity: 1,
 				zIndex: 1,
-				isBase: expect.any(Boolean),
 			}),
 		);
 
@@ -395,7 +391,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 				hidden: false,
 				opacity: 100,
 				zIndex: 1,
-				isBase: expect.any(Boolean),
 			}),
 		);
 		expect(spied).toHaveBeenCalledTimes(2);
@@ -443,7 +438,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					hidden: false,
 					opacity: 1,
 					zIndex: 1,
-					isBase: expect.any(Boolean),
 				}),
 			]),
 		);
@@ -470,7 +464,6 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 				hidden: false,
 				opacity: 1,
 				zIndex: 1,
-				isBase: expect.any(Boolean),
 			}),
 		);
 

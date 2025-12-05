@@ -33,19 +33,11 @@ export type ClearActiveLayer = {
 	projectId: Project['id'];
 } | null;
 
-export type ModifyStackParams = {
+export type AddToHistoryParams = {
 	projectId: Project['id'];
-	data: {
-		layers: Layer[],
-		type: HISTORY_ACTIONS | ACTIONS;
-	};
+	type: HISTORY_ACTIONS | ACTIONS;
 };
 
-export type LoadStackParams = {
+export type LoadHistoryParams = {
 	projectId: Project['id'];
-};
-
-export type UndoRedoStackParams = {
-	projectId: Project['id'];
-	pointer?: number;
 };

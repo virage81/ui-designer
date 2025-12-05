@@ -10,25 +10,43 @@ export interface Project {
 	preview: string;
 }
 
-export interface Stack {
+export interface HistoryStack {
 	history: History[];
 	pointer: number;
 }
 export interface History {
 	id: number;
 	date: string;
-	layers: Layer[],
+	layers: (Layer & { canvasDataURL?: string })[];
 	type: HISTORY_ACTIONS | ACTIONS;
-	uniqId: string;
 }
 
 export interface Layer {
 	id: string;
 	name: string;
-	isBase: boolean;
 	opacity: number;
 	zIndex: number;
 	hidden: boolean;
-	cleared?: boolean;
 	canvasDataURL?: string;
 }
+
+export interface AddToHistoryPayload {
+	projectId: string;
+	type: HISTORY_ACTIONS | ACTIONS;
+}
+
+export interface UndoRedoHistoryParams {
+	projectId: Project['id'];
+	pointer?: number;
+}
+
+export interface SetHistoryParams {
+	projectId: Project['id'];
+	pointer: number;
+};
+
+export interface SaveHistorySnapshotParams {
+	projectId: Project['id'];
+	layerId: Layer['id'];
+	canvasDataURL: string;
+};

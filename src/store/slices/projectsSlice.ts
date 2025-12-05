@@ -1,7 +1,7 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
 import type { ProjectsSliceState } from '@shared/types/projectsSliceState';
-import type { Layer, Project } from '@shared/types/project';
+import type { AddToHistoryPayload, Project, SaveHistorySnapshotParams, SetHistoryParams, UndoRedoHistoryParams } from '@shared/types/project';
 import { checkProjectExistence } from '@store/utils/projects';
 import type { RootState } from '..';
 import type {
@@ -10,10 +10,7 @@ import type {
 	CreateProjectParams,
 	DeleteLayerParams,
 	DeleteProjectParams,
-	LoadStackParams,
-	ModifyStackParams,
 	SetActiveLayerParams,
-	UndoRedoStackParams,
 	UpdateLayerParams,
 	UpdateProjectParams,
 } from './projectSlice.types';
@@ -21,28 +18,29 @@ import { HISTORY_ACTIONS } from './projectsSlice.enums';
 
 const initialState: ProjectsSliceState = {
 	projects: [],
-	// history: {},
-	stack: {},
+	history: {},
 	layers: {},
 	activeLayer: null,
 };
 
 const projectsSlice = createSlice({
 	name: 'projects',
-	initialState: initialState,
+	initialState,
 	reducers: {
 		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
-			const id = generateId();
+			const projectId = generateId();
 
-			state.projects.push({ ...action.payload, id, preview: '', date: new Date().toISOString() });
-			const baseLayer = { id: generateId(), hidden: false, isBase: true, name: 'Фон', opacity: 100, zIndex: 1 };
-			state.layers[id] = [baseLayer];
-			state.activeLayer = baseLayer;
-
-			state.stack[id] = {
-				history: [
-					{ id: 0, date: new Date().toUTCString(), layers: [baseLayer], type: HISTORY_ACTIONS.LAYER_ADD, uniqId: generateId() }
-				],
+			state.projects.push({ ...action.payload, id: projectId, preview: '', date: new Date().toISOString() });
+			const layer = { id: generateId(), hidden: false, name: 'Фон', opacity: 100, zIndex: 1 };
+			state.layers[projectId] = [layer];
+			state.activeLayer = layer;
+			state.history[projectId] = {
+				history: [{
+					layers: [...state.layers[projectId]],
+					type: HISTORY_ACTIONS.LAYER_ADD,
+					id: 0,
+					date: new Date().toUTCString()
+				}],
 				pointer: 0,
 			};
 		},
@@ -65,7 +63,7 @@ const projectsSlice = createSlice({
 			const { projectId, data } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			state.layers[projectId].push({ ...data, id: generateId(), isBase: false });
+			state.layers[projectId].push({ ...data, id: generateId() });
 		},
 
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
@@ -81,11 +79,10 @@ const projectsSlice = createSlice({
 		deleteLayer: (state, action: PayloadAction<DeleteLayerParams>) => {
 			const { id, projectId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
+			if (state.layers[projectId].length === 1) throw new Error('Cannot delete the last remaining layer');
 
 			const layerIndex = state.layers?.[projectId]?.findIndex(item => item.id === id);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${id} not found`);
-
-			if (state.layers[projectId][layerIndex].isBase) throw new Error('Cannot delete base layer');
 
 			state.layers[projectId].splice(layerIndex, 1);
 		},
@@ -121,173 +118,119 @@ const projectsSlice = createSlice({
 			const layerIndex = state.layers?.[payload.projectId]?.findIndex(item => item.id === payload.layerId);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.layerId} not found`);
 
-			state.layers[payload.projectId][layerIndex].cleared = true;
+			state.layers[payload.projectId][layerIndex].canvasDataURL = '';
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},
+	},
 
-		addToStack: (state, action: PayloadAction<ModifyStackParams>) => {
-			const { projectId, data } = action.payload;
+	extraReducers: (builder) => {
+		builder.addCase(addToHistory, (state, action) => {
+			const { projectId, type } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			if (!state.stack[projectId].history?.length) {
-				state.stack[projectId].history[0] = { ...data, id: 0, date: new Date().toUTCString(), uniqId: generateId() };
-			} else {
-				state.stack[projectId].pointer++;
-				const pointer = state.stack[projectId].pointer;
+			const pointer = state.history[projectId].pointer;
 
-				if (state.stack[projectId].history.length - 1 > pointer) {
-					const diff = state.stack[projectId].history.length - pointer;
-					state.stack[projectId].history.splice(pointer, diff);
-				}
-
-				state.stack[projectId].history[pointer] = { ...data, id: pointer, date: new Date().toUTCString(), uniqId: generateId() };
+			if (state.history[projectId].history.length - 1 > pointer) {
+				const diff = state.history[projectId].history.length - pointer;
+				state.history[projectId].history.splice(pointer + 1, diff);
 			}
-		},
 
-		undo: (state, action: PayloadAction<UndoRedoStackParams>) => {
-			const { projectId, pointer } = action.payload;
-			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
-			if ((pointer && pointer < 0)) throw new Error(`Pointer is ${pointer}. Pointer could not be less than 0`);
-
-			if (pointer !== 0) {
-				if (!pointer) {
-					state.stack[projectId].pointer--;
-					const newPointer = state.stack[projectId].pointer;
-
-					if (state.stack[projectId].history[newPointer]?.layers) {
-						state.layers[projectId] = [];
-						state.layers[projectId] = state.stack[projectId].history[newPointer].layers;
-					}
-				} else {
-					state.stack[projectId].pointer = pointer - 1;
-
-					if (state.stack[projectId].history[pointer - 1]?.layers) {
-						state.layers[projectId] = [];
-						state.layers[projectId] = state.stack[projectId].history[pointer - 1].layers;
-					}
-				}
-			} else {
-				state.stack[projectId].pointer = 0;
-
-				if (state.stack[projectId].history[0]?.layers) {
-					state.layers[projectId] = [];
-					state.layers[projectId] = state.stack[projectId].history[0].layers;
-				}
+			const newPointer = ++state.history[projectId].pointer;
+			state.history[projectId].history[newPointer] = {
+				layers: [...state.layers[projectId]],
+				type,
+				id: newPointer,
+				date: new Date().toUTCString()
 			}
-		},
+		});
 
-		redo: (state, action: PayloadAction<UndoRedoStackParams>) => {
-			const { projectId, pointer } = action.payload;
-			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
-
-			if (!pointer) {
-				if (state.stack[projectId].history[state.stack[projectId].pointer + 1]?.layers) {
-					state.layers[projectId] = [];
-					state.layers[projectId] = state.stack[projectId].history[state.stack[projectId].pointer + 1].layers;
-					state.stack[projectId].pointer++;
-				}
-			} else {
-				state.stack[projectId].pointer = pointer;
-
-				if (state.stack[projectId].history[pointer + 1]?.layers) {
-					state.layers[projectId] = [];
-					state.layers[projectId] = state.stack[projectId].history[pointer + 1].layers;
-				} else {
-					state.layers[projectId] = state.stack[projectId].history[pointer].layers;
-				}
-			}
-		},
-
-		loadStackElement: (state, action: PayloadAction<LoadStackParams>) => {
+		builder.addCase(undoHistory, (state, action) => {
 			const { projectId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			if (state.stack[projectId].history?.length > 1) {
-				const pointer = state.stack[projectId].pointer;
-				historyDrawHelper(state, projectId, pointer);
-			}
-		},
+			const pointer = --state.history[projectId].pointer;
+			state.layers[projectId] = state.history[projectId].history[pointer].layers;
+		});
 
-		saveLayersSnaps: (state, action: PayloadAction<LoadStackParams>) => {
+		builder.addCase(redoHistory, (state, action) => {
 			const { projectId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			if (state.layers[projectId].length >= 1) {
-				state.layers[projectId].forEach((l: Layer) => {
-					if (l?.id) {
-						const canvas = document.getElementById(l.id) as HTMLCanvasElement;
+			const pointer = ++state.history[projectId].pointer;
+			state.layers[projectId] = state.history[projectId].history[pointer].layers;
+		});
 
-						if (canvas) {
-							l.canvasDataURL = canvas.toDataURL();
-						}
-					}
-				})
+		builder.addCase(setHistory, (state, action) => {
+			const { projectId, pointer } = action.payload;
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
+			if (pointer < 0) throw new Error(`Pointer can't be lower than 0. Pointer is ${pointer}`);
+
+			if (pointer <= state.history[projectId].pointer) {
+				state.history[projectId].pointer = pointer - 1;
+				const newPointer = state.history[projectId].pointer;
+				state.layers[projectId] = [...state.history[projectId].history[newPointer].layers];
+
+				return;
 			}
-		},
+
+			if (pointer > state.history[projectId].pointer) {
+				state.history[projectId].pointer = pointer;
+				state.layers[projectId] = state.history[projectId].history[pointer].layers;
+			}
+		});
+
+		builder.addCase(saveHistorySnapshot, (state, action) => {
+			const { projectId, layerId, canvasDataURL } = action.payload;
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
+
+			const pointer = state.history[projectId].pointer;
+			const layers = state.history[projectId].history[pointer].layers;
+			const layer = layers.find(l => l.id === layerId);
+
+			if (!layer) return;
+
+			layer.canvasDataURL = canvasDataURL;
+		});
 	},
 });
 
-export const sortedLayersSelector = (state: RootState, projectId: Project['id']) => {
-	const { layers } = state.projects;
+export const addToHistory = createAction<AddToHistoryPayload>('history/addToHistory');
+export const undoHistory = createAction<UndoRedoHistoryParams>('history/undoHistory');
+export const redoHistory = createAction<UndoRedoHistoryParams>('history/redoHistory');
+export const setHistory = createAction<SetHistoryParams>('history/setHistory');
+export const saveHistorySnapshot = createAction<SaveHistorySnapshotParams>('history/saveHistorySnapshot');
 
-	return [...layers[projectId]].sort((a, b) => {
-		if (a.isBase && !b.isBase) return 1;
-		if (!a.isBase && b.isBase) return -1;
-
-		return b.zIndex - a.zIndex;
-	});
-};
+export const sortedLayersSelector = createSelector(
+	[(state: RootState) => state.projects.layers, (_, projectId: string) => projectId],
+	(layers = {}, projectId) => {
+		return [...layers[projectId]].sort((a, b) => b.zIndex - a.zIndex);
+	},
+);
 
 export const isUndoActiveSelector = (state: RootState, projectId: Project['id']) => {
-	const { stack } = state.projects;
-	const pointer = stack[projectId].pointer;
+	const { history } = state.projects;
+	const pointer = history[projectId].pointer;
 
 	return pointer > 0 ? true : false;
 }
 
 export const isRedoActiveSelector = (state: RootState, projectId: Project['id']) => {
-	const { stack } = state.projects;
-	const pointer = stack[projectId].pointer;
+	const { history } = state.projects;
+	const pointer = history[projectId].pointer;
 
-	return pointer < stack[projectId].history.length - 1 ? true : false;
-}
-
-const historyDrawHelper = (state: ProjectsSliceState, projectId: Project['id'], pointer: number) => {
-	const history = state.stack[projectId].history;
-
-	const layers = pointer < history[history.length - 1]?.id
-		? history[pointer].layers
-		: state.layers[projectId];
-
-	layers.forEach((l: Layer) => {
-		if (l?.canvasDataURL) {
-			const img = new Image();
-			img.src = l.canvasDataURL;
-			const canvas = document.getElementById(l.id) as HTMLCanvasElement;
-			img.onload = () => {
-				const ctx = canvas.getContext('2d');
-
-				if (ctx) {
-					const width = ctx.canvas.width;
-					const height = ctx.canvas.height;
-					ctx.clearRect(0, 0, width, height)
-					ctx.drawImage(img, 0, 0, width, height);
-				}
-			};
-		}
-	})
+	return pointer <= history[projectId].history.length - 2 ? true : false;
 }
 
 export const pointerSelector = (state: RootState, projectId: Project['id']) => {
-	const { stack } = state.projects;
+	const { history } = state.projects;
 
-	return stack[projectId].pointer;
+	return history[projectId].pointer;
 };
 
 export const historySelector = (state: RootState, projectId: Project['id']) => {
-	const { stack } = state.projects;
+	const { history } = state.projects;
 
-	return [...stack[projectId].history];
+	return [...history[projectId].history];
 };
 
 export const {
@@ -299,11 +242,6 @@ export const {
 	deleteLayer,
 	setActiveLayer,
 	clearActiveLayer,
-	addToStack,
-	loadStackElement,
-	saveLayersSnaps,
-	undo,
-	redo,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;

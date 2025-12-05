@@ -11,7 +11,7 @@ import {
 	sortedLayersSelector,
 	updateLayer,
 	historySelector,
-	addToStack,
+	addToHistory,
 	pointerSelector,
 } from '@store/slices/projectsSlice';
 import { PlusIcon } from 'lucide-react';
@@ -28,7 +28,7 @@ export const RightSideBar: React.FC = () => {
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
 	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
-	const stack = useSelector((state: RootState) => historySelector(state, projectId));
+	const history = useSelector((state: RootState) => historySelector(state, projectId));
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const [activeTab, setActiveTab] = useState(0);
@@ -51,12 +51,9 @@ export const RightSideBar: React.FC = () => {
 		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
 
 		dispatch(
-			addToStack({
+			addToHistory({
 				projectId,
-				data: {
-					layers: sortedLayers,
-					type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
-				},
+				type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
 			}),
 		);
 	};
@@ -71,12 +68,9 @@ export const RightSideBar: React.FC = () => {
 				}),
 			);
 			dispatch(
-				addToStack({
+				addToHistory({
 					projectId,
-					data: {
-						layers: sortedLayers,
-						type: HISTORY_ACTIONS.LAYER_CLEAR,
-					},
+					type: HISTORY_ACTIONS.LAYER_CLEAR,
 				}),
 			);
 		}
@@ -94,12 +88,9 @@ export const RightSideBar: React.FC = () => {
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
 		dispatch(
-			addToStack({
+			addToHistory({
 				projectId,
-				data: {
-					layers: sortedLayers,
-					type: HISTORY_ACTIONS.LAYER_DELETE,
-				},
+				type: HISTORY_ACTIONS.LAYER_DELETE,
 			}),
 		);
 
@@ -112,12 +103,9 @@ export const RightSideBar: React.FC = () => {
 		if (!editingLayerId) {
 			dispatch(setActiveLayer({ projectId, id }));
 			dispatch(
-				addToStack({
+				addToHistory({
 					projectId,
-					data: {
-						layers: sortedLayers,
-						type: HISTORY_ACTIONS.LAYER_ACTIVE,
-					},
+					type: HISTORY_ACTIONS.LAYER_ACTIVE,
 				}),
 			);
 		}
@@ -146,12 +134,9 @@ export const RightSideBar: React.FC = () => {
 			}),
 		);
 		dispatch(
-			addToStack({
+			addToHistory({
 				projectId,
-				data: {
-					layers: sortedLayers,
-					type: HISTORY_ACTIONS.LAYER_RENAME,
-				},
+				type: HISTORY_ACTIONS.LAYER_RENAME,
 			}),
 		);
 		setEditingLayerId(null);
@@ -175,12 +160,9 @@ export const RightSideBar: React.FC = () => {
 			dispatch(updateLayer({ projectId, data: { id: layer.id, zIndex: newLayers.length - index } }));
 		});
 		dispatch(
-			addToStack({
+			addToHistory({
 				projectId,
-				data: {
-					layers: sortedLayers,
-					type: HISTORY_ACTIONS.LAYER_ORDER,
-				},
+				type: HISTORY_ACTIONS.LAYER_ORDER,
 			}),
 		);
 	};
@@ -218,6 +200,7 @@ export const RightSideBar: React.FC = () => {
 								sx={{ padding: '10px' }}
 								onClick={() => {
 									if (!projectId) return;
+									// addLayerAndUpdateHistory();
 									dispatch(
 										createLayer({
 											projectId: projectId,
@@ -230,12 +213,9 @@ export const RightSideBar: React.FC = () => {
 										}),
 									);
 									dispatch(
-										addToStack({
-											projectId: projectId,
-											data: {
-												layers: sortedLayers,
-												type: HISTORY_ACTIONS.LAYER_ADD,
-											},
+										addToHistory({
+											projectId,
+											type: HISTORY_ACTIONS.LAYER_ADD,
 										}),
 									);
 								}}>
@@ -299,7 +279,7 @@ export const RightSideBar: React.FC = () => {
 
 					<MenuItem onClick={handleClearLayer}>Очистить</MenuItem>
 
-					{currentLayer && !currentLayer.isBase && (
+					{currentLayer && (
 						<MenuItem
 							onClick={() => {
 								handleDelete(currentLayer.id);
@@ -334,9 +314,11 @@ export const RightSideBar: React.FC = () => {
 									backgroundColor: 'rgba(0,0,0,0.3)',
 								},
 							}}>
-							{stack.reverse().map((el: History) => (
-								<HistoryItem key={el.uniqId} {...el} isActive={el?.id <= pointer} />
-							))}
+							{history
+								.reverse()
+								.map(
+									(el: History) => el && el.id !== 0 && <HistoryItem key={el.id} {...el} isActive={el.id <= pointer} />,
+								)}
 						</Box>
 					</Box>
 				)}

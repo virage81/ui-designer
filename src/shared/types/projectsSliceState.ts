@@ -1,9 +1,8 @@
-import type { Stack, Layer, Project } from '@shared/types/project.ts';
+import type { Layer, Project, HistoryStack } from '@shared/types/project.ts';
 
 export interface ProjectsSliceState {
 	projects: Project[];
-	// history: Record<Project['id'], History[]>;
-	stack: Record<Project['id'], Stack>;
+	history: Record<Project['id'], HistoryStack>;
 	layers: Record<Project['id'], Layer[]>;
 	activeLayer: Layer | null;
 }

@@ -57,20 +57,18 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 				},
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-				{!layer.isBase && (
-					<IconButton
-						sx={{
-							p: 0.5,
-							cursor: 'grab',
-							'&:active': { cursor: 'grabbing' },
-							color: 'var(--color)',
-						}}
-						{...attributes}
-						{...listeners}
-						onClick={e => e.stopPropagation()}>
-						<GripVertical size={16} />
-					</IconButton>
-				)}
+				<IconButton
+					sx={{
+						p: 0.5,
+						cursor: 'grab',
+						'&:active': { cursor: 'grabbing' },
+						color: 'var(--color)',
+					}}
+					{...attributes}
+					{...listeners}
+					onClick={e => e.stopPropagation()}>
+					<GripVertical size={16} />
+				</IconButton>
 
 				<IconButton
 					sx={{ p: 0.5, color: 'var(--color)' }}

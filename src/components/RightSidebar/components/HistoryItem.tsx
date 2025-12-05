@@ -1,14 +1,10 @@
 import { Paper, Typography } from '@mui/material';
-import { redo, undo } from '@store/slices/projectsSlice';
-import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
-import type { ACTIONS } from '@store/slices/toolsSlice';
+import type { History } from '@shared/types/project';
+import { setHistory } from '@store/slices/projectsSlice';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
-interface HistoryItemProps {
-	id: number;
-	date: string;
-	type: HISTORY_ACTIONS | ACTIONS;
+interface HistoryItemProps extends Pick<History, 'id' | 'date' | 'type'> {
 	isActive: boolean;
 }
 
@@ -34,19 +30,12 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActi
 				},
 			}}
 			onClick={() =>
-				isActive
-					? dispatch(
-							undo({
-								projectId: projectId,
-								pointer: id,
-							}),
-					  )
-					: dispatch(
-							redo({
-								projectId: projectId,
-								pointer: id,
-							}),
-					  )
+				dispatch(
+					setHistory({
+						projectId: projectId,
+						pointer: id,
+					}),
+				)
 			}>
 			<Typography variant='body2' sx={{ color: 'var(--color)' }}>
 				{type}

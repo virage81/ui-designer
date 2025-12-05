@@ -1,6 +1,6 @@
 import { Box, Button } from '@mui/material';
 import type { RootState } from '@store/index';
-import { isRedoActiveSelector, isUndoActiveSelector, redo, undo } from '@store/slices/projectsSlice';
+import { isRedoActiveSelector, isUndoActiveSelector, redoHistory, undoHistory } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { Redo2Icon, Undo2Icon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -41,10 +41,10 @@ export const ToolsHistoryGroup: React.FC = () => {
 					onClick={() =>
 						dispatch(
 							tool.id === ACTIONS.UNDO
-								? undo({
+								? undoHistory({
 										projectId: projectId,
 								  })
-								: redo({
+								: redoHistory({
 										projectId: projectId,
 								  }),
 						)

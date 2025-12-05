@@ -126,8 +126,7 @@ export const Modal: FC = () => {
 				width: Number(width),
 				height: Number(height),
 				preview: '',
-				// history: [],
-				stack: null,
+				history: null,
 				layers: [],
 			} as Omit<Project, 'id' | 'date'>;
 
