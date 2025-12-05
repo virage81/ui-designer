@@ -2,7 +2,7 @@ import { LineWeight } from '@mui/icons-material';
 import { Box, Button, Menu } from '@mui/material';
 import type { RootState } from '@store/index';
 import { ACTIONS } from '@store/slices/toolsSlice';
-import { BaselineIcon, PaletteIcon, SquareDashedIcon } from 'lucide-react';
+import { BaselineIcon, PaletteIcon, SquareDashedIcon, Grid2X2Icon } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { MenuContent } from '../MenuContent';
@@ -13,6 +13,7 @@ const SETTING_TOOLS = [
 	{ id: ACTIONS.LINE_SIZE, icon: <LineWeight />, label: 'Размер линии' },
 	{ id: ACTIONS.COLOR, icon: <PaletteIcon size={16} color={'var(--color)'} />, label: 'Цвет' },
 	{ id: ACTIONS.CONTOUR_COLOR, icon: <SquareDashedIcon size={16} color={'var(--color)'} />, label: 'Контурный цвет' },
+	{ id: ACTIONS.GUIDE_LINES, icon: <Grid2X2Icon size={16} color={'var(--color)'}/>, label: 'Направляющие'	}
 ];
 
 export const ToolsSettingGroup: React.FC = () => {

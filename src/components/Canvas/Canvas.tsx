@@ -20,6 +20,12 @@ export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
 	const { register, unregister } = useCanvasContext();
+	const guides = useSelector((state: RootState) => state.projects.guides);
+
+	const GRID_COLS: number = guides.columns || 1;
+	const GRID_ROWS: number = guides.rows || 1;
+	const totalCells: number = GRID_COLS * GRID_ROWS;
+	const showGrid: boolean = guides.enabled;
 
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
@@ -206,6 +212,37 @@ export const Canvas: React.FC = () => {
 						}}
 					/>
 				))}
+				{showGrid && (
+					<Box
+						sx={{
+							position: 'absolute',
+							top: 0,
+							left: 0,
+							width: '100%',
+							height: '100%',
+							pointerEvents: 'none',
+							zIndex: 1000,
+							display: 'grid',
+							gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+							gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`,
+							gap: 0,
+							...(guides.enabled && {
+								'& > *': {
+									border: '1px dashed lightgrey',
+									boxSizing: 'border-box',
+								},
+								'& > *:nth-of-type(-n + ${GRID_COLS})': { borderTop: 'none' },
+								'& > *:nth-of-type(n + ${GRID_COLS * (GRID_ROWS - 1) + 1})': { borderBottom: 'none' },
+								'& > *:nth-of-type(n+1)': { borderLeft: 'none' },
+								'& > *:nth-of-type(${GRID_COLS}n)': { borderRight: 'none' },
+							}),
+						}}
+					>
+						{Array.from({ length: totalCells }).map((_, i) => (
+							<Box key={i} />
+						))}
+					</Box>
+				)}
 			</Box>
 		</Box>
 	);
