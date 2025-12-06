@@ -36,12 +36,16 @@ export const Canvas: React.FC = () => {
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
+	const isDrawingRef = useRef(false);
+	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const layerChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 
 	const currentProject = useProject()
 
 	const { canvases } = useCanvasContext();
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
-	const projectLayers = layersByProject[projectId ?? ''] ?? []
+	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
 
@@ -70,17 +74,63 @@ export const Canvas: React.FC = () => {
 		dprSetupsRef.current[canvas.id] = true;
 	}, []);
 
+	const triggerDrawingSave = useCallback(() => {
+		if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+		saveTimeoutRef.current = setTimeout(() => {
+			if (!isDrawingRef.current) {
+				saveProjectPreviewRef.current();
+			}
+		}, 1500);
+	}, []);
+
+	const triggerLayerSave = useCallback(() => {
+		if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+		layerChangeTimeoutRef.current = setTimeout(() => {
+			saveProjectPreviewRef.current();
+		}, 1000);
+	}, []);
+
 	useEffect(() => {
 		saveProjectPreviewRef.current = saveProjectPreview;
 	}, [saveProjectPreview]);
 
 	useEffect(() => {
-		const saveInterval = setInterval(() => {
-			saveProjectPreviewRef.current();
-		}, 3000);
+		const handlePointerDown = () => {
+			isDrawingRef.current = true;
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+				saveTimeoutRef.current = null;
+			}
+			if (layerChangeTimeoutRef.current) {
+				clearTimeout(layerChangeTimeoutRef.current);
+				layerChangeTimeoutRef.current = null;
+			}
+		};
 
-		return () => clearInterval(saveInterval);
-	}, []);
+		const handlePointerUp = () => {
+			isDrawingRef.current = false;
+			triggerDrawingSave();
+		};
+
+		const currentCanvases = canvasesRef.current;
+		Object.values(currentCanvases).forEach(canvas => {
+			canvas.addEventListener('pointerdown', handlePointerDown);
+			canvas.addEventListener('pointerup', handlePointerUp);
+		});
+
+		return () => {
+			Object.values(currentCanvases).forEach(canvas => {
+				canvas.removeEventListener('pointerdown', handlePointerDown);
+				canvas.removeEventListener('pointerup', handlePointerUp);
+			});
+			if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+			if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+		};
+	}, [triggerDrawingSave]);
+
+	useEffect(() => {
+		triggerLayerSave();
+	}, [tool, projectLayers, triggerLayerSave]);
 
 	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
 		if (!guides.enabled) return [x, y];

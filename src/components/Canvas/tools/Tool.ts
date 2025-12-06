@@ -30,6 +30,8 @@ export class Tool {
 
 	protected snapToGrid?: (x: number, y: number) => [number, number];
 
+	protected eventCleanup?: () => void;
+
 	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
 		this.canvas = canvas;
 
@@ -88,6 +90,11 @@ export class Tool {
 		this.canvas.onpointermove = null;
 		this.canvas.onpointerdown = null;
 		this.canvas.onmouseleave = null;
+
+		if (this.eventCleanup) {
+			this.eventCleanup();
+			this.eventCleanup = undefined;
+		}
 	}
 }
 
