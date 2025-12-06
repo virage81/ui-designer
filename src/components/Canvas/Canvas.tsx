@@ -82,6 +82,24 @@ export const Canvas: React.FC = () => {
 		return () => clearInterval(saveInterval);
 	}, []);
 
+	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
+		if (!guides.enabled) return [x, y];
+
+		const gridW = currentProject.width / guides.columns;
+		const gridH = currentProject.height / guides.rows;
+		const SNAP_TOLERANCE = gridW * 0.1;
+
+		const nearestGridX = Math.round(x / gridW) * gridW;
+		const xDiff = Math.abs(x - nearestGridX);
+		const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
+
+		const nearestGridY = Math.round(y / gridH) * gridH;
+		const yDiff = Math.abs(y - nearestGridY);
+		const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
+
+		return [snappedX, snappedY];
+	}, [guides, currentProject]);
+
 	useEffect(() => {
 		if (toolRef.current) {
 			toolRef.current.destroyEvents();
@@ -92,20 +110,20 @@ export const Canvas: React.FC = () => {
 
 		switch (tool) {
 			case ACTIONS.BRUSH: {
-				toolRef.current = new BrushTool(canvasRef.current, toolStyles, zoom);
+				toolRef.current = new BrushTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.RECTANGLE: {
-				toolRef.current = new RectangleTool(canvasRef.current, toolStyles, zoom);
+				toolRef.current = new RectangleTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 
 			case ACTIONS.CIRCLE: {
-				toolRef.current = new CircleTool(canvasRef.current, toolStyles, zoom);
+				toolRef.current = new CircleTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.LINE: {
-				toolRef.current = new LineTool(canvasRef.current, toolStyles, zoom);
+				toolRef.current = new LineTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.ERASER: {
@@ -113,7 +131,7 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles, zoom);
+				toolRef.current = new TextTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 			default: {
@@ -127,7 +145,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
-	}, [tool, activeLayer, toolStyles, currentProject.id,  zoom]);
+	}, [tool, activeLayer, toolStyles, currentProject.id,  zoom, snapToGrid]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;

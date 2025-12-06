@@ -6,8 +6,8 @@ export class CircleTool extends Tool {
 	private startX: number = 0;
 	private startY: number = 0;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
-		super(canvas, styles, zoom);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
+		super(canvas, styles, zoom, snapToGrid);
 		this.listen();
 	}
 

@@ -1,8 +1,8 @@
 import { Tool, type Styles } from './Tool';
 
 export class BrushTool extends Tool {
-	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
-		super(canvas, styles, zoom);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
+		super(canvas, styles, zoom, snapToGrid);
 		this.listen();
 	}
 

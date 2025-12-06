@@ -15,16 +15,16 @@ interface CanvasBounds {
 export class TextTool extends Tool {
 	private textInput: HTMLTextAreaElement | null = null;
 	private isEditing: boolean = false;
-	private pendingText: {
-		x: number;
-		y: number;
-		fontSize: number;
-		color: string;
-	} | null = null;
+	private pendingText: { x: number; y: number; fontSize: number; color: string } | null = null;
 	private resizeObserver: ResizeObserver | null = null;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
-		super(canvas, styles, zoom);
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		zoom: number,
+		snapToGrid?: (x: number, y: number) => [number, number],
+	) {
+		super(canvas, styles, zoom, snapToGrid);
 		this.createTextInput();
 		this.listen();
 	}
@@ -33,14 +33,16 @@ export class TextTool extends Tool {
 		this.canvas.onclick = this.clickHandler.bind(this);
 	};
 
-	clickHandler = (e: MouseEvent) => {
+	clickHandler = (e: PointerEvent) => {
 		if (this.isEditing) return;
 
-		const rect = this.canvas.getBoundingClientRect();
-		const canvasX = e.clientX - rect.left;
-		const canvasY = e.clientY - rect.top;
+		const [canvasX, canvasY] = this.getMousePos(e);
 
-		this.startTextInput(e.clientX, e.clientY, canvasX, canvasY);
+		const rect = this.canvas.getBoundingClientRect();
+		const clientX = rect.left + canvasX * this.zoom;
+		const clientY = rect.top + canvasY * this.zoom;
+
+		this.startTextInput(clientX, clientY, canvasX, canvasY);
 	};
 
 	private createTextInput() {
@@ -138,12 +140,7 @@ export class TextTool extends Tool {
 		if (!this.ctx) return;
 
 		this.isEditing = true;
-		this.pendingText = {
-			x: canvasX,
-			y: canvasY,
-			fontSize: this.fontSize,
-			color: this.fill,
-		};
+		this.pendingText = { x: canvasX, y: canvasY, fontSize: this.fontSize, color: this.fill };
 
 		Object.assign(this.textInput!.style, {
 			display: 'block',
