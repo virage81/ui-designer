@@ -148,7 +148,7 @@ export const Canvas: React.FC = () => {
 	}, [tool, activeLayer, toolStyles, currentProject.id,  zoom, snapToGrid]);
 
 	useEffect(() => {
-		if (!canvasRef.current || !activeLayer || !currentProject) return;
+		if (!canvasRef.current || !activeLayer) return;
 
 		if (activeLayer.cleared) {
 			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
@@ -157,7 +157,7 @@ export const Canvas: React.FC = () => {
 				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
 			}
 		}
-	}, [activeLayer, currentProject, projectId, dispatch]);
+	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width ]);
 
 	useEffect(() => {
 		if (canvasRef.current) {
