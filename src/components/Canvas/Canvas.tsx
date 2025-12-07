@@ -1,5 +1,6 @@
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
-import { Box } from '@mui/material';
+import { ZoomBar } from '@components/ZoomBar';
+import { Box, Paper } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
@@ -301,66 +302,71 @@ export const Canvas: React.FC = () => {
 	}
 
 	return (
-		<Box
-			sx={{
-				m: '0 auto',
-				width: '100%',
-				padding: '8px 8px',
-				backgroundColor: 'var(--main-bg)',
-				overflow: 'auto',
-			}}>
+		<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 			<Box
 				sx={{
-					position: 'relative',
-					m: `${zoom <= 1.2 ? '0 auto' : '0'}`,
-					width: currentProject.width,
-					height: currentProject.height,
-					cursor: tool === ACTIONS.ERASER ? 'pointer' : tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
-					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
-					transform: `scale(${zoom})`,
-					transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`,
+					m: '0 auto',
+					width: '100%',
+					height: '100%',
+					padding: '8px 8px',
+					backgroundColor: 'var(--main-bg)',
+					overflow: 'auto',
 				}}>
-				<canvas
-					style={{
-						background: 'white',
-						position: 'absolute',
-						inset: 0,
-						zIndex: 0,
-						pointerEvents: 'none',
-						width: `${currentProject.width}px`,
-						height: `${currentProject.height}px`,
-					}}
-				/>
-				{sortedLayers.map(layer => (
+				<Paper
+					elevation={5}
+					sx={{
+						position: 'relative',
+						m: `${zoom <= 1.2 ? '0 auto' : '0'}`,
+						width: currentProject.width,
+						height: currentProject.height,
+						cursor: tool === ACTIONS.ERASER ? 'pointer' : tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+						transform: `scale(${zoom})`,
+						transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`,
+					}}>
 					<canvas
-						id={layer.id}
-						key={layer.id}
-						ref={el => {
-							if (el) {
-								canvasesRef.current[layer.id] = el;
-								if (layer.id === activeLayer?.id) {
-									canvasRef.current = el;
-									setupCanvasDPR(el);
-								}
-								register(layer.id, el);
-							} else {
-								delete canvasesRef.current[layer.id];
-								unregister(layer.id);
-							}
-						}}
 						style={{
-							background: 'transparent',
+							background: 'white',
 							position: 'absolute',
 							inset: 0,
-							zIndex: layer.zIndex,
-							opacity: layer.hidden ? 0 : layer.opacity / 100,
-							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
+							zIndex: 0,
+							pointerEvents: 'none',
 							width: `${currentProject.width}px`,
 							height: `${currentProject.height}px`,
 						}}
 					/>
-				))}
+					{sortedLayers.map(layer => (
+						<canvas
+							id={layer.id}
+							key={layer.id}
+							ref={el => {
+								if (el) {
+									canvasesRef.current[layer.id] = el;
+									if (layer.id === activeLayer?.id) {
+										canvasRef.current = el;
+										setupCanvasDPR(el);
+									}
+									register(layer.id, el);
+								} else {
+									delete canvasesRef.current[layer.id];
+									unregister(layer.id);
+								}
+							}}
+							style={{
+								background: 'transparent',
+								position: 'absolute',
+								inset: 0,
+								zIndex: layer.zIndex,
+								opacity: layer.hidden ? 0 : layer.opacity / 100,
+								pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
+								width: `${currentProject.width}px`,
+								height: `${currentProject.height}px`,
+							}}
+						/>
+					))}
+				</Paper>
 			</Box>
+
+			<ZoomBar />
 		</Box>
 	);
 };
