@@ -1,4 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import canvasReducer from '@store/slices/canvasSlice.ts';
 import modalsReducer from '@store/slices/modalsSlice.ts';
 import projectsReducer from '@store/slices/projectsSlice';
 import toolsReducer from '@store/slices/toolsSlice';
@@ -9,6 +10,7 @@ const rootReducer = combineReducers({
 	projects: projectsReducer,
 	tools: toolsReducer,
 	modals: modalsReducer,
+	canvas: canvasReducer,
 });
 
 const persistConfig = {
