@@ -18,16 +18,18 @@ export const ZoomBar = () => {
 
 	return (
 		<Paper
-			elevation={6}
+			elevation={5}
 			sx={{
-				p: 0.5,
+				position: 'sticky',
+				bottom: 0,
 				display: 'flex',
 				alignItems: 'center',
 				gap: 2,
 				justifyContent: 'center',
-				background: 'var(--header-bg)',
+				p: 0.5,
 				borderRadius: 0,
-				border: '1px solid var(--header-border-color)',
+				borderTop: '1px solid var(--header-border-color)',
+				background: 'var(--header-bg)',
 			}}>
 			<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
 				<Typography variant='body2' sx={{ color: 'var(--color)', minWidth: 40, textAlign: 'right' }}>
