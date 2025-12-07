@@ -17,14 +17,17 @@ export class TextTool extends Tool {
 	private isEditing: boolean = false;
 	private pendingText: { x: number; y: number; fontSize: number; color: string } | null = null;
 	private resizeObserver: ResizeObserver | null = null;
+	private isTextEditingRef: React.RefObject<boolean>
 
 	constructor(
 		canvas: HTMLCanvasElement,
 		styles: Styles,
 		zoom: number,
+		isTextEditingRef: React.RefObject<boolean>,
 		snapToGrid?: (x: number, y: number) => [number, number],
 	) {
 		super(canvas, styles, zoom, snapToGrid);
+		this.isTextEditingRef = isTextEditingRef
 		this.createTextInput();
 		this.listen();
 	}
@@ -35,7 +38,7 @@ export class TextTool extends Tool {
 
 	clickHandler = (e: PointerEvent) => {
 		if (this.isEditing) return;
-
+		this.isTextEditingRef.current = true;
 		const [canvasX, canvasY] = this.getMousePos(e);
 
 		const rect = this.canvas.getBoundingClientRect();
@@ -297,6 +300,7 @@ export class TextTool extends Tool {
 		}
 		this.isEditing = false;
 		this.pendingText = null;
+		this.isTextEditingRef.current = false;
 	}
 
 	applyStyles(styles: Styles) {

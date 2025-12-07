@@ -32,6 +32,7 @@ export const Canvas: React.FC = () => {
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
 
+	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
@@ -75,20 +76,34 @@ export const Canvas: React.FC = () => {
 	}, []);
 
 	const triggerDrawingSave = useCallback(() => {
+		if (isTextEditingRef.current) {
+			if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+			return;
+		}
+
 		if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
 		saveTimeoutRef.current = setTimeout(() => {
-			if (!isDrawingRef.current) {
+			if (!isDrawingRef.current && !isTextEditingRef.current) {
 				saveProjectPreviewRef.current();
 			}
 		}, 1500);
-	}, []);
+	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const triggerLayerSave = useCallback(() => {
+		if (isTextEditingRef.current) {
+			if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+			return;
+		}
+
 		if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+
 		layerChangeTimeoutRef.current = setTimeout(() => {
-			saveProjectPreviewRef.current();
+			if (!isTextEditingRef.current) {
+				saveProjectPreviewRef.current();
+			}
 		}, 1000);
-	}, []);
+	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	useEffect(() => {
 		saveProjectPreviewRef.current = saveProjectPreview;
@@ -181,7 +196,7 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles, zoom, snapToGrid);
+				toolRef.current = new TextTool(canvasRef.current, toolStyles, zoom, isTextEditingRef, snapToGrid);
 				break;
 			}
 			default: {
