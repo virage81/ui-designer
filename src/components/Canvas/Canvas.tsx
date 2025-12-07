@@ -92,7 +92,7 @@ export const Canvas: React.FC = () => {
 			if (!isDrawingRef.current && !isTextEditingRef.current) {
 				saveProjectPreviewRef.current();
 			}
-		}, 1500);
+		}, 600);
 	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const triggerLayerSave = useCallback(() => {
@@ -107,7 +107,7 @@ export const Canvas: React.FC = () => {
 			if (!isTextEditingRef.current) {
 				saveProjectPreviewRef.current();
 			}
-		}, 1000);
+		}, 300);
 	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const handleToolComplete = useCallback(
@@ -256,11 +256,9 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
+		//eslint-disable-next-line
 	}, [tool, activeLayer, toolStyles, currentProject.id,  layerObjects, zoom, snapToGrid]);
-// =======
-// 		//eslint-disable-next-line
-// 	}, [tool, activeLayer?.id, toolStyles, layerObjects, currentProject.id, zoom]);
-// >>>>>>> development
+
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer) return;
