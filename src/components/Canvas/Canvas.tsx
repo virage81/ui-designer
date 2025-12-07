@@ -1,4 +1,7 @@
+import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import { Box } from '@mui/material';
+import { useProject } from '@shared/hooks/useProject.tsx';
+import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import type { RootState } from '@store/index';
 import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
@@ -12,9 +15,6 @@ import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import {useCanvasContext} from "@/contexts/useCanvasContext.ts";
-import {useSaveProjectPreview} from "@shared/hooks/useSavePreview.tsx";
-import {useProject} from "@shared/hooks/useProject.tsx";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -31,11 +31,11 @@ export const Canvas: React.FC = () => {
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
 
-	const currentProject = useProject()
+	const currentProject = useProject();
 
 	const { canvases } = useCanvasContext();
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
-	const projectLayers = layersByProject[projectId ?? ''] ?? []
+	const projectLayers = layersByProject[projectId ?? ''] ?? [];
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
 
@@ -44,25 +44,28 @@ export const Canvas: React.FC = () => {
 		[fillColor, strokeWidth, strokeStyle, fontSize],
 	);
 
-	const setupCanvasDPR = useCallback((canvas: HTMLCanvasElement) => {
-		if (!canvas || dprSetupsRef.current[canvas.id]) return;
+	const setupCanvasDPR = useCallback(
+		(canvas: HTMLCanvasElement) => {
+			if (!canvas || dprSetupsRef.current[canvas.id]) return;
 
-		const dpr = window.devicePixelRatio || 1;
-		const rect = canvas.getBoundingClientRect();
+			const dpr = window.devicePixelRatio || 1;
 
-		canvas.width = Math.floor(rect.width * dpr);
-		canvas.height = Math.floor(rect.height * dpr);
-		canvas.style.width = `${rect.width}px`;
-		canvas.style.height = `${rect.height}px`;
+			canvas.width = currentProject.width * dpr;
+			canvas.height = currentProject.height * dpr;
 
-		const ctx = canvas.getContext('2d', { willReadFrequently: true });
-		if (ctx) {
-			ctx.scale(dpr, dpr);
-			ctx.imageSmoothingEnabled = false;
-		}
+			canvas.style.width = `${currentProject.width}px`;
+			canvas.style.height = `${currentProject.height}px`;
 
-		dprSetupsRef.current[canvas.id] = true;
-	}, []);
+			const ctx = canvas.getContext('2d', { willReadFrequently: true });
+			if (ctx) {
+				ctx.scale(dpr, dpr);
+				ctx.imageSmoothingEnabled = false;
+			}
+
+			dprSetupsRef.current[canvas.id] = true;
+		},
+		[currentProject.width, currentProject.height],
+	);
 
 	useEffect(() => {
 		saveProjectPreviewRef.current = saveProjectPreview;
@@ -121,7 +124,7 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
-	}, [tool, activeLayer, toolStyles, currentProject.id,  zoom]);
+	}, [tool, activeLayer, toolStyles, currentProject.id, zoom]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
@@ -164,7 +167,7 @@ export const Canvas: React.FC = () => {
 					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
 					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
 					transform: `scale(${zoom})`,
-					transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`
+					transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`,
 				}}>
 				<canvas
 					style={{
