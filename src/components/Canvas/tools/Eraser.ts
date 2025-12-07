@@ -1,10 +1,11 @@
-import { Tool, type Styles } from './Tool';
+import { findObjectAtPointPrecise } from '@shared/utils/canvas-helpers';
+import { Tool, type Styles, type ToolOptions } from './Tool';
 
 export class EraserTool extends Tool {
 	private erased: boolean = false;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
-		super(canvas, styles, zoom);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number) {
+		super(canvas, styles, options, zoom);
 		this.listen();
 	}
 
@@ -12,33 +13,22 @@ export class EraserTool extends Tool {
 		this.canvas.onpointerdown = this.mouseDownHandler.bind(this);
 		this.canvas.onpointermove = this.mouseMoveHandler.bind(this);
 		this.canvas.onpointerup = this.mouseUpHandler.bind(this);
-
-		const handleGlobalUp = () => {
-			if (this.isMouseDown) {
-				this.isMouseDown = false;
-			}
-		};
-
-		document.addEventListener('pointerup', handleGlobalUp);
-
-		this.eventCleanup = () => {
-			document.removeEventListener('pointerup', handleGlobalUp);
-			this.canvas.onpointerdown = null;
-			this.canvas.onpointermove = null;
-			this.canvas.onpointerup = null;
-		};
 	};
 
 	mouseDownHandler = (e: PointerEvent) => {
-		if (!this.ctx) return;
+		if (!this.ctx || !this.onComplete || !this.layerObjects) return;
 
+		const [x, y] = this.getMousePos(e);
 		this.isMouseDown = true;
 		this.canvas.setPointerCapture(e.pointerId);
 		this.erased = false;
-		const [x, y] = this.getMousePos(e);
 		this.ctx.beginPath();
 		this.ctx.moveTo(x, y);
 		this.erase(x, y);
+
+		const hitObject = this.findObjectAt(x, y);
+
+		if (hitObject) this.onComplete({ id: hitObject.id });
 	};
 
 	mouseMoveHandler = (e: PointerEvent) => {
@@ -84,4 +74,8 @@ export class EraserTool extends Tool {
 		this.ctx.stroke();
 		this.ctx.restore();
 	};
+
+	private findObjectAt(x: number, y: number) {
+		return findObjectAtPointPrecise(this.layerObjects, x, y, { tolerance: 5 });
+	}
 }
