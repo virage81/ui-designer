@@ -12,13 +12,13 @@ import {
 	Typography,
 } from '@mui/material';
 import type { Project } from '@shared/types/project';
+import { validateProjectName } from '@shared/utils/projectNameValidation';
 import { closeCreateProjectModal } from '@store/slices/modalsSlice';
 import { createProject } from '@store/slices/projectsSlice';
 import { type ChangeEvent, type FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getNewProjectName } from './utils';
-import { validateProjectName } from '@shared/utils/projectNameValidation';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
@@ -118,6 +118,7 @@ export const Modal: FC = () => {
 	}, [dispatch]);
 
 	const handleCreate: () => void = (): void => {
+		console.log('enter');
 		if (!projectNameError && !widthError && !heightError) {
 			const trimmedName = projectName.trim();
 			const newProject: NewProject = {
@@ -163,72 +164,75 @@ export const Modal: FC = () => {
 					</IconButton>
 				</DialogTitle>
 				<DialogContent>
-					<Typography sx={{ color: '#9fa5b5', marginBottom: 2 }}>Укажите параметры для нового проекта</Typography>
-					<TextField
-						name='projectName'
-						label='Название проекта'
-						fullWidth
-						margin='normal'
-						value={projectName}
-						autoComplete='off'
-						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-							validateInput(e.target.value, e.target.name)
-						}
-						error={!!projectNameError}
-						helperText={projectNameError}
-					/>
-					<TextField
-						name='width'
-						label='Ширина холста (px)'
-						type='number'
-						fullWidth
-						margin='normal'
-						value={width}
-						slotProps={{ htmlInput: { min: 100 } }}
-						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-							validateInput(e.target.value, e.target.name)
-						}
-						error={!!widthError}
-						helperText={widthError}
-					/>
-					<TextField
-						name='height'
-						label='Высота холста (px)'
-						type='number'
-						fullWidth
-						margin='normal'
-						value={height}
-						slotProps={{ htmlInput: { min: 100 } }}
-						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-							validateInput(e.target.value, e.target.name)
-						}
-						error={!!heightError}
-						helperText={heightError}
-					/>
+					<Box component='form' onSubmit={handleCreate}>
+						<Typography sx={{ color: '#9fa5b5', marginBottom: 2 }}>Укажите параметры для нового проекта</Typography>
+						<TextField
+							name='projectName'
+							label='Название проекта'
+							fullWidth
+							margin='normal'
+							value={projectName}
+							autoComplete='off'
+							onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+								validateInput(e.target.value, e.target.name)
+							}
+							error={!!projectNameError}
+							helperText={projectNameError}
+						/>
+						<TextField
+							name='width'
+							label='Ширина холста (px)'
+							type='number'
+							fullWidth
+							margin='normal'
+							value={width}
+							slotProps={{ htmlInput: { min: 100 } }}
+							onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+								validateInput(e.target.value, e.target.name)
+							}
+							error={!!widthError}
+							helperText={widthError}
+						/>
+						<TextField
+							name='height'
+							label='Высота холста (px)'
+							type='number'
+							fullWidth
+							margin='normal'
+							value={height}
+							slotProps={{ htmlInput: { min: 100 } }}
+							onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+								validateInput(e.target.value, e.target.name)
+							}
+							error={!!heightError}
+							helperText={heightError}
+						/>
+						<DialogActions>
+							<Button
+								onClick={() => dispatch(closeCreateProjectModal())}
+								variant='outlined'
+								type='button'
+								sx={{
+									borderColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : 'rgb(196,196,196)'),
+									textTransform: 'none',
+									color: theme => (theme.palette.mode === 'dark' ? '#FFF' : '#000'),
+									'&:hover': {
+										backgroundColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : null),
+										borderColor: theme => (theme.palette.mode !== 'dark' ? '#000' : null),
+									},
+								}}>
+								Отмена
+							</Button>
+							<Button
+								variant='contained'
+								type='submit'
+								disabled={!!projectNameError || !!widthError || !!heightError}
+								sx={{ textTransform: 'none' }}>
+								Создать
+							</Button>
+						</DialogActions>
+					</Box>
 				</DialogContent>
-				<DialogActions sx={{ paddingRight: '24px', paddingLeft: '24px' }}>
-					<Button
-						onClick={() => dispatch(closeCreateProjectModal())}
-						variant='outlined'
-						sx={{
-							borderColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : 'rgb(196,196,196)'),
-							textTransform: 'none',
-							color: theme => (theme.palette.mode === 'dark' ? '#FFF' : '#000'),
-							'&:hover': {
-								backgroundColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : null),
-								borderColor: theme => (theme.palette.mode !== 'dark' ? '#000' : null),
-							},
-						}}>
-						Отмена
-					</Button>
-					<Button
-						onClick={handleCreate}
-						variant='contained'
-						disabled={!!projectNameError || !!widthError || !!heightError}
-						sx={{ textTransform: 'none' }}>
-						Создать
-					</Button>
-				</DialogActions>
 			</Box>
 		</Dialog>
 	);
