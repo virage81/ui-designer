@@ -1,12 +1,12 @@
 import { DeleteConfirmModal } from '@components/DeleteConfirmModal';
 import { Box, Button, Card, CardActions, CardContent, CardMedia, Typography } from '@mui/material';
+import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
 import type { Project } from '@shared/types/project';
+import { type RootState } from '@store/index';
 import { FolderOpen, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { type RootState } from '@store/index';
-import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
+import { useNavigate } from 'react-router-dom';
 import { Placeholder } from './components';
 import { getFormatedDate } from './utils';
 
@@ -21,7 +21,6 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 		<>
 			<Card
 				sx={{
-					width: 290,
 					borderRadius: 3,
 					border: '1px solid var(--header-border-color)',
 					backgroundColor: 'var(--header-bg)',

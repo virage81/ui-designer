@@ -67,7 +67,10 @@ export const Modal: FC = () => {
 			case 'width': {
 				const num: number = Number(value);
 				setWidth(value);
-				if (!Number.isInteger(num) || num < 100) {
+
+				if (!Number.isInteger(num) || num < 0) {
+					setWidthError('Введите целое положительное число');
+				} else if (num < 100) {
 					setWidthError('Минимальная ширина холста: 100px');
 				} else {
 					setWidthError('');
@@ -77,7 +80,10 @@ export const Modal: FC = () => {
 			case 'height': {
 				const num: number = Number(value);
 				setHeight(value);
-				if (!Number.isInteger(num) || num < 100) {
+
+				if (!Number.isInteger(num) || num < 0) {
+					setHeightError('Введите целое положительное число');
+				} else if (num < 100) {
 					setHeightError('Минимальная высота холста: 100px');
 				} else {
 					setHeightError('');
