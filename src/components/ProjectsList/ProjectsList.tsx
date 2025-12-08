@@ -36,9 +36,9 @@ export const ProjectsList: React.FC = () => {
 				{!projects.length ? (
 					<EmptyProjectsState />
 				) : (
-					<Grid container spacing={3} justifyContent='center' sx={{ mt: 3 }}>
+					<Grid container spacing={3} justifyContent={{ xs: 'center', md: 'flex-start' }} sx={{ mt: 3 }}>
 						{projects.map(project => (
-							<Grid key={project.id}>
+							<Grid size={{ xs: 12, md: 6, lg: 4 }} key={project.id}>
 								<ProjectCard {...project} />
 							</Grid>
 						))}
