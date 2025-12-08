@@ -30,7 +30,7 @@ export class TextTool extends Tool {
 		container: HTMLDivElement,
 		snapToGrid?: (x: number, y: number) => [number, number],
 	) {
-		super(canvas, styles, options, zoom, container, snapToGrid);
+		super(canvas, styles, options, zoom, snapToGrid, container);
 		this.isTextEditingRef = isTextEditingRef;
 		this.createTextInput();
 		this.listen();
@@ -49,7 +49,7 @@ export class TextTool extends Tool {
 	};
 
 	private createTextInput() {
-		if (this.textInput) return;
+		if (this.textInput || !this.container) return;
 
 		this.textInput = document.createElement('textarea');
 		Object.assign(this.textInput.style, {

@@ -44,15 +44,15 @@ export class Tool {
 	protected onComplete: ((obj: unknown) => void) | undefined;
 	protected layerObjects: Drawable[] = [];
 
-	protected container: HTMLDivElement;
+	protected container?: HTMLDivElement;
 
 	constructor(
 		canvas: HTMLCanvasElement,
 		styles: Styles,
 		options: ToolOptions = {},
 		zoom: number,
-		container: HTMLDivElement,
 		snapToGrid?: (x: number, y: number) => [number, number],
+		container?: HTMLDivElement,
 	) {
 		this.canvas = canvas;
 		this.container = container;
