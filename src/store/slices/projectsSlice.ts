@@ -36,6 +36,7 @@ const projectsSlice = createSlice({
 			const layer = { id: generateId(), hidden: false, name: 'Фон', opacity: 100, zIndex: 1 };
 			state.layers[id] = [layer];
 			state.activeLayer = layer;
+			state.zoom = initialState.zoom;
 		},
 		updateProject: (state, action: PayloadAction<UpdateProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
