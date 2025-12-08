@@ -22,7 +22,6 @@ import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 
 export const LayersTab = () => {
 	const dispatch = useDispatch();
-
 	const { id: projectId = '' } = useParams();
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
@@ -34,6 +33,7 @@ export const LayersTab = () => {
 	const [currentLayerId, setCurrentLayerId] = useState<string | null>(null);
 	const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
 	const [editingLayerName, setEditingLayerName] = useState('');
+
 	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
 	const isMenuOpen = Boolean(anchorEl);
 

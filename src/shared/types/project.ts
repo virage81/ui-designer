@@ -16,7 +16,7 @@ export interface HistoryStack {
 }
 export interface History {
 	id: number;
-	date: string;
+	date: number;
 	type: HISTORY_ACTIONS | ACTIONS;
 	canvasData: string;
 }

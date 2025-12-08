@@ -76,6 +76,12 @@ const projectsSlice = createSlice({
 			if (projectIndex === -1) throw new Error(`Project with ID ${action.payload.id} not found`);
 
 			state.projects.splice(projectIndex, 1);
+
+			if (!state.layers[action.payload.id]) throw new Error('There is no layers to delete');
+			delete state.layers[action.payload.id];
+
+			if (!state.history[action.payload.id]) throw new Error('There is no history to delete');
+			delete state.history[action.payload.id];
 		},
 
 		createLayer: (state, action: PayloadAction<CreateLayerParams>) => {
@@ -111,6 +117,9 @@ const projectsSlice = createSlice({
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${id} not found`);
 
 			state.layers[projectId].splice(layerIndex, 1);
+
+			if (!state.history[projectId][id]) throw new Error('There is no history to delete');
+			delete state.history[projectId][id];
 		},
 
 		setActiveLayer: (state, action: PayloadAction<SetActiveLayerParams>) => {
@@ -187,7 +196,7 @@ const projectsSlice = createSlice({
 			 * Если были отменена история (pointer < history.length - 1),
 			 * обрезаем "будущую" историю
 			 */
-			if (historyState.pointer < historyState.history.length - 1) {
+			if (historyState.pointer < historyState.history?.length - 1) {
 				historyState.history = historyState.history.slice(0, historyState.pointer + 1);
 			}
 
@@ -195,7 +204,7 @@ const projectsSlice = createSlice({
 			historyState.history.push(({
 				type,
 				id: historyState.history.length,
-				date: new Date().toUTCString(),
+				date: new Date().getTime(),
 				canvasData: '',
 			}));
 
@@ -258,7 +267,7 @@ const projectsSlice = createSlice({
 			}
 
 			historyState.pointer = index;
-		}
+		},
 	},
 
 	extraReducers: (builder) => {
@@ -268,7 +277,7 @@ const projectsSlice = createSlice({
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
 			const layers = state.layers[projectId];
-			const layer = layers.find(l => l.id === layerId);
+			const layer = layers.find(l => l?.id === layerId);
 
 			if (!layer) return;
 
@@ -276,7 +285,8 @@ const projectsSlice = createSlice({
 
 			const historyState = state.history[projectId]?.[layerId];
 
-			if (!historyState.history[historyState.pointer].id) return;
+			if (historyState.history[historyState.pointer]?.id === undefined) return;
+
 			historyState.history[historyState.pointer].canvasData = canvasDataURL;
 		});
 	},
@@ -304,7 +314,7 @@ export const isUndoActiveSelector = (state: RootState, projectId: Project['id'],
 	const pointer = history[projectId][activeLayer.id]?.pointer;
 	if (pointer === undefined) return false;
 
-	return pointer >= -1;
+	return pointer >= 0;
 }
 
 export const isRedoActiveSelector = (state: RootState, projectId: Project['id'], activeLayer: Layer | null) => {
@@ -336,6 +346,14 @@ export const historySelector = (state: RootState, projectId: Project['id'], acti
 	if (!history[projectId][activeLayer.id]?.history?.length) return;
 
 	return [...history[projectId][activeLayer.id].history];
+};
+
+export const fullHistorySelector = (state: RootState, projectId: Project['id']) => {
+	const { history } = state.projects;
+
+	if (!history[projectId]) return;
+
+	return history[projectId];
 };
 
 export const {

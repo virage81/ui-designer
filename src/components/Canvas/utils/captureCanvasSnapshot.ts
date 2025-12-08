@@ -16,16 +16,17 @@ export const captureCanvasAndSaveToHistory = createAsyncThunk<void, CaptureCanva
 	async (
 		{ projectId, layerId, canvasRef }, { dispatch }
 	) => {
+		let dataURL = '';
 		if (canvasRef) {
-			const dataURL = canvasRef.toDataURL('image/png', 1);
-
-			dispatch(
-				saveHistorySnapshot({
-					projectId,
-					layerId,
-					canvasDataURL: dataURL,
-				})
-			);
+			dataURL = canvasRef.toDataURL('image/png', 1);
 		}
+
+		dispatch(
+			saveHistorySnapshot({
+				projectId,
+				layerId,
+				canvasDataURL: dataURL,
+			})
+		);
 	}
 );

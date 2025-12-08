@@ -1,6 +1,7 @@
 import { Paper, Typography } from '@mui/material';
 import type { History } from '@shared/types/project';
 import { setHistory } from '@store/slices/projectsSlice';
+import { HISTORY_NAMES } from '@store/slices/projectsSlice.const';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
@@ -8,10 +9,9 @@ interface HistoryItemProps extends Pick<History, 'id' | 'date' | 'type'> {
 	layerId: string;
 	index: number;
 	isActive: boolean;
-	pointer: number; //удалить
 }
 
-export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActive, index, layerId, pointer }) => {
+export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActive, index, layerId }) => {
 	const dispatch = useDispatch();
 	const { id: projectId = '' } = useParams();
 
@@ -42,17 +42,10 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActi
 				)
 			}>
 			<Typography variant='body2' sx={{ color: 'var(--color)' }}>
-				{type}
+				{HISTORY_NAMES[type]}
 			</Typography>
 			<Typography variant='caption' sx={{ color: 'var(--color)', mt: 0.5, display: 'block' }}>
-				{date}
-				{/* @TODO: убрать, это для наглядности */}
-				{<br />}
-				{<br />}
-				index: {index}
-				{<br />}
-				{<br />}
-				pointer: {pointer}
+				{new Date(date).toLocaleString('ru-RU')}
 			</Typography>
 		</Paper>
 	);

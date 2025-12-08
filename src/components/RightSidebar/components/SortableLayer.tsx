@@ -112,8 +112,7 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 							e.stopPropagation();
 							startEditing(layer.id, layer.name);
 						}}>
-						{layer.name} - {layer.id}
-						{/* @TODO: убрать, ^ это для наглядности */}
+						{layer.name}
 					</Typography>
 				)}
 

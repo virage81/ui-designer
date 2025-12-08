@@ -1,10 +1,10 @@
 import type { RootState } from '@store/index';
 import {
 	addToHistory,
+	fullHistorySelector,
 	historySelector,
 	pointerSelector,
 	sortedLayersSelector,
-	updateLayer,
 } from '@store/slices/projectsSlice';
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import { ZoomBar } from '@components/ZoomBar';
@@ -12,7 +12,7 @@ import { Box, Paper } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
-import type { Brush, Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
+import type { Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
 import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -26,50 +26,47 @@ import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import { captureCanvasAndSaveToHistory } from './thunks/captureCanvasSnapshot';
-import { redrawCanvas } from '@store/utils/canvasRedraw';
-import { useThunkDispatch } from '@store/utils/thunkDispatch';
+import { captureCanvasAndSaveToHistory } from './utils/captureCanvasSnapshot';
+import { redrawCanvas } from '@components/Canvas/utils/canvasRedraw';
+import { useThunkDispatch } from '@components/Canvas/utils/thunkDispatch';
 import { GridOverlay } from '@components/GridOverlay/GridOverlay.tsx';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
-	const { register, unregister } = useCanvasContext();
-	const guides = useSelector((state: RootState) => state.projects.guides);
-	const showGrid: boolean = guides.enabled;
-
-	/**
-	 * Тут более специфичный вид dispatch для captureCanvasAndSaveToHistory;
-	 */
 	const thunkDispatch = useThunkDispatch();
-
+	const guides = useSelector((state: RootState) => state.projects.guides);
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 	const history = useSelector((state: RootState) => historySelector(state, projectId, activeLayer));
+	const fullHistory = useSelector((state: RootState) => fullHistorySelector(state, projectId));
 	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId, activeLayer));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
 	const layerObjects = useSelector((state: RootState) => objectsByLayerSelector(state, activeLayer?.id || ''));
+	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 
 	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
-
 	const isDrawingRef = useRef(false);
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const layerChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const initialRenderRef = useRef(false);
 
-	const animationFrameRef = useRef<number | null>(null);
+	// @TODO: внедрить в существующую рисовку
+	// const animationFrameRef = useRef<number | null>(null);
 
 	const currentProject = useProject();
-
 	const { canvases } = useCanvasContext();
-	const layersByProject = useSelector((state: RootState) => state.projects.layers);
+	const { register, unregister } = useCanvasContext();
 	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
+
+	const showGrid: boolean = guides.enabled;
 
 	const toolStyles = useMemo<Styles>(
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
@@ -129,7 +126,6 @@ export const Canvas: React.FC = () => {
 	const handleToolComplete = useCallback(
 		(payload: unknown) => {
 			if (!payload || typeof payload !== 'object') return;
-			console.log('handleToolComplete');
 
 			if ('type' in payload) {
 				dispatch(addObject(payload as Rect | Circle | Line | Text));
@@ -140,8 +136,53 @@ export const Canvas: React.FC = () => {
 			if ('id' in payload && !('type' in payload) && !('updates' in payload)) {
 				dispatch(removeObject((payload as { id: string }).id));
 			}
+
+			if (activeLayer) {
+				dispatch(
+					addToHistory({
+						projectId: projectId,
+						layerId: activeLayer.id,
+						type: tool,
+					}),
+				);
+			}
+
+			if (canvasRef.current && activeLayer) {
+				thunkDispatch(
+					/**
+					 * Это middleware для слайса - внутри сохранение изображения
+					 * слоя в строку и в параметр слоя canvasDataURL
+					 */
+					captureCanvasAndSaveToHistory({
+						projectId: projectId,
+						layerId: activeLayer.id,
+						canvasRef: canvasRef.current,
+					}),
+				);
+			}
 		},
-		[dispatch],
+		[projectId, activeLayer, tool, dispatch, thunkDispatch],
+	);
+
+	const snapToGrid = useCallback(
+		(x: number, y: number): [number, number] => {
+			if (!guides.enabled) return [x, y];
+
+			const gridW = currentProject.width / guides.columns;
+			const gridH = currentProject.height / guides.rows;
+			const SNAP_TOLERANCE = gridW * 0.1;
+
+			const nearestGridX = Math.round(x / gridW) * gridW;
+			const xDiff = Math.abs(x - nearestGridX);
+			const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
+
+			const nearestGridY = Math.round(y / gridH) * gridH;
+			const yDiff = Math.abs(y - nearestGridY);
+			const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
+
+			return [snappedX, snappedY];
+		},
+		[guides, currentProject],
 	);
 
 	const toolOptions = useMemo(
@@ -153,17 +194,18 @@ export const Canvas: React.FC = () => {
 		[activeLayer?.id, handleToolComplete, layerObjects],
 	);
 
-	const baseStyles = useMemo(
-		() => ({
-			lineCap: 'round' as CanvasLineCap,
-			lineJoin: 'round' as CanvasLineJoin,
-			font: `${toolStyles.fontSize}px Arial`,
-			lineWidth: toolStyles.strokeWidth,
-			fillStyle: toolStyles.fill,
-			strokeStyle: toolStyles.strokeStyle,
-		}),
-		[toolStyles],
-	);
+	// @TODO: внедрить в существующую рисовку
+	// const baseStyles = useMemo(
+	// 	() => ({
+	// 		lineCap: 'round' as CanvasLineCap,
+	// 		lineJoin: 'round' as CanvasLineJoin,
+	// 		font: `${toolStyles.fontSize}px Arial`,
+	// 		lineWidth: toolStyles.strokeWidth,
+	// 		fillStyle: toolStyles.fill,
+	// 		strokeStyle: toolStyles.strokeStyle,
+	// 	}),
+	// 	[toolStyles],
+	// );
 
 	useEffect(() => {
 		saveProjectPreviewRef.current = saveProjectPreview;
@@ -206,27 +248,6 @@ export const Canvas: React.FC = () => {
 	useEffect(() => {
 		triggerLayerSave();
 	}, [tool, projectLayers, triggerLayerSave]);
-
-	const snapToGrid = useCallback(
-		(x: number, y: number): [number, number] => {
-			if (!guides.enabled) return [x, y];
-
-			const gridW = currentProject.width / guides.columns;
-			const gridH = currentProject.height / guides.rows;
-			const SNAP_TOLERANCE = gridW * 0.1;
-
-			const nearestGridX = Math.round(x / gridW) * gridW;
-			const xDiff = Math.abs(x - nearestGridX);
-			const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
-
-			const nearestGridY = Math.round(y / gridH) * gridH;
-			const yDiff = Math.abs(y - nearestGridY);
-			const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
-
-			return [snappedX, snappedY];
-		},
-		[guides, currentProject],
-	);
 
 	useEffect(() => {
 		if (toolRef.current) {
@@ -279,172 +300,142 @@ export const Canvas: React.FC = () => {
 		//eslint-disable-next-line
 	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
 
+	// чтобы избежать рендера, useRef --> initialRenderuseRef = true - Тогда full history, если false - тогда конкретный слой
+	// по принципу isMouseDown
+
+	// Тут перерисовываем canvas всех слоёв
 	useEffect(() => {
-		if (!canvasRef.current || !activeLayer) return;
+		if (!fullHistory || !canvasRef.current || initialRenderRef.current === true) return;
 
-		if (activeLayer.canvasDataURL === '') {
-			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-			if (ctx) {
-				// @TODO: очищение уще есть, проверить
-				// ctx.clearRect(0, 0, currentProject.width, currentProject.height);
-				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, canvasDataURL: '' } }));
-			}
-		}
-	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width]);
+		Object.entries(fullHistory).forEach(([key, value]) => {
+			const currentLayerData = value.history[value.pointer]?.canvasData;
+			redrawCanvas(canvasesRef.current[key], currentLayerData);
+		});
 
+		initialRenderRef.current = true;
+	}, [fullHistory]);
+
+	// Тут перерисовываем canvas текущего слоя
 	useEffect(() => {
-		if (!canvasRef.current || !activeLayer || !currentProject) return;
+		if (!projectId || !canvasRef.current || !history || pointer === undefined || initialRenderRef.current === false)
+			return;
 
-		const draw = () => {
-			const ctx = canvasRef.current?.getContext('2d');
-			if (!ctx) return;
+		const currentLayerData = history[pointer]?.canvasData;
+		redrawCanvas(canvasRef.current, currentLayerData);
+	}, [projectId, sortedLayers, history, pointer]);
 
-			ctx.clearRect(0, 0, currentProject.width, currentProject.height);
+	// @TODO: внедрить в существующую рисовку
+	// useEffect(() => {
+	// 	if (!canvasRef.current || !activeLayer || !currentProject) return;
 
-			Object.assign(ctx, baseStyles);
+	// 	const draw = () => {
+	// 		const ctx = canvasRef.current?.getContext('2d');
+	// 		if (!ctx) return;
 
-			layerObjects.forEach(obj => {
-				switch (obj.type) {
-					case 'rect': {
-						const r = obj as Rect;
-						ctx.fillStyle = r.fill;
-						ctx.strokeStyle = r.stroke;
-						ctx.lineWidth = r.strokeWidth;
-						ctx.beginPath();
-						ctx.rect(r.x, r.y, r.width, r.height);
-						ctx.fill();
-						if (r.strokeWidth > 0) ctx.stroke();
-						break;
-					}
+	// 		ctx.clearRect(0, 0, currentProject.width, currentProject.height);
 
-					case 'circle': {
-						const c = obj as Circle;
-						ctx.fillStyle = c.fill;
-						ctx.strokeStyle = c.stroke;
-						ctx.lineWidth = c.strokeWidth;
-						ctx.beginPath();
-						ctx.arc(c.cx, c.cy, c.r, 0, Math.PI * 2);
-						ctx.fill();
-						if (c.strokeWidth > 0) ctx.stroke();
-						break;
-					}
+	// 		Object.assign(ctx, baseStyles);
 
-					case 'line': {
-						const l = obj as Line;
-						ctx.strokeStyle = l.stroke;
-						ctx.lineWidth = l.strokeWidth;
-						ctx.beginPath();
-						ctx.moveTo(l.x1, l.y1);
-						ctx.lineTo(l.x2, l.y2);
-						ctx.stroke();
-						break;
-					}
+	// 		layerObjects.forEach(obj => {
+	// 			switch (obj.type) {
+	// 				case 'rect': {
+	// 					const r = obj as Rect;
+	// 					ctx.fillStyle = r.fill;
+	// 					ctx.strokeStyle = r.stroke;
+	// 					ctx.lineWidth = r.strokeWidth;
+	// 					ctx.beginPath();
+	// 					ctx.rect(r.x, r.y, r.width, r.height);
+	// 					ctx.fill();
+	// 					if (r.strokeWidth > 0) ctx.stroke();
+	// 					break;
+	// 				}
 
-					case 'text': {
-						const t = obj as Text;
-						ctx.fillStyle = t.fill;
-						ctx.font = `${t.fontSize}px Arial`;
-						ctx.textBaseline = 'top';
-						ctx.textAlign = 'left';
+	// 				case 'circle': {
+	// 					const c = obj as Circle;
+	// 					ctx.fillStyle = c.fill;
+	// 					ctx.strokeStyle = c.stroke;
+	// 					ctx.lineWidth = c.strokeWidth;
+	// 					ctx.beginPath();
+	// 					ctx.arc(c.cx, c.cy, c.r, 0, Math.PI * 2);
+	// 					ctx.fill();
+	// 					if (c.strokeWidth > 0) ctx.stroke();
+	// 					break;
+	// 				}
 
-						const lines = t.lines || t.text.split('\n');
-						const lineHeight = t.fontSize * 1.2;
+	// 				case 'line': {
+	// 					const l = obj as Line;
+	// 					ctx.strokeStyle = l.stroke;
+	// 					ctx.lineWidth = l.strokeWidth;
+	// 					ctx.beginPath();
+	// 					ctx.moveTo(l.x1, l.y1);
+	// 					ctx.lineTo(l.x2, l.y2);
+	// 					ctx.stroke();
+	// 					break;
+	// 				}
 
-						for (let i = 0; i < lines.length; i++) {
-							const lineY = t.y + i * lineHeight;
-							if (lineY > currentProject.height) break;
-							ctx.fillText(lines[i], t.x, lineY);
-						}
-						break;
-					}
+	// 				case 'text': {
+	// 					const t = obj as Text;
+	// 					ctx.fillStyle = t.fill;
+	// 					ctx.font = `${t.fontSize}px Arial`;
+	// 					ctx.textBaseline = 'top';
+	// 					ctx.textAlign = 'left';
 
-					case 'brush': {
-						const b = obj as Brush;
-						if (b.points.length === 0) break;
+	// 					const lines = t.lines || t.text.split('\n');
+	// 					const lineHeight = t.fontSize * 1.2;
 
-						ctx.strokeStyle = b.stroke;
-						ctx.lineWidth = b.strokeWidth;
-						ctx.lineCap = 'round';
-						ctx.lineJoin = 'round';
+	// 					for (let i = 0; i < lines.length; i++) {
+	// 						const lineY = t.y + i * lineHeight;
+	// 						if (lineY > currentProject.height) break;
+	// 						ctx.fillText(lines[i], t.x, lineY);
+	// 					}
+	// 					break;
+	// 				}
 
-						ctx.beginPath();
-						ctx.moveTo(b.points[0].x, b.points[0].y);
+	// 				case 'brush': {
+	// 					const b = obj as Brush;
+	// 					if (b.points.length === 0) break;
 
-						for (let i = 1; i < b.points.length; i++) {
-							ctx.lineTo(b.points[i].x, b.points[i].y);
-						}
+	// 					ctx.strokeStyle = b.stroke;
+	// 					ctx.lineWidth = b.strokeWidth;
+	// 					ctx.lineCap = 'round';
+	// 					ctx.lineJoin = 'round';
 
-						ctx.stroke();
-						break;
-					}
-					default:
-						break;
-				}
-			});
-		};
+	// 					ctx.beginPath();
+	// 					ctx.moveTo(b.points[0].x, b.points[0].y);
 
-		if (animationFrameRef.current) {
-			cancelAnimationFrame(animationFrameRef.current);
-		}
+	// 					for (let i = 1; i < b.points.length; i++) {
+	// 						ctx.lineTo(b.points[i].x, b.points[i].y);
+	// 					}
 
-		animationFrameRef.current = requestAnimationFrame(draw);
+	// 					ctx.stroke();
+	// 					break;
+	// 				}
+	// 				default:
+	// 					break;
+	// 			}
+	// 		});
+	// 	};
 
-		return () => {
-			if (animationFrameRef.current) {
-				cancelAnimationFrame(animationFrameRef.current);
-			}
-		};
+	// 	if (animationFrameRef.current) {
+	// 		cancelAnimationFrame(animationFrameRef.current);
+	// 	}
 
-		//eslint-disable-next-line
-	}, [layerObjects, activeLayer?.id, currentProject?.width, currentProject?.height]);
+	// 	animationFrameRef.current = requestAnimationFrame(draw);
+
+	// 	return () => {
+	// 		if (animationFrameRef.current) {
+	// 			cancelAnimationFrame(animationFrameRef.current);
+	// 		}
+	// 	};
+
+	// 	//eslint-disable-next-line
+	// }, [layerObjects, activeLayer?.id, currentProject?.width, currentProject?.height]);
 
 	useEffect(() => {
 		if (canvasRef.current) {
 			setupCanvasDPR(canvasRef.current);
 		}
 	}, [activeLayer?.id, setupCanvasDPR]);
-
-	// Тут перерисовываем canvas
-	useEffect(() => {
-		if (!projectId || !canvasRef.current) return;
-
-		if (history?.length && pointer !== undefined) {
-			const currentLayerData = history[pointer]?.canvasData;
-
-			redrawCanvas(canvasRef.current, currentLayerData);
-		}
-	}, [projectId, sortedLayers, history, pointer]);
-
-	/**
-	 * чтобы добавить canvasDataURL (snapshot) в историю,
-	 * нужно снять snapshot canvas в момент записи в историю
-	 */
-	const handleCanvasDraw = () => {
-		const canvas = canvasRef.current;
-		if (!canvas || !projectId || !activeLayer) return;
-
-		dispatch(
-			addToHistory({
-				projectId: projectId,
-				layerId: activeLayer.id,
-				type: tool,
-			}),
-		);
-
-		/**
-		 * Тут более специфичный вид dispatch с чёткой типизацией;
-		 * без этого dispatch "знает" только про обычные экшены
-		 * и не "видит" thunk‑и и другие асинхронные экшены
-		 */
-		thunkDispatch(
-			// это middleware для слайса - внутри сохранение изображения слоя в строку и в параметр слоя canvasDataURL
-			captureCanvasAndSaveToHistory({
-				projectId: projectId,
-				layerId: activeLayer.id,
-				canvasRef: canvasRef.current,
-			}),
-		);
-	};
 
 	if (!currentProject) {
 		redirect('/404');
@@ -512,7 +503,6 @@ export const Canvas: React.FC = () => {
 								width: `${currentProject.width}px`,
 								height: `${currentProject.height}px`,
 							}}
-							onMouseUp={handleCanvasDraw}
 						/>
 					))}
 				</Paper>

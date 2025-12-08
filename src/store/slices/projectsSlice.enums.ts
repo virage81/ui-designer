@@ -17,28 +17,3 @@ export enum HISTORY_ACTIONS {
 	LAYER_ORDER = 'order',
 	LAYER_HIDE = 'hide',
 }
-
-// Названия для истории
-/**
- * 	SELECT = 'Выбор',
- *	BRUSH = 'Кисть',
- *	RECTANGLE = 'Прямоугольник',
- *	CIRCLE = 'Круг',
- *	ERASER = 'Ластик',
- *	TEXT = 'Текст',
- *	LINE = 'Линия',
- *	FONT = 'Размер шрифта',
- *	LINE_SIZE = 'Размер линии',
- *	COLOR = 'Цвет',
- *	CONTOUR_COLOR = 'Цвет обводки',
- *	UNDO = 'Отменить',
- *	REDO = 'Вернуть',
- *	LAYER_ADD = 'Слой добавлен',
- *	LAYER_CLEAR = 'Слой очищен',
- *	LAYER_DELETE = 'Слой удалён',
- *	LAYER_OPACITY = 'Прозрачность слоя',
- *	LAYER_RENAME = 'Слой переименован',
- *	LAYER_ACTIVE = 'Активность слоя',
- *	LAYER_ORDER = 'Порядок слоя',
- *	LAYER_HIDE = 'Слой скрыт',
- */
