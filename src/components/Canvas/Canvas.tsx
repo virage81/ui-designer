@@ -1,6 +1,6 @@
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import type { RootState } from '@store/index';
-import { Box, Paper } from '@mui/material';
+import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
@@ -8,7 +8,7 @@ import type { Brush, Circle, Drawable, Line, Rect, Text } from '@shared/types/ca
 import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
@@ -36,6 +36,7 @@ export const Canvas: React.FC = () => {
 
 	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const canvasContainerRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
@@ -53,6 +54,8 @@ export const Canvas: React.FC = () => {
 	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
+
+	const [canvasContainerWidth, setCanvasContainerWidth] = useState(currentProject.width);
 
 	const toolStyles = useMemo<Styles>(
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
@@ -386,30 +389,38 @@ export const Canvas: React.FC = () => {
 		}
 	}, [activeLayer?.id, setupCanvasDPR]);
 
+	useEffect(() => {
+		if (canvasContainerRef.current) {
+			setCanvasContainerWidth(canvasContainerRef.current.getBoundingClientRect().width);
+		}
+	}, []);
+
 	if (!currentProject) {
 		redirect('/404');
 		return null;
 	}
 
+
 	return (
+		<Box
+			ref={canvasContainerRef}
+			sx={{
+				width: '100%',
+				padding: '8px',
+				backgroundColor: 'var(--main-bg)',
+				overflow: 'auto',
+			}}>
 			<Box
-				sx={{			
-					width: '100%',		
-					padding: '8px',
-					backgroundColor: 'var(--main-bg)',
-					overflow: 'auto',
+				sx={{
+					position: 'relative',
+					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
+					width: currentProject.width,
+					height: currentProject.height,
+					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
+					transform: `scale(${zoom})`,
+					transformOrigin: `${currentProject.width * zoom <= canvasContainerWidth ? 'top center' : 'top left'}`,
 				}}>
-				<Paper
-					elevation={5}
-					sx={{
-						position: 'relative',
-						m: `${zoom <= 1.2 ? '0 auto' : '0'}`,
-						width: currentProject.width,
-						height: currentProject.height,
-						cursor: tool === ACTIONS.ERASER ? 'pointer' : tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
-						transform: `scale(${zoom})`,
-						transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`,
-					}}>
 					<canvas
 						style={{
 							background: 'white',
@@ -452,8 +463,8 @@ export const Canvas: React.FC = () => {
 								height: `${currentProject.height}px`,
 							}}
 						/>
-					))}
-				</Paper>
-			</Box>
+					))}	
+			</Box>		
+		</Box>
 	);
 };
