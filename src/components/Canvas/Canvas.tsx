@@ -1,6 +1,6 @@
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import type { RootState } from '@store/index';
-import { Box, Paper } from '@mui/material';
+import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
