@@ -15,10 +15,11 @@ export interface HistoryStack {
 	pointer: number;
 }
 export interface History {
-	id: string;
+	id: number;
 	date: string;
-	layers: (Layer & { canvasDataURL?: string })[];
+	// layers: Layer[];
 	type: HISTORY_ACTIONS | ACTIONS;
+	canvasData: string;
 }
 
 export interface Layer {
@@ -31,23 +32,28 @@ export interface Layer {
 	canvasData?: string;
 }
 
-export interface AddToHistoryPayload {
+export interface AddToHistoryParams {
 	projectId: string;
+	layerId: string;
 	type: HISTORY_ACTIONS | ACTIONS;
 }
 
 export interface UndoRedoHistoryParams {
 	projectId: Project['id'];
-	pointer?: number;
+	layerId: Layer['id'];
+	// index: number;
+	// pointer?: number;
 }
 
 export interface SetHistoryParams {
 	projectId: Project['id'];
-	id: string;
+	layerId: Layer['id'];
+	index: number;
 };
 
 export interface SaveHistorySnapshotParams {
 	projectId: Project['id'];
 	layerId: Layer['id'];
+	// index: number;
 	canvasDataURL: string;
 };

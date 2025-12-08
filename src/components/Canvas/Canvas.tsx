@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import type { RootState } from '@store/index';
-import { addToHistory, pointerSelector, sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
+import { addToHistory, historySelector, pointerSelector, sortedLayersSelector } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,7 +15,6 @@ import type { Styles, Tools } from './tools/Tool';
 import { captureCanvasAndSaveToHistory } from './thunks/captureCanvasSnapshot';
 import { redrawCanvas } from '@store/utils/canvasRedraw';
 import { useThunkDispatch } from '@store/utils/thunkDispatch';
-import { debounce, type DebouncedFunc } from 'lodash';
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import { useProject } from '@shared/hooks/useProject.tsx';
@@ -26,14 +25,15 @@ export const Canvas: React.FC = () => {
 	const { register, unregister } = useCanvasContext();
 
 	/**
-	 * тут более специфичный вид dispatch для captureCanvasAndSaveToHistory;
+	 * Тут более специфичный вид dispatch для captureCanvasAndSaveToHistory;
 	 */
 	const thunkDispatch = useThunkDispatch();
 
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
-	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
+	const history = useSelector((state: RootState) => historySelector(state, projectId, activeLayer));
+	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId, activeLayer));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -53,7 +53,6 @@ export const Canvas: React.FC = () => {
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
 		[fillColor, strokeWidth, strokeStyle, fontSize],
 	);
-	const saveSnapshotDebouncedRef = useRef<DebouncedFunc<() => void> | null>(null);
 
 	const setupCanvasDPR = useCallback((canvas: HTMLCanvasElement) => {
 		if (!canvas || dprSetupsRef.current[canvas.id]) return;
@@ -139,66 +138,46 @@ export const Canvas: React.FC = () => {
 		}
 	}, [activeLayer?.id, setupCanvasDPR]);
 
-	useEffect(() => {
-		if (!canvasRef.current || !activeLayer) return;
-
-		const saveSnapshot = () => {
-			if (!canvasRef.current) return;
-
-			/**
-			 * тут более специфичный вид dispatch с чёткой типизацией;
-			 * без этого dispatch "знает" только про обычные экшены
-			 * и не "видит" thunk‑и и другие асинхронные экшены
-			 */
-			thunkDispatch(
-				// это middleware для слайса - внутри сохранение изображения слоя в строку и в параметр слоя canvasDataURL
-				captureCanvasAndSaveToHistory({
-					projectId: projectId,
-					layerId: activeLayer.id,
-					canvasRef: canvasRef.current,
-				}),
-			);
-		};
-
-		/**
-		 * чтобы избежать ошибки доступа к ref во время рендера,
-		 * можно использовать отложенное создание debounced‑версии функции;
-		 * то есть создаём debounced‑версию только после монтирования
-		 * компонента, когда canvasRef.current уже точно существует
-		 */
-		saveSnapshotDebouncedRef.current = debounce(saveSnapshot, 200);
-
-		// очистка при размонтировании
-		return () => {
-			if (saveSnapshotDebouncedRef.current) {
-				saveSnapshotDebouncedRef.current.cancel();
-			}
-		};
-	}, [projectId, activeLayer, thunkDispatch]);
-
+	// Тут перерисовываем canvas
 	useEffect(() => {
 		if (!projectId || !canvasRef.current) return;
 
-		// тут перерисовываем canvas
-		redrawCanvas(canvasRef.current, sortedLayers);
-	}, [projectId, sortedLayers, pointer]);
+		if (history?.length && pointer !== undefined) {
+			const currentLayerData = history[pointer]?.canvasData;
+
+			redrawCanvas(canvasRef.current, currentLayerData);
+		}
+	}, [projectId, sortedLayers, history, pointer]);
 
 	/**
-	 * чтобы добавить canvasDataURL (snapshot) каждого слоя в историю,
+	 * чтобы добавить canvasDataURL (snapshot) в историю,
 	 * нужно снять snapshot canvas в момент записи в историю
 	 */
 	const handleCanvasDraw = () => {
+		const canvas = canvasRef.current;
+		if (!canvas || !projectId || !activeLayer) return;
+
 		dispatch(
 			addToHistory({
 				projectId: projectId,
+				layerId: activeLayer.id,
 				type: tool,
 			}),
 		);
 
-		// тут вызываем debounced-функцию, если она создана
-		if (saveSnapshotDebouncedRef.current) {
-			saveSnapshotDebouncedRef.current();
-		}
+		/**
+		 * Тут более специфичный вид dispatch с чёткой типизацией;
+		 * без этого dispatch "знает" только про обычные экшены
+		 * и не "видит" thunk‑и и другие асинхронные экшены
+		 */
+		thunkDispatch(
+			// это middleware для слайса - внутри сохранение изображения слоя в строку и в параметр слоя canvasDataURL
+			captureCanvasAndSaveToHistory({
+				projectId: projectId,
+				layerId: activeLayer.id,
+				canvasRef: canvasRef.current,
+			}),
+		);
 	};
 
 	if (!currentProject) {

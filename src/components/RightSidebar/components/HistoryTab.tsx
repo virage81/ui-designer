@@ -8,8 +8,9 @@ import { HistoryItem } from './HistoryItem';
 export const HistoryTab = () => {
 	const { id: projectId = '' } = useParams();
 
-	const history = useSelector((state: RootState) => historySelector(state, projectId));
-	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
+	const { activeLayer } = useSelector((state: RootState) => state.projects);
+	const history = useSelector((state: RootState) => historySelector(state, projectId, activeLayer));
+	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId, activeLayer));
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
@@ -35,14 +36,23 @@ export const HistoryTab = () => {
 						backgroundColor: 'rgba(0,0,0,0.3)',
 					},
 				}}>
-				{history.map((_, idx) => {
-					const reversedIndex = history.length - 1 - idx;
-					const el = history[reversedIndex];
+				{history &&
+					activeLayer?.id &&
+					history.map((_, idx) => {
+						const reversedIndex = history.length - 1 - idx;
+						const el = history[reversedIndex];
 
-					return el && el.id !== '' ? (
-						<HistoryItem key={el.id} {...el} index={reversedIndex} isActive={pointer >= reversedIndex} />
-					) : null;
-				})}
+						return el && pointer !== undefined ? (
+							<HistoryItem
+								key={el.id}
+								{...el}
+								index={reversedIndex}
+								isActive={pointer >= reversedIndex}
+								layerId={activeLayer.id}
+								pointer={pointer}
+							/>
+						) : null;
+					})}
 			</Box>
 		</Box>
 	);

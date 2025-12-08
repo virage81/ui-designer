@@ -1,7 +1,7 @@
 import { createAction, createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
 import type { ProjectsSliceState } from '@shared/types/projectsSliceState';
-import type { AddToHistoryPayload, Project, SaveHistorySnapshotParams, SetHistoryParams, UndoRedoHistoryParams } from '@shared/types/project';
+import type { AddToHistoryParams, Layer, Project, SaveHistorySnapshotParams, SetHistoryParams, UndoRedoHistoryParams } from '@shared/types/project';
 import { checkProjectExistence } from '@store/utils/projects';
 import type { RootState } from '..';
 import type {
@@ -14,7 +14,6 @@ import type {
 	UpdateLayerParams,
 	UpdateProjectParams,
 } from './projectSlice.types';
-import { HISTORY_ACTIONS } from './projectsSlice.enums';
 
 const initialState: ProjectsSliceState = {
 	projects: [],
@@ -30,27 +29,37 @@ const projectsSlice = createSlice({
 	reducers: {
 		createProject: (state, action: PayloadAction<CreateProjectParams>) => {
 			const id = generateId();
+			const layerId = generateId();
 
-			state.projects.push({ ...action.payload, id, preview: '', date: new Date().getTime() });
-			const layer = { id: generateId(), hidden: false, name: 'Фон', opacity: 100, zIndex: 1 };
+			state.projects.push({
+				...action.payload,
+				id,
+				preview: '',
+				date: new Date().getTime()
+			});
+
+			const layer = {
+				id: layerId,
+				hidden: false,
+				name: 'Фон',
+				opacity: 100,
+				zIndex: 1
+			};
+
 			state.layers[id] = [layer];
 			state.activeLayer = layer;
-			state.history[id] = {
+
+			// Инициализируем историю для проекта и слоя
+			if (!state.history[id]) {
+				state.history[id] = {};
+			}
+			state.history[id][layerId] = {
+				history: [],
 				/**
-				 * тут заполняем историю нулевым элементом с базовым слоем.
-				 * Он не будет показываться, но на данный момент нужен для работы приложения
-				 */
-				history: [{
-					layers: [...state.layers[id]],
-					type: HISTORY_ACTIONS.LAYER_ADD,
-					id: '',
-					date: new Date().toUTCString()
-				}],
-				/**
-				 * pointer - общий указатель для истории, начнём с 0
-				 * первый элемент истории также 0го индекса
-				 */
-				pointer: 0,
+				 * pointer - общий указатель для истории;
+				 * начнём с -1 - это означает, что истории нет
+					*/
+				pointer: -1
 			};
 		},
 
@@ -76,7 +85,13 @@ const projectsSlice = createSlice({
 			const { projectId, data } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			state.layers[projectId].push({ ...data, id: generateId() });
+			const layerId = generateId();
+			state.layers[projectId].push({ ...data, id: layerId });
+
+			state.history[projectId][layerId] = {
+				history: [],
+				pointer: -1
+			};
 		},
 
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
@@ -136,117 +151,119 @@ const projectsSlice = createSlice({
 			state.layers[payload.projectId][layerIndex].canvasData = undefined;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 		},
+
 		setZoom: (state, action: PayloadAction<number>) => {
 			state.zoom = action.payload;
 		},
-	},
 
-	extraReducers: (builder) => {
-		// тут добавляем события в историю
-		builder.addCase(addToHistory, (state, action) => {
-			const { projectId, type } = action.payload;
+		// Тут добавляем события в историю
+		addToHistory: (state, action: PayloadAction<AddToHistoryParams>) => {
+			const { projectId, type, layerId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			// pointer - общий указатель для истории
-			const pointer = state.history[projectId].pointer;
+			const historyState = state.history[projectId]?.[layerId];
+
+			if (!historyState) return;
 
 			/**
-			* если длина истории больше указателя
-			* и добавляем новый элемент истории -> значит,
-			* нужно удалить неактивные элементы истории.
-			*
-			* То есть это кейс, когда мы сделали 10 действий,
-			* отменили 5 действий и сделали новое действие ->
-			* теперь у нас 6 действий, а старые 5 не нужны
-			*/
-			if (state.history[projectId].history.length - 1 > pointer) {
-				const diff = state.history[projectId].history.length - pointer;
-				state.history[projectId].history.splice(pointer + 1, diff);
+			 * Если были отменена история (pointer < history.length - 1),
+			 * обрезаем "будущую" историю
+			 */
+			if (historyState.pointer < historyState.history.length - 1) {
+				historyState.history = historyState.history.slice(0, historyState.pointer + 1);
 			}
 
-			// тут увеличиваем указатель на шаг
-			const newPointer = ++state.history[projectId].pointer;
-			// и добавляем новый элемент в историю
-			state.history[projectId].history[newPointer] = {
-				layers: [...state.layers[projectId]],
+			// Добавляем историю
+			historyState.history.push(({
 				type,
-				id: generateId(),
-				date: new Date().toUTCString()
-			}
-		});
+				id: historyState.history.length,
+				date: new Date().toUTCString(),
+				canvasData: '',
+			}));
 
-		// тут отменяем историю на шаг
-		builder.addCase(undoHistory, (state, action) => {
-			const { projectId } = action.payload;
+			// Сдвигаем указатель
+			historyState.pointer = historyState.history.length - 1;
+		},
+
+		// Тут отменяем историю на шаг
+		undoHistory: (state, action: PayloadAction<UndoRedoHistoryParams>) => {
+			const { projectId, layerId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			const pointer = --state.history[projectId].pointer;
-			state.layers[projectId] = [...state.history[projectId].history[pointer].layers];
-		});
+			const historyState = state.history[projectId]?.[layerId];
+			if (!historyState || historyState.pointer <= -1) throw new Error(`Can't undo`);
 
-		// тут возвращаем историю на шаг
-		builder.addCase(redoHistory, (state, action) => {
-			const { projectId } = action.payload;
+			const step = 1;
+			historyState.pointer -= step;
+		},
+
+		// Тут возвращаем историю на шаг
+		redoHistory: (state, action: PayloadAction<UndoRedoHistoryParams>) => {
+			const { projectId, layerId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			const pointer = ++state.history[projectId].pointer;
-			state.layers[projectId] = [...state.history[projectId].history[pointer].layers];
-		});
+			const historyState = state.history[projectId]?.[layerId];
+			if (!historyState || historyState.pointer >= historyState.history.length - 1) throw new Error(`Can't redo`);
 
-		// тут выставляем историю при клике на список истории
-		builder.addCase(setHistory, (state, action) => {
-			const { projectId, id } = action.payload;
+			const step = 1;
+			historyState.pointer += step;
+		},
+
+		// Тут выставляем историю при клике на список истори
+		setHistory: (state, action: PayloadAction<SetHistoryParams>) => {
+			const { projectId, layerId, index } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
-			if (!id) throw new Error(`History with ID ${id} does not exist`);
 
-			const clickedElIdx = state.history[projectId].history.findIndex(h => h.id === id);
+			const historyState = state.history[projectId]?.[layerId];
+			if (!historyState || index < -1 || index >= historyState.history.length) throw new Error(`Can't set history`);
 
 			/**
-			 * если кликнули на активный элемент истории,
+			 * Если кликнули на активный элемент истории,
 			 * выставляем указатель на этот элемент минус 1
 			 * для того, чтобы сделать кликнутый элемент
 			 * и все элементы после него (после = позже)
 			 * неактивными
 			 */
-			if (clickedElIdx <= state.history[projectId].pointer) {
-				state.history[projectId].pointer = clickedElIdx - 1;
-				const newPointer = state.history[projectId].pointer;
-				state.layers[projectId] = [...state.history[projectId].history[newPointer].layers];
+			if (index <= historyState.pointer) {
+				historyState.pointer = index - 1;
 
 				return;
 			}
 
 			/**
-			 * если кликнули на неактивный элемент истории,
+			 * Если кликнули на неактивный элемент истории,
 			 * активируем (возвращаем) все элементы включая
 			 * тот, на который кликнули
 			 */
-			if (clickedElIdx > state.history[projectId].pointer) {
-				state.history[projectId].pointer = clickedElIdx;
-				state.layers[projectId] = [...state.history[projectId].history[clickedElIdx].layers];
+			if (index > historyState.pointer) {
+				historyState.pointer = index;
 			}
-		});
 
-		// тут сохраняем snapshot слоя
+			historyState.pointer = index;
+		}
+	},
+
+	extraReducers: (builder) => {
+		// Тут сохраняем snapshot слоя
 		builder.addCase(saveHistorySnapshot, (state, action) => {
 			const { projectId, layerId, canvasDataURL } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
-			const pointer = state.history[projectId].pointer;
-			const layers = state.history[projectId].history[pointer].layers;
+			const layers = state.layers[projectId];
 			const layer = layers.find(l => l.id === layerId);
 
 			if (!layer) return;
 
 			layer.canvasDataURL = canvasDataURL;
+
+			const historyState = state.history[projectId]?.[layerId];
+
+			if (!historyState.history[historyState.pointer].id) return;
+			historyState.history[historyState.pointer].canvasData = canvasDataURL;
 		});
 	},
 });
 
-export const addToHistory = createAction<AddToHistoryPayload>('history/addToHistory');
-export const undoHistory = createAction<UndoRedoHistoryParams>('history/undoHistory');
-export const redoHistory = createAction<UndoRedoHistoryParams>('history/redoHistory');
-export const setHistory = createAction<SetHistoryParams>('history/setHistory');
 export const saveHistorySnapshot = createAction<SaveHistorySnapshotParams>('history/saveHistorySnapshot');
 
 export const sortedLayersSelector = createSelector(
@@ -262,34 +279,45 @@ export const selectProjectById = createSelector(
 	(projects, id) => projects.find(p => p.id === id),
 );
 
-// тут определяем активность элемента меню "Отменить"
-export const isUndoActiveSelector = (state: RootState, projectId: Project['id']) => {
-	const { history } = state.projects;
-	const pointer = history[projectId].pointer;
+export const isUndoActiveSelector = (state: RootState, projectId: Project['id'], activeLayer: Layer | null) => {
+	if (!activeLayer?.id) return false;
 
-	return pointer > 0 ? true : false;
+	const { history } = state.projects;
+	const pointer = history[projectId][activeLayer.id]?.pointer;
+	if (pointer === undefined) return false;
+
+	return pointer >= -1;
 }
 
-// тут определяем активность элемента меню "Вернуть"
-export const isRedoActiveSelector = (state: RootState, projectId: Project['id']) => {
-	const { history } = state.projects;
-	const pointer = history[projectId].pointer;
+export const isRedoActiveSelector = (state: RootState, projectId: Project['id'], activeLayer: Layer | null) => {
+	if (!activeLayer?.id) return false;
 
-	return pointer <= history[projectId].history.length - 2 ? true : false;
+	const { history } = state.projects;
+	const pointer = history[projectId][activeLayer.id]?.pointer;
+	if (pointer === undefined) return false;
+
+	return pointer < history[projectId][activeLayer.id].history.length - 1;
 }
 
-// тут достаём указатель
-export const pointerSelector = (state: RootState, projectId: Project['id']) => {
-	const { history } = state.projects;
+export const pointerSelector = (state: RootState, projectId: Project['id'], activeLayer: Layer | null) => {
+	if (!activeLayer?.id) return;
 
-	return history[projectId].pointer;
+	const { history } = state.projects;
+	const pointer = history[projectId][activeLayer.id]?.pointer;
+
+	if (pointer === undefined) return;
+
+	return history[projectId][activeLayer.id].pointer;
 };
 
-// тут достаём историю
-export const historySelector = (state: RootState, projectId: Project['id']) => {
+export const historySelector = (state: RootState, projectId: Project['id'], activeLayer: Layer | null) => {
+	if (!activeLayer?.id) return;
+
 	const { history } = state.projects;
 
-	return [...history[projectId].history];
+	if (!history[projectId][activeLayer.id]?.history?.length) return;
+
+	return [...history[projectId][activeLayer.id].history];
 };
 
 export const {
@@ -301,7 +329,11 @@ export const {
 	deleteLayer,
 	setActiveLayer,
 	clearActiveLayer,
-	setZoom
+	setZoom,
+	addToHistory,
+	undoHistory,
+	redoHistory,
+	setHistory,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;

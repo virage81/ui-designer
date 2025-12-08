@@ -18,22 +18,17 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from '../components';
-import { useThunkDispatch } from '@store/utils/thunkDispatch';
-import { captureCanvasAndSaveToHistory } from '@components/Canvas/thunks/captureCanvasSnapshot';
-import { debounce, type DebouncedFunc } from 'lodash';
-import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 import { redrawCanvas } from '@store/utils/canvasRedraw';
+import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 
 export const LayersTab = () => {
 	const dispatch = useDispatch();
-	const thunkDispatch = useThunkDispatch();
 
 	const { id: projectId = '' } = useParams();
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-	const saveSnapshotDebouncedRef = useRef<DebouncedFunc<() => void> | null>(null);
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
-	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
+	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId, activeLayer));
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const sensors = useSensors(useSensor(PointerSensor));
@@ -45,56 +40,13 @@ export const LayersTab = () => {
 	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
 	const isMenuOpen = Boolean(anchorEl);
 
-	/**
-	 * полное описание в
-	 * @link src/components/Canvas/Canvas.tsx
-	 *
-	 * @TODO: если реально, вынести это в отдельный файл,
-	 * т.к. используется в нескольких местах в приложении
-	 */
-	useEffect(() => {
-		if (!canvasRef.current || !activeLayer) return;
-
-		const saveSnapshot = () => {
-			if (!canvasRef.current) return;
-
-			thunkDispatch(
-				captureCanvasAndSaveToHistory({
-					projectId: projectId,
-					layerId: activeLayer.id,
-					canvasRef: canvasRef.current,
-				}),
-			);
-		};
-
-		saveSnapshotDebouncedRef.current = debounce(saveSnapshot, 200);
-
-		return () => {
-			if (saveSnapshotDebouncedRef.current) {
-				saveSnapshotDebouncedRef.current.cancel();
-			}
-		};
-	}, [projectId, activeLayer, thunkDispatch]);
-
-	// тут обновляем слой (прячем или прозрачность) и добавляем это событие в историю
 	const handleUpdateLayer = (name: keyof Layer, value: unknown, layerId: string) => {
 		if (!projectId) return;
 
 		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
-
-		dispatch(
-			addToHistory({
-				projectId,
-				type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
-			}),
-		);
-
-		if (saveSnapshotDebouncedRef.current) {
-			saveSnapshotDebouncedRef.current();
-		}
 	};
 
-	// тут очищаем слой и добавляем это событие в историю
+	// Тут очищаем слой и добавляем это событие в историю
 	const handleClearLayer = () => {
 		if (!projectId) return;
 		if (currentLayer) {
@@ -105,16 +57,15 @@ export const LayersTab = () => {
 				}),
 			);
 
+			if (!activeLayer?.id) return;
+
 			dispatch(
 				addToHistory({
 					projectId,
+					layerId: activeLayer.id,
 					type: HISTORY_ACTIONS.LAYER_CLEAR,
 				}),
 			);
-
-			if (saveSnapshotDebouncedRef.current) {
-				saveSnapshotDebouncedRef.current();
-			}
 		}
 		handleCloseMenu();
 	};
@@ -127,34 +78,19 @@ export const LayersTab = () => {
 		}, 0);
 	};
 
-	// тут удаляем слой и добавляем это событие в историю
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
-		dispatch(
-			addToHistory({
-				projectId,
-				type: HISTORY_ACTIONS.LAYER_DELETE,
-			}),
-		);
 
 		if (layerId === activeLayer?.id) {
 			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
 		}
 	};
 
-	// тут "делаем" активным слой и добавляем это событие в историю
 	const handleLayerClick = (id: string) => {
 		if (id === activeLayer?.id) return;
 
 		if (!editingLayerId) {
 			dispatch(setActiveLayer({ projectId, id }));
-
-			dispatch(
-				addToHistory({
-					projectId,
-					type: HISTORY_ACTIONS.LAYER_ACTIVE,
-				}),
-			);
 		}
 	};
 
@@ -172,19 +108,12 @@ export const LayersTab = () => {
 		setEditingLayerName(currentName);
 	};
 
-	// тут переименовываем слой и добавляем это событие в историю
 	const saveLayerName = (layerId: string) => {
 		if (!projectId) return;
 		dispatch(
 			updateLayer({
 				projectId,
 				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
-			}),
-		);
-		dispatch(
-			addToHistory({
-				projectId,
-				type: HISTORY_ACTIONS.LAYER_RENAME,
 			}),
 		);
 		setEditingLayerId(null);
@@ -195,7 +124,7 @@ export const LayersTab = () => {
 		setEditingLayerId(null);
 		setEditingLayerName('');
 	};
-	// тут меняем порядок слоёв и добавляем это событие в историю
+
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 		if (!over || active.id === over.id) return;
@@ -207,20 +136,14 @@ export const LayersTab = () => {
 		newLayers.forEach((layer, index) => {
 			dispatch(updateLayer({ projectId, data: { id: layer.id, zIndex: newLayers.length - index } }));
 		});
-		dispatch(
-			addToHistory({
-				projectId,
-				type: HISTORY_ACTIONS.LAYER_ORDER,
-			}),
-		);
 	};
 
-	useEffect(() => {
-		if (!projectId || !canvasRef.current) return;
+	// useEffect(() => {
+	// 	if (!projectId || !canvasRef.current) return;
 
-		// тут перерисовываем canvas
-		redrawCanvas(canvasRef.current, sortedLayers);
-	}, [projectId, sortedLayers, pointer]);
+	// 	// Тут перерисовываем canvas
+	// 	redrawCanvas(canvasRef.current, sortedLayers);
+	// }, [projectId, sortedLayers, pointer]);
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
@@ -231,7 +154,6 @@ export const LayersTab = () => {
 					sx={{ padding: '10px' }}
 					onClick={() => {
 						if (!projectId) return;
-						// тут добавляем слой и это событие в историю
 						dispatch(
 							createLayer({
 								projectId: projectId,
@@ -243,15 +165,6 @@ export const LayersTab = () => {
 								},
 							}),
 						);
-						dispatch(
-							addToHistory({
-								projectId,
-								type: HISTORY_ACTIONS.LAYER_ADD,
-							}),
-						);
-						if (saveSnapshotDebouncedRef.current) {
-							saveSnapshotDebouncedRef.current();
-						}
 					}}>
 					<PlusIcon size={16} color='var(--color)' />
 				</Button>

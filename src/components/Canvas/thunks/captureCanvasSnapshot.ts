@@ -4,7 +4,7 @@ import { saveHistorySnapshot } from '@store/slices/projectsSlice';
 interface CaptureCanvasParams {
 	projectId: string;
 	layerId: string;
-	canvasRef: HTMLCanvasElement;
+	canvasRef: HTMLCanvasElement | null;
 }
 
 /**
@@ -16,14 +16,16 @@ export const captureCanvasAndSaveToHistory = createAsyncThunk<void, CaptureCanva
 	async (
 		{ projectId, layerId, canvasRef }, { dispatch }
 	) => {
-		const dataURL = canvasRef.toDataURL('image/png', 1);
+		if (canvasRef) {
+			const dataURL = canvasRef.toDataURL('image/png', 1);
 
-		dispatch(
-			saveHistorySnapshot({
-				projectId,
-				layerId,
-				canvasDataURL: dataURL,
-			})
-		);
+			dispatch(
+				saveHistorySnapshot({
+					projectId,
+					layerId,
+					canvasDataURL: dataURL,
+				})
+			);
+		}
 	}
 );

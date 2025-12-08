@@ -5,11 +5,13 @@ import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 interface HistoryItemProps extends Pick<History, 'id' | 'date' | 'type'> {
-	index?: number;
-	isActive?: boolean;
+	layerId: string;
+	index: number;
+	isActive: boolean;
+	pointer: number; //удалить
 }
 
-export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActive, index }) => {
+export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActive, index, layerId, pointer }) => {
 	const dispatch = useDispatch();
 	const { id: projectId = '' } = useParams();
 
@@ -34,7 +36,8 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActi
 				dispatch(
 					setHistory({
 						projectId: projectId,
-						id: id,
+						layerId,
+						index,
 					}),
 				)
 			}>
@@ -46,7 +49,10 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActi
 				{/* @TODO: убрать, это для наглядности */}
 				{<br />}
 				{<br />}
-				id: {index}
+				index: {index}
+				{<br />}
+				{<br />}
+				pointer: {pointer}
 			</Typography>
 		</Paper>
 	);
