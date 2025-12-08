@@ -1,8 +1,10 @@
+import type { Drawable } from '@shared/types/canvas';
 import type { BrushTool } from './Brush';
 import type { CircleTool } from './Circle';
 import type { EraserTool } from './Eraser';
 import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
+import type { SelectTool } from './Select';
 import type { TextTool } from './Text';
 
 export type Styles = {
@@ -10,6 +12,12 @@ export type Styles = {
 	strokeWidth: number;
 	fill: string;
 	strokeStyle: string;
+};
+
+export type ToolOptions = {
+	layerId?: string;
+	onComplete?: (object: unknown) => void;
+	layerObjects?: Drawable[];
 };
 
 export class Tool {
@@ -28,7 +36,15 @@ export class Tool {
 
 	protected zoom: number = 1;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
+	protected snapToGrid?: (x: number, y: number) => [number, number];
+
+	protected eventCleanup?: () => void;
+
+	protected layerId: string | undefined;
+	protected onComplete: ((obj: unknown) => void) | undefined;
+	protected layerObjects: Drawable[] = [];
+
+	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
 		this.canvas = canvas;
 
 		this.ctx = canvas.getContext('2d', { willReadFrequently: true })!;
@@ -43,6 +59,11 @@ export class Tool {
 		this.stroke = styles.strokeStyle;
 
 		this.zoom = zoom;
+
+		this.snapToGrid = snapToGrid;
+		this.layerId = options.layerId;
+		this.onComplete = options.onComplete;
+		this.layerObjects = options.layerObjects || [];
 
 		this.destroyEvents();
 		this.setupEvents();
@@ -67,15 +88,15 @@ export class Tool {
 
 	public getMousePos(e: PointerEvent): [number, number] {
 		const rect = this.canvas.getBoundingClientRect();
-		const x = (e.clientX - rect.left) / this.zoom;
-		const y = (e.clientY - rect.top) / this.zoom;
-		return [x, y];
+		const [x, y] = [(e.clientX - rect.left) / this.zoom, (e.clientY - rect.top) / this.zoom];
+
+		return this.snapToGrid ? this.snapToGrid(x, y) : [x, y];
 	}
 
 	setupEvents() {
 		this.canvas.onmouseleave = () => {
 			this.isMouseDown = false;
-			this.ctx.closePath();
+			this.ctx?.closePath();
 		};
 	}
 
@@ -84,7 +105,12 @@ export class Tool {
 		this.canvas.onpointermove = null;
 		this.canvas.onpointerdown = null;
 		this.canvas.onmouseleave = null;
+
+		if (this.eventCleanup) {
+			this.eventCleanup();
+			this.eventCleanup = undefined;
+		}
 	}
 }
 
-export type Tools = BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
+export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;

@@ -17,7 +17,6 @@ export interface HistoryStack {
 export interface History {
 	id: number;
 	date: string;
-	// layers: Layer[];
 	type: HISTORY_ACTIONS | ACTIONS;
 	canvasData: string;
 }
@@ -41,8 +40,6 @@ export interface AddToHistoryParams {
 export interface UndoRedoHistoryParams {
 	projectId: Project['id'];
 	layerId: Layer['id'];
-	// index: number;
-	// pointer?: number;
 }
 
 export interface SetHistoryParams {
@@ -54,6 +51,5 @@ export interface SetHistoryParams {
 export interface SaveHistorySnapshotParams {
 	projectId: Project['id'];
 	layerId: Layer['id'];
-	// index: number;
 	canvasDataURL: string;
 };

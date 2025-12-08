@@ -6,4 +6,9 @@ export interface ProjectsSliceState {
 	layers: Record<Project['id'], Layer[]>;
 	activeLayer: Layer | null;
 	zoom: number;
+	guides: {
+		enabled: boolean;
+		columns: number;
+		rows: number;
+	};
 }

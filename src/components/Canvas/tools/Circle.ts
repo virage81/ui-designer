@@ -1,4 +1,6 @@
-import { Tool, type Styles } from './Tool';
+import { generateId } from '@shared/helpers';
+import type { Circle } from '@shared/types/canvas';
+import { Tool, type Styles, type ToolOptions } from './Tool';
 
 export class CircleTool extends Tool {
 	private saved: string = '';
@@ -6,8 +8,8 @@ export class CircleTool extends Tool {
 	private startX: number = 0;
 	private startY: number = 0;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number) {
-		super(canvas, styles, zoom);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
+		super(canvas, styles, options, zoom, snapToGrid);
 		this.listen();
 	}
 
@@ -15,11 +17,24 @@ export class CircleTool extends Tool {
 		this.canvas.onpointerdown = this.mouseDownHandler.bind(this);
 		this.canvas.onpointermove = this.mouseMoveHandler.bind(this);
 		this.canvas.onpointerup = this.mouseUpHandler.bind(this);
+
+		const handleGlobalUp = () => {
+			this.isMouseDown = false;
+		};
+
+		document.addEventListener('pointerup', handleGlobalUp);
+
+		this.eventCleanup = () => {
+			document.removeEventListener('pointerup', handleGlobalUp);
+			this.canvas.onpointerdown = null;
+			this.canvas.onpointermove = null;
+			this.canvas.onpointerup = null;
+		};
 	}
 
 	mouseDownHandler(e: PointerEvent) {
 		this.isMouseDown = true;
-
+		this.canvas.setPointerCapture(e.pointerId);
 		const [x, y] = this.getMousePos(e);
 		this.ctx.beginPath();
 		this.startX = x;
@@ -39,6 +54,20 @@ export class CircleTool extends Tool {
 
 	mouseUpHandler() {
 		this.isMouseDown = false;
+
+		const circle: Circle = {
+			id: generateId(),
+			type: 'circle',
+			cx: this.startX,
+			cy: this.startY,
+			r: this.radius,
+			fill: this.fill,
+			stroke: this.stroke,
+			strokeWidth: this.strokeWidth,
+			layerId: this.layerId || 'default',
+		};
+
+		this.onComplete?.(circle);
 	}
 
 	draw(x: number, y: number, radius: number) {
@@ -51,6 +80,8 @@ export class CircleTool extends Tool {
 			this.ctx.drawImage(img, 0, 0, this.logicalWidth, this.logicalHeight);
 
 			this.ctx.fillStyle = this.fill;
+			this.ctx.strokeStyle = this.stroke;
+			this.ctx.lineWidth = this.strokeWidth;
 			this.ctx.beginPath();
 			this.ctx.arc(x, y, radius, 0, Math.PI * 2);
 			this.ctx.fill();

@@ -3,32 +3,29 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-ki
 import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
+import { clearLayerCanvas } from '@store/slices/canvasSlice';
 import {
 	addToHistory,
 	clearActiveLayer,
 	createLayer,
 	deleteLayer,
-	pointerSelector,
 	setActiveLayer,
 	sortedLayersSelector,
 	updateLayer,
 } from '@store/slices/projectsSlice';
 import { PlusIcon } from 'lucide-react';
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from '../components';
-import { redrawCanvas } from '@store/utils/canvasRedraw';
 import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 
 export const LayersTab = () => {
 	const dispatch = useDispatch();
 
 	const { id: projectId = '' } = useParams();
-	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
-	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId, activeLayer));
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 
 	const sensors = useSensors(useSensor(PointerSensor));
@@ -56,6 +53,7 @@ export const LayersTab = () => {
 					layerId: currentLayer.id,
 				}),
 			);
+			dispatch(clearLayerCanvas(activeLayer?.id ?? ''));
 
 			if (!activeLayer?.id) return;
 
@@ -137,13 +135,6 @@ export const LayersTab = () => {
 			dispatch(updateLayer({ projectId, data: { id: layer.id, zIndex: newLayers.length - index } }));
 		});
 	};
-
-	// useEffect(() => {
-	// 	if (!projectId || !canvasRef.current) return;
-
-	// 	// Тут перерисовываем canvas
-	// 	redrawCanvas(canvasRef.current, sortedLayers);
-	// }, [projectId, sortedLayers, pointer]);
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
