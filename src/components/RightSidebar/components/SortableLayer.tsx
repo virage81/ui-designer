@@ -96,13 +96,20 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 							if (e.key === 'Enter') saveLayerName(layer.id);
 							if (e.key === 'Escape') cancelEditing();
 						}}
-						autoFocus
-						sx={{ flex: 1 }}
 						onClick={e => e.stopPropagation()}
+						autoFocus
+						sx={{
+							flex: 1,
+							'& .MuiInputBase-input': {
+								fontSize: '14px',
+								padding: '2px 0',
+							},
+						}}
 					/>
 				) : (
 					<Typography
 						variant='body2'
+						title={layer.name}
 						sx={{
 							flex: 1,
 							overflow: 'hidden',

@@ -3,6 +3,7 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-ki
 import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
+import { clearLayerCanvas } from '@store/slices/canvasSlice';
 import {
 	clearActiveLayer,
 	createLayer,
@@ -49,6 +50,7 @@ export const LayersTab = () => {
 					layerId: currentLayer.id,
 				}),
 			);
+			dispatch(clearLayerCanvas(activeLayer?.id ?? ''));
 		}
 		handleCloseMenu();
 	};

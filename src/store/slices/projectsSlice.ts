@@ -21,6 +21,7 @@ const initialState: ProjectsSliceState = {
 	layers: {},
 	activeLayer: null,
 	zoom: 1,
+	guides: { enabled: false, columns: 1, rows: 1 },
 };
 
 const projectsSlice = createSlice({
@@ -41,11 +42,7 @@ const projectsSlice = createSlice({
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
 			if (projectIndex === -1) throw new Error(`Project with ID ${action.payload.id} not found`);
 
-			state.projects[projectIndex] = {
-				...state.projects[projectIndex],
-				...action.payload,
-				date: new Date().getTime(),
-			};
+			state.projects[projectIndex] = { ...state.projects[projectIndex], ...action.payload, date: new Date().getTime() };
 		},
 		deleteProject: (state, action: PayloadAction<DeleteProjectParams>) => {
 			const projectIndex = state.projects.findIndex(item => item.id === action.payload.id);
@@ -117,6 +114,24 @@ const projectsSlice = createSlice({
 		setZoom: (state, action: PayloadAction<number>) => {
 			state.zoom = action.payload;
 		},
+		enableGuides: (state, action: PayloadAction<boolean>) => {
+			if (!state.guides) {
+				state.guides = { enabled: false, columns: 1, rows: 1 };
+			}
+			state.guides.enabled = action.payload;
+		},
+		setGuidesColumns: (state, action: PayloadAction<number>) => {
+			if (!state.guides) {
+				state.guides = { enabled: false, columns: 1, rows: 1 };
+			}
+			state.guides.columns = action.payload;
+		},
+		setGuidesRows: (state, action: PayloadAction<number>) => {
+			if (!state.guides) {
+				state.guides = { enabled: false, columns: 1, rows: 1 };
+			}
+			state.guides.rows = action.payload;
+		},
 	},
 });
 
@@ -143,6 +158,9 @@ export const {
 	setActiveLayer,
 	clearActiveLayer,
 	setZoom,
+	enableGuides,
+	setGuidesColumns,
+	setGuidesRows
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;

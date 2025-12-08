@@ -14,6 +14,7 @@ export enum ACTIONS {
 	CONTOUR_COLOR = 'contourColor',
 	UNDO = 'undo',
 	REDO = 'redo',
+	GUIDE_LINES = 'guideLines',
 }
 
 interface State {
