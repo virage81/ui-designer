@@ -43,6 +43,8 @@ export const Modal: FC = () => {
 	const [widthError, setWidthError] = useState<string>('');
 	const [heightError, setHeightError] = useState<string>('');
 
+	const [isLoading, setIsLoading] = useState(false);
+
 	const resetForm: () => void = useCallback((): void => {
 		setProjectName(newProjectName);
 		setWidth(DEFAULT_SIZE);
@@ -51,13 +53,6 @@ export const Modal: FC = () => {
 		setWidthError('');
 		setHeightError('');
 	}, [newProjectName]);
-
-	useEffect(() => {
-		if (isCreateProjectModalOpen) {
-			const id = setTimeout(resetForm, 0);
-			return (): void => clearTimeout(id);
-		}
-	}, [isCreateProjectModalOpen, resetForm]);
 
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
@@ -100,6 +95,33 @@ export const Modal: FC = () => {
 		}
 	};
 
+	const handleCreate: () => void = (): void => {
+		if (!projectNameError && !widthError && !heightError) {
+			const trimmedName = projectName.trim();
+			const newProject: NewProject = {
+				name: trimmedName,
+				width: Number(width),
+				height: Number(height),
+				preview: '',
+			};
+
+			if (projects.some((p: Project) => p.name === trimmedName)) {
+				setProjectNameError('Проект с таким именем уже существует');
+			} else {
+				setPendingName(trimmedName);
+				setIsLoading(true);
+				dispatch(createProject(newProject));
+			}
+		}
+	};
+
+	useEffect(() => {
+		if (isCreateProjectModalOpen) {
+			const id = setTimeout(resetForm, 0);
+			return (): void => clearTimeout(id);
+		}
+	}, [isCreateProjectModalOpen, resetForm]);
+
 	useEffect(() => {
 		if (!pendingName) return;
 
@@ -122,29 +144,6 @@ export const Modal: FC = () => {
 			dispatch(closeCreateProjectModal());
 		};
 	}, [dispatch]);
-
-	const handleCreate: () => void = (): void => {
-		console.log('enter');
-		if (!projectNameError && !widthError && !heightError) {
-			const trimmedName = projectName.trim();
-			const newProject: NewProject = {
-				name: trimmedName,
-				width: Number(width),
-				height: Number(height),
-				preview: '',
-				history: [],
-				layers: [],
-			} as Omit<Project, 'id' | 'date'>;
-
-			if (projects.some((p: Project) => p.name === trimmedName)) {
-				setProjectNameError('Проект с таким именем уже существует');
-			} else {
-				setPendingName(trimmedName);
-				dispatch(createProject(newProject));
-				dispatch(closeCreateProjectModal());
-			}
-		}
-	};
 
 	return (
 		<Dialog
@@ -170,76 +169,73 @@ export const Modal: FC = () => {
 					</IconButton>
 				</DialogTitle>
 				<DialogContent>
-					<Box component='form' onSubmit={handleCreate}>
-						<Typography sx={{ color: '#9fa5b5', marginBottom: 2 }}>Укажите параметры для нового проекта</Typography>
-						<TextField
-							name='projectName'
-							label='Название проекта'
-							fullWidth
-							margin='normal'
-							value={projectName}
-							autoComplete='off'
-							onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-								validateInput(e.target.value, e.target.name)
-							}
-							error={!!projectNameError}
-							helperText={projectNameError}
-						/>
-						<TextField
-							name='width'
-							label='Ширина холста (px)'
-							type='number'
-							fullWidth
-							margin='normal'
-							value={width}
-							slotProps={{ htmlInput: { min: 100 } }}
-							onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-								validateInput(e.target.value, e.target.name)
-							}
-							error={!!widthError}
-							helperText={widthError}
-						/>
-						<TextField
-							name='height'
-							label='Высота холста (px)'
-							type='number'
-							fullWidth
-							margin='normal'
-							value={height}
-							slotProps={{ htmlInput: { min: 100 } }}
-							onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-								validateInput(e.target.value, e.target.name)
-							}
-							error={!!heightError}
-							helperText={heightError}
-						/>
-						<DialogActions>
-							<Button
-								onClick={() => dispatch(closeCreateProjectModal())}
-								variant='outlined'
-								type='button'
-								sx={{
-									borderColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : 'rgb(196,196,196)'),
-									textTransform: 'none',
-									color: theme => (theme.palette.mode === 'dark' ? '#FFF' : '#000'),
-									'&:hover': {
-										backgroundColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : null),
-										borderColor: theme => (theme.palette.mode !== 'dark' ? '#000' : null),
-									},
-								}}>
-								Отмена
-							</Button>
-							<Button
-								variant='contained'
-								type='submit'
-								autoFocus
-								disabled={!!projectNameError || !!widthError || !!heightError}
-								sx={{ textTransform: 'none' }}>
-								Создать
-							</Button>
-						</DialogActions>
-					</Box>
+					<Typography sx={{ color: '#9fa5b5', marginBottom: 2 }}>Укажите параметры для нового проекта</Typography>
+					<TextField
+						name='projectName'
+						label='Название проекта'
+						fullWidth
+						margin='normal'
+						value={projectName}
+						autoComplete='off'
+						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+							validateInput(e.target.value, e.target.name)
+						}
+						error={!!projectNameError}
+						helperText={projectNameError}
+					/>
+					<TextField
+						name='width'
+						label='Ширина холста (px)'
+						type='number'
+						fullWidth
+						margin='normal'
+						value={width}
+						slotProps={{ htmlInput: { min: 100 } }}
+						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+							validateInput(e.target.value, e.target.name)
+						}
+						error={!!widthError}
+						helperText={widthError}
+					/>
+					<TextField
+						name='height'
+						label='Высота холста (px)'
+						type='number'
+						fullWidth
+						margin='normal'
+						value={height}
+						slotProps={{ htmlInput: { min: 100 } }}
+						onChange={(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+							validateInput(e.target.value, e.target.name)
+						}
+						error={!!heightError}
+						helperText={heightError}
+					/>
 				</DialogContent>
+				<DialogActions sx={{ paddingRight: '24px', paddingLeft: '24px' }}>
+					<Button
+						onClick={() => dispatch(closeCreateProjectModal())}
+						variant='outlined'
+						sx={{
+							borderColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : 'rgb(196,196,196)'),
+							textTransform: 'none',
+							color: theme => (theme.palette.mode === 'dark' ? '#FFF' : '#000'),
+							'&:hover': {
+								backgroundColor: theme => (theme.palette.mode === 'dark' ? '#31313A' : null),
+								borderColor: theme => (theme.palette.mode !== 'dark' ? '#000' : null),
+							},
+						}}>
+						Отмена
+					</Button>
+					<Button
+						loading={isLoading}
+						onClick={handleCreate}
+						variant='contained'
+						disabled={!!projectNameError || !!widthError || !!heightError}
+						sx={{ textTransform: 'none' }}>
+						Создать
+					</Button>
+				</DialogActions>
 			</Box>
 		</Dialog>
 	);
