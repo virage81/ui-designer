@@ -17,16 +17,20 @@ interface CanvasBounds {
 export class TextTool extends Tool {
 	private textInput: HTMLTextAreaElement | null = null;
 	private isEditing: boolean = false;
-	private pendingText: {
-		logicalX: number;
-		logicalY: number;
-		fontSize: number;
-		color: string;
-	} | null = null;
+	private pendingText: { x: number; y: number; fontSize: number; color: string } | null = null;
 	private resizeObserver: ResizeObserver | null = null;
+	private isTextEditingRef: React.RefObject<boolean>
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number) {
-		super(canvas, styles, options, zoom);
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		options: ToolOptions = {},
+		zoom: number,
+		isTextEditingRef: React.RefObject<boolean>,
+		snapToGrid?: (x: number, y: number) => [number, number],
+	) {
+		super(canvas, styles, options, zoom, snapToGrid);
+		this.isTextEditingRef = isTextEditingRef
 		this.createTextInput();
 		this.listen();
 	}
@@ -37,10 +41,14 @@ export class TextTool extends Tool {
 
 	clickHandler = (e: PointerEvent) => {
 		if (this.isEditing) return;
+		this.isTextEditingRef.current = true;
+		const [canvasX, canvasY] = this.getMousePos(e);
 
-		const [logicalX, logicalY] = this.getMousePos(e);
+		const rect = this.canvas.getBoundingClientRect();
+		const clientX = rect.left + canvasX * this.zoom;
+		const clientY = rect.top + canvasY * this.zoom;
 
-		this.startTextInput(e.clientX, e.clientY, logicalX, logicalY);
+		this.startTextInput(clientX, clientY, canvasX, canvasY);
 	};
 
 	private createTextInput() {
@@ -134,16 +142,11 @@ export class TextTool extends Tool {
 		this.textInput.style.borderColor = isOutOfBounds ? 'red' : '#007bff';
 	}
 
-	private startTextInput(clientX: number, clientY: number, logicalX: number, logicalY: number) {
+	private startTextInput(clientX: number, clientY: number, x: number, y: number) {
 		if (!this.ctx) return;
 
 		this.isEditing = true;
-		this.pendingText = {
-			logicalX,
-			logicalY,
-			fontSize: this.fontSize,
-			color: this.fill,
-		};
+		this.pendingText = { x: x, y: y, fontSize: this.fontSize, color: this.fill };
 
 		Object.assign(this.textInput!.style, {
 			display: 'block',
@@ -203,7 +206,7 @@ export class TextTool extends Tool {
 			return;
 		}
 
-		const { logicalX, logicalY, fontSize, color } = this.pendingText;
+		const { x, y, fontSize, color } = this.pendingText;
 
 		const tempCtx = this.ctx;
 		if (!tempCtx) {
@@ -217,7 +220,7 @@ export class TextTool extends Tool {
 		tempCtx.textBaseline = 'top';
 		tempCtx.textAlign = 'left';
 
-		const maxWidth = (this.logicalWidth - logicalX - 10) * this.dpr;
+		const maxWidth = (this.logicalWidth - x - 10) * this.dpr;
 		const lines = this.wrapTextLogical(tempCtx, text, maxWidth);
 		const lineHeight = fontSize * 1.2;
 
@@ -231,8 +234,8 @@ export class TextTool extends Tool {
 		const textObject: Text = {
 			id: generateId(),
 			type: 'text',
-			x: logicalX,
-			y: logicalY,
+			x: x,
+			y: y,
 			width,
 			height,
 			lines,
@@ -315,6 +318,7 @@ export class TextTool extends Tool {
 		}
 		this.isEditing = false;
 		this.pendingText = null;
+		this.isTextEditingRef.current = false;
 	}
 
 	applyStyles(styles: Styles) {

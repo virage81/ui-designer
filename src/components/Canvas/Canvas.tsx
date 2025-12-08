@@ -20,11 +20,14 @@ import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
+import {GridOverlay} from "@components/GridOverlay/GridOverlay.tsx";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
 	const { register, unregister } = useCanvasContext();
+	const guides = useSelector((state: RootState) => state.projects.guides);
+	const showGrid: boolean = guides.enabled;
 
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
@@ -32,17 +35,23 @@ export const Canvas: React.FC = () => {
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
 	const layerObjects = useSelector((state: RootState) => objectsByLayerSelector(state, activeLayer?.id || ''));
 
+	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
+
+	const isDrawingRef = useRef(false);
+	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const layerChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 	const animationFrameRef = useRef<number | null>(null);
 
 	const currentProject = useProject();
 
 	const { canvases } = useCanvasContext();
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
-	const projectLayers = layersByProject[projectId ?? ''] ?? [];
+	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
 
@@ -70,6 +79,36 @@ export const Canvas: React.FC = () => {
 
 		dprSetupsRef.current[canvas.id] = true;
 	}, []);
+
+	const triggerDrawingSave = useCallback(() => {
+		if (isTextEditingRef.current) {
+			if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+			return;
+		}
+
+		if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+		saveTimeoutRef.current = setTimeout(() => {
+			if (!isDrawingRef.current && !isTextEditingRef.current) {
+				saveProjectPreviewRef.current();
+			}
+		}, 600);
+	}, [isTextEditingRef, saveProjectPreviewRef]);
+
+	const triggerLayerSave = useCallback(() => {
+		if (isTextEditingRef.current) {
+			if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+			return;
+		}
+
+		if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+
+		layerChangeTimeoutRef.current = setTimeout(() => {
+			if (!isTextEditingRef.current) {
+				saveProjectPreviewRef.current();
+			}
+		}, 300);
+	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const handleToolComplete = useCallback(
 		(payload: unknown) => {
@@ -114,12 +153,60 @@ export const Canvas: React.FC = () => {
 	}, [saveProjectPreview]);
 
 	useEffect(() => {
-		const saveInterval = setInterval(() => {
-			saveProjectPreviewRef.current();
-		}, 3000);
+		const handlePointerDown = () => {
+			isDrawingRef.current = true;
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+				saveTimeoutRef.current = null;
+			}
+			if (layerChangeTimeoutRef.current) {
+				clearTimeout(layerChangeTimeoutRef.current);
+				layerChangeTimeoutRef.current = null;
+			}
+		};
 
-		return () => clearInterval(saveInterval);
-	}, []);
+		const handlePointerUp = () => {
+			isDrawingRef.current = false;
+			triggerDrawingSave();
+		};
+
+		const currentCanvases = canvasesRef.current;
+		Object.values(currentCanvases).forEach(canvas => {
+			canvas.addEventListener('pointerdown', handlePointerDown);
+			canvas.addEventListener('pointerup', handlePointerUp);
+		});
+
+		return () => {
+			Object.values(currentCanvases).forEach(canvas => {
+				canvas.removeEventListener('pointerdown', handlePointerDown);
+				canvas.removeEventListener('pointerup', handlePointerUp);
+			});
+			if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+			if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+		};
+	}, [triggerDrawingSave]);
+
+	useEffect(() => {
+		triggerLayerSave();
+	}, [tool, projectLayers, triggerLayerSave]);
+
+	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
+		if (!guides.enabled) return [x, y];
+
+		const gridW = currentProject.width / guides.columns;
+		const gridH = currentProject.height / guides.rows;
+		const SNAP_TOLERANCE = gridW * 0.1;
+
+		const nearestGridX = Math.round(x / gridW) * gridW;
+		const xDiff = Math.abs(x - nearestGridX);
+		const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
+
+		const nearestGridY = Math.round(y / gridH) * gridH;
+		const yDiff = Math.abs(y - nearestGridY);
+		const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
+
+		return [snappedX, snappedY];
+	}, [guides, currentProject]);
 
 	useEffect(() => {
 		if (toolRef.current) {
@@ -135,19 +222,19 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.BRUSH: {
-				toolRef.current = new BrushTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new BrushTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.RECTANGLE: {
-				toolRef.current = new RectangleTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new RectangleTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.CIRCLE: {
-				toolRef.current = new CircleTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new CircleTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.LINE: {
-				toolRef.current = new LineTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new LineTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.ERASER: {
@@ -155,7 +242,7 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom, isTextEditingRef, snapToGrid);
 				break;
 			}
 			default: {
@@ -170,10 +257,11 @@ export const Canvas: React.FC = () => {
 			}
 		};
 		//eslint-disable-next-line
-	}, [tool, activeLayer?.id, toolStyles, layerObjects, currentProject.id, zoom]);
+	}, [tool, activeLayer, toolStyles, currentProject.id,  layerObjects, zoom, snapToGrid]);
+
 
 	useEffect(() => {
-		if (!canvasRef.current || !activeLayer || !currentProject) return;
+		if (!canvasRef.current || !activeLayer) return;
 
 		if (activeLayer.cleared) {
 			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
@@ -182,7 +270,7 @@ export const Canvas: React.FC = () => {
 				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
 			}
 		}
-	}, [activeLayer, currentProject, projectId, dispatch]);
+	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width ]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
@@ -334,6 +422,9 @@ export const Canvas: React.FC = () => {
 							height: `${currentProject.height}px`,
 						}}
 					/>
+				{showGrid && (
+					<GridOverlay guides={guides}/>
+				)}
 					{sortedLayers.map(layer => (
 						<canvas
 							id={layer.id}

@@ -36,11 +36,15 @@ export class Tool {
 
 	protected zoom: number = 1;
 
+	protected snapToGrid?: (x: number, y: number) => [number, number];
+
+	protected eventCleanup?: () => void;
+
 	protected layerId: string | undefined;
 	protected onComplete: ((obj: unknown) => void) | undefined;
 	protected layerObjects: Drawable[] = [];
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number) {
+	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
 		this.canvas = canvas;
 
 		this.ctx = canvas.getContext('2d', { willReadFrequently: true })!;
@@ -56,6 +60,7 @@ export class Tool {
 
 		this.zoom = zoom;
 
+		this.snapToGrid = snapToGrid;
 		this.layerId = options.layerId;
 		this.onComplete = options.onComplete;
 		this.layerObjects = options.layerObjects || [];
@@ -83,9 +88,9 @@ export class Tool {
 
 	public getMousePos(e: PointerEvent): [number, number] {
 		const rect = this.canvas.getBoundingClientRect();
-		const x = (e.clientX - rect.left) / this.zoom;
-		const y = (e.clientY - rect.top) / this.zoom;
-		return [x, y];
+		const [x, y] = [(e.clientX - rect.left) / this.zoom, (e.clientY - rect.top) / this.zoom];
+
+		return this.snapToGrid ? this.snapToGrid(x, y) : [x, y];
 	}
 
 	setupEvents() {
@@ -100,6 +105,11 @@ export class Tool {
 		this.canvas.onpointermove = null;
 		this.canvas.onpointerdown = null;
 		this.canvas.onmouseleave = null;
+
+		if (this.eventCleanup) {
+			this.eventCleanup();
+			this.eventCleanup = undefined;
+		}
 	}
 }
 

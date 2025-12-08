@@ -7,8 +7,8 @@ export class BrushTool extends Tool {
 	private pathId: string = '';
 	private savedImage?: ImageData;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number) {
-		super(canvas, styles, options, zoom);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number],) {
+		super(canvas, styles, options, zoom, snapToGrid);
 		this.listen();
 	}
 
