@@ -226,6 +226,7 @@ export const Modal: FC = () => {
 							<Button
 								variant='contained'
 								type='submit'
+								autoFocus
 								disabled={!!projectNameError || !!widthError || !!heightError}
 								sx={{ textTransform: 'none' }}>
 								Создать
