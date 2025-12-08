@@ -1,4 +1,5 @@
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
+import { GridOverlay } from '@components/GridOverlay/GridOverlay.tsx';
 import { ZoomBar } from '@components/ZoomBar';
 import { Box, Paper } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
@@ -20,7 +21,6 @@ import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import {GridOverlay} from "@components/GridOverlay/GridOverlay.tsx";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -40,6 +40,7 @@ export const Canvas: React.FC = () => {
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
+	const containerRef = useRef<HTMLDivElement>(null);
 
 	const isDrawingRef = useRef(false);
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -190,23 +191,26 @@ export const Canvas: React.FC = () => {
 		triggerLayerSave();
 	}, [tool, projectLayers, triggerLayerSave]);
 
-	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
-		if (!guides.enabled) return [x, y];
+	const snapToGrid = useCallback(
+		(x: number, y: number): [number, number] => {
+			if (!guides.enabled) return [x, y];
 
-		const gridW = currentProject.width / guides.columns;
-		const gridH = currentProject.height / guides.rows;
-		const SNAP_TOLERANCE = gridW * 0.1;
+			const gridW = currentProject.width / guides.columns;
+			const gridH = currentProject.height / guides.rows;
+			const SNAP_TOLERANCE = gridW * 0.1;
 
-		const nearestGridX = Math.round(x / gridW) * gridW;
-		const xDiff = Math.abs(x - nearestGridX);
-		const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
+			const nearestGridX = Math.round(x / gridW) * gridW;
+			const xDiff = Math.abs(x - nearestGridX);
+			const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
 
-		const nearestGridY = Math.round(y / gridH) * gridH;
-		const yDiff = Math.abs(y - nearestGridY);
-		const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
+			const nearestGridY = Math.round(y / gridH) * gridH;
+			const yDiff = Math.abs(y - nearestGridY);
+			const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
 
-		return [snappedX, snappedY];
-	}, [guides, currentProject]);
+			return [snappedX, snappedY];
+		},
+		[guides, currentProject],
+	);
 
 	useEffect(() => {
 		if (toolRef.current) {
@@ -214,7 +218,7 @@ export const Canvas: React.FC = () => {
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !activeLayer || !currentProject.id) return;
+		if (!canvasRef.current || !containerRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
@@ -242,7 +246,15 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom, isTextEditingRef, snapToGrid);
+				toolRef.current = new TextTool(
+					canvasRef.current,
+					toolStyles,
+					toolOptions,
+					zoom,
+					isTextEditingRef,
+					containerRef.current,
+					snapToGrid,
+				);
 				break;
 			}
 			default: {
@@ -257,8 +269,7 @@ export const Canvas: React.FC = () => {
 			}
 		};
 		//eslint-disable-next-line
-	}, [tool, activeLayer, toolStyles, currentProject.id,  layerObjects, zoom, snapToGrid]);
-
+	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer) return;
@@ -270,7 +281,7 @@ export const Canvas: React.FC = () => {
 				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
 			}
 		}
-	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width ]);
+	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
@@ -402,6 +413,7 @@ export const Canvas: React.FC = () => {
 				}}>
 				<Paper
 					elevation={5}
+					ref={containerRef}
 					sx={{
 						position: 'relative',
 						m: `${zoom <= 1.2 ? '0 auto' : '0'}`,
@@ -422,9 +434,7 @@ export const Canvas: React.FC = () => {
 							height: `${currentProject.height}px`,
 						}}
 					/>
-				{showGrid && (
-					<GridOverlay guides={guides}/>
-				)}
+					{showGrid && <GridOverlay guides={guides} />}
 					{sortedLayers.map(layer => (
 						<canvas
 							id={layer.id}

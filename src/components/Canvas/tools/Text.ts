@@ -19,7 +19,7 @@ export class TextTool extends Tool {
 	private isEditing: boolean = false;
 	private pendingText: { x: number; y: number; fontSize: number; color: string } | null = null;
 	private resizeObserver: ResizeObserver | null = null;
-	private isTextEditingRef: React.RefObject<boolean>
+	private isTextEditingRef: React.RefObject<boolean>;
 
 	constructor(
 		canvas: HTMLCanvasElement,
@@ -27,10 +27,11 @@ export class TextTool extends Tool {
 		options: ToolOptions = {},
 		zoom: number,
 		isTextEditingRef: React.RefObject<boolean>,
+		container: HTMLDivElement,
 		snapToGrid?: (x: number, y: number) => [number, number],
 	) {
-		super(canvas, styles, options, zoom, snapToGrid);
-		this.isTextEditingRef = isTextEditingRef
+		super(canvas, styles, options, zoom, container, snapToGrid);
+		this.isTextEditingRef = isTextEditingRef;
 		this.createTextInput();
 		this.listen();
 	}
@@ -44,11 +45,7 @@ export class TextTool extends Tool {
 		this.isTextEditingRef.current = true;
 		const [canvasX, canvasY] = this.getMousePos(e);
 
-		const rect = this.canvas.getBoundingClientRect();
-		const clientX = rect.left + canvasX * this.zoom;
-		const clientY = rect.top + canvasY * this.zoom;
-
-		this.startTextInput(clientX, clientY, canvasX, canvasY);
+		this.startTextInput(canvasX, canvasY);
 	};
 
 	private createTextInput() {
@@ -71,7 +68,7 @@ export class TextTool extends Tool {
 			lineHeight: '1.2',
 		});
 
-		document.body.appendChild(this.textInput);
+		this.container.appendChild(this.textInput);
 
 		this.textInput.addEventListener('keydown', this.handleKeyDown.bind(this));
 		this.textInput.addEventListener('blur', this.cancelEditing.bind(this));
@@ -142,7 +139,7 @@ export class TextTool extends Tool {
 		this.textInput.style.borderColor = isOutOfBounds ? 'red' : '#007bff';
 	}
 
-	private startTextInput(clientX: number, clientY: number, x: number, y: number) {
+	private startTextInput(x: number, y: number) {
 		if (!this.ctx) return;
 
 		this.isEditing = true;
@@ -150,8 +147,8 @@ export class TextTool extends Tool {
 
 		Object.assign(this.textInput!.style, {
 			display: 'block',
-			left: clientX + 'px',
-			top: clientY + 'px',
+			left: x + 'px',
+			top: y + 'px',
 			width: '200px',
 			height: 'auto',
 			minHeight: '1lh',
