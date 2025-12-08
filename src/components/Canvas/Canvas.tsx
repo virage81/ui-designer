@@ -7,15 +7,14 @@ import {
 	sortedLayersSelector,
 } from '@store/slices/projectsSlice';
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
-import { ZoomBar } from '@components/ZoomBar';
-import { Box, Paper } from '@mui/material';
+import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import type { Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
 import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
@@ -48,6 +47,7 @@ export const Canvas: React.FC = () => {
 
 	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const canvasContainerRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
@@ -55,16 +55,17 @@ export const Canvas: React.FC = () => {
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const layerChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const initialRenderRef = useRef(false);
-
-	// @TODO: внедрить в существующую рисовку
-	// const animationFrameRef = useRef<number | null>(null);
-
 	const currentProject = useProject();
 	const { canvases } = useCanvasContext();
 	const { register, unregister } = useCanvasContext();
 	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
+
+	// @TODO: внедрить в существующую рисовку
+	// const animationFrameRef = useRef<number | null>(null);
+
+	const [canvasContainerWidth, setCanvasContainerWidth] = useState(currentProject.width);
 
 	const showGrid: boolean = guides.enabled;
 
@@ -73,25 +74,28 @@ export const Canvas: React.FC = () => {
 		[fillColor, strokeWidth, strokeStyle, fontSize],
 	);
 
-	const setupCanvasDPR = useCallback((canvas: HTMLCanvasElement) => {
-		if (!canvas || dprSetupsRef.current[canvas.id]) return;
+	const setupCanvasDPR = useCallback(
+		(canvas: HTMLCanvasElement) => {
+			if (!canvas || dprSetupsRef.current[canvas.id]) return;
 
-		const dpr = window.devicePixelRatio || 1;
-		const rect = canvas.getBoundingClientRect();
+			const dpr = window.devicePixelRatio || 1;
 
-		canvas.width = Math.floor(rect.width * dpr);
-		canvas.height = Math.floor(rect.height * dpr);
-		canvas.style.width = `${rect.width}px`;
-		canvas.style.height = `${rect.height}px`;
+			canvas.width = currentProject.width * dpr;
+			canvas.height = currentProject.height * dpr;
 
-		const ctx = canvas.getContext('2d', { willReadFrequently: true });
-		if (ctx) {
-			ctx.scale(dpr, dpr);
-			ctx.imageSmoothingEnabled = false;
-		}
+			canvas.style.width = `${currentProject.width}px`;
+			canvas.style.height = `${currentProject.height}px`;
 
-		dprSetupsRef.current[canvas.id] = true;
-	}, []);
+			const ctx = canvas.getContext('2d', { willReadFrequently: true });
+			if (ctx) {
+				ctx.scale(dpr, dpr);
+				ctx.imageSmoothingEnabled = false;
+			}
+
+			dprSetupsRef.current[canvas.id] = true;
+		},
+		[currentProject.width, currentProject.height],
+	);
 
 	const triggerDrawingSave = useCallback(() => {
 		if (isTextEditingRef.current) {
@@ -300,9 +304,6 @@ export const Canvas: React.FC = () => {
 		//eslint-disable-next-line
 	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
 
-	// чтобы избежать рендера, useRef --> initialRenderuseRef = true - Тогда full history, если false - тогда конкретный слой
-	// по принципу isMouseDown
-
 	// Тут перерисовываем canvas всех слоёв
 	useEffect(() => {
 		if (!fullHistory || !canvasRef.current || initialRenderRef.current === true) return;
@@ -437,78 +438,79 @@ export const Canvas: React.FC = () => {
 		}
 	}, [activeLayer?.id, setupCanvasDPR]);
 
+	useEffect(() => {
+		if (canvasContainerRef.current) {
+			setCanvasContainerWidth(canvasContainerRef.current.getBoundingClientRect().width);
+		}
+	}, []);
+
 	if (!currentProject) {
 		redirect('/404');
 		return null;
 	}
 
 	return (
-		<Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+		<Box
+			ref={canvasContainerRef}
+			sx={{
+				width: '100%',
+				padding: '8px',
+				backgroundColor: 'var(--main-bg)',
+				overflow: 'auto',
+			}}>
 			<Box
 				sx={{
-					m: '0 auto',
-					width: '100%',
-					height: '100%',
-					padding: '8px 8px',
-					backgroundColor: 'var(--main-bg)',
-					overflow: 'auto',
+					position: 'relative',
+					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
+					width: currentProject.width,
+					height: currentProject.height,
+					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
+					transform: `scale(${zoom})`,
+					transformOrigin: `${currentProject.width * zoom <= canvasContainerWidth ? 'top center' : 'top left'}`,
 				}}>
-				<Paper
-					elevation={5}
-					sx={{
-						position: 'relative',
-						m: `${zoom <= 1.2 ? '0 auto' : '0'}`,
-						width: currentProject.width,
-						height: currentProject.height,
-						cursor: tool === ACTIONS.ERASER ? 'pointer' : tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
-						transform: `scale(${zoom})`,
-						transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`,
-					}}>
+				<canvas
+					style={{
+						background: 'white',
+						position: 'absolute',
+						inset: 0,
+						zIndex: 0,
+						pointerEvents: 'none',
+						width: `${currentProject.width}px`,
+						height: `${currentProject.height}px`,
+					}}
+				/>
+				{showGrid && <GridOverlay guides={guides} />}
+				{sortedLayers.map(layer => (
 					<canvas
+						id={layer.id}
+						key={layer.id}
+						ref={el => {
+							if (el) {
+								canvasesRef.current[layer.id] = el;
+								if (layer.id === activeLayer?.id) {
+									canvasRef.current = el;
+									setupCanvasDPR(el);
+								}
+								register(layer.id, el);
+							} else {
+								delete canvasesRef.current[layer.id];
+								unregister(layer.id);
+							}
+						}}
 						style={{
-							background: 'white',
+							background: 'transparent',
 							position: 'absolute',
 							inset: 0,
-							zIndex: 0,
-							pointerEvents: 'none',
+							zIndex: layer.zIndex,
+							opacity: layer.hidden ? 0 : layer.opacity / 100,
+							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 							width: `${currentProject.width}px`,
 							height: `${currentProject.height}px`,
 						}}
 					/>
-					{showGrid && <GridOverlay guides={guides} />}
-					{sortedLayers.map(layer => (
-						<canvas
-							id={layer.id}
-							key={layer.id}
-							ref={el => {
-								if (el) {
-									canvasesRef.current[layer.id] = el;
-									if (layer.id === activeLayer?.id) {
-										canvasRef.current = el;
-										setupCanvasDPR(el);
-									}
-									register(layer.id, el);
-								} else {
-									delete canvasesRef.current[layer.id];
-									unregister(layer.id);
-								}
-							}}
-							style={{
-								background: 'transparent',
-								position: 'absolute',
-								inset: 0,
-								zIndex: layer.zIndex,
-								opacity: layer.hidden ? 0 : layer.opacity / 100,
-								pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
-								width: `${currentProject.width}px`,
-								height: `${currentProject.height}px`,
-							}}
-						/>
-					))}
-				</Paper>
+				))}
 			</Box>
-
-			<ZoomBar />
 		</Box>
 	);
 };

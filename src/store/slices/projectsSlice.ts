@@ -49,6 +49,7 @@ const projectsSlice = createSlice({
 
 			state.layers[id] = [layer];
 			state.activeLayer = layer;
+			state.zoom = initialState.zoom;
 
 			// Инициализируем объект истории для проекта и слоя
 			if (!state.history[id]) {

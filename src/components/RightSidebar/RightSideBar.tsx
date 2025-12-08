@@ -15,7 +15,7 @@ export const RightSideBar: React.FC = () => {
 			sx={{
 				display: 'flex',
 				flexDirection: 'column',
-				width: 320,
+				width: { sm: '30dvw', lg: 320 },
 				borderLeft: '1px solid',
 				borderColor: 'var(--header-border-color)',
 			}}>
