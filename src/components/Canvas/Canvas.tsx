@@ -5,7 +5,7 @@ import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import type { RootState } from '@store/index';
 import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useParams } from 'react-router-dom';
 import { BrushTool } from './tools/Brush';
@@ -27,6 +27,7 @@ export const Canvas: React.FC = () => {
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
 
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const canvasContainerRef = useRef<HTMLCanvasElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
@@ -38,6 +39,8 @@ export const Canvas: React.FC = () => {
 	const projectLayers = layersByProject[projectId ?? ''] ?? [];
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
+
+	const [canvasContainerWidth, setCanvasContainerWidth] = useState(currentProject.width);
 
 	const toolStyles = useMemo<Styles>(
 		() => ({ fill: fillColor, strokeWidth, strokeStyle, fontSize }),
@@ -144,30 +147,40 @@ export const Canvas: React.FC = () => {
 		}
 	}, [activeLayer?.id, setupCanvasDPR]);
 
+	useEffect(() => {
+		if (canvasContainerRef.current) {
+			setCanvasContainerWidth(canvasContainerRef.current.getBoundingClientRect().width);
+		}
+	}, []);
+
 	if (!currentProject) {
 		redirect('/404');
 		return null;
 	}
 
+	console.log('canvasContainerWidth', canvasContainerWidth);
+	console.log('currentProject.width', currentProject.width);
+	console.log('canvasContainerWidth <= currentProject.width', canvasContainerWidth <= currentProject.width);
+
 	return (
 		<Box
+			ref={canvasContainerRef}
 			sx={{
-				m: '0 auto',
 				width: '100%',
-				padding: '8px 8px',
+				padding: '8px',
 				backgroundColor: 'var(--main-bg)',
 				overflow: 'auto',
 			}}>
 			<Box
 				sx={{
 					position: 'relative',
-					m: `${zoom <= 1.2 ? '0 auto' : '0'}`,
+					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
 					width: currentProject.width,
 					height: currentProject.height,
 					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
 					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
 					transform: `scale(${zoom})`,
-					transformOrigin: `${zoom <= 1 ? '50% 20%' : 'top left'}`,
+					transformOrigin: `${currentProject.width * zoom <= canvasContainerWidth ? 'top center' : 'top left'}`,
 				}}>
 				<canvas
 					style={{
