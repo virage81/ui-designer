@@ -1,4 +1,13 @@
+import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
+import { redrawCanvas } from '@components/Canvas/utils/redrawCanvas';
+import { GridOverlay } from '@components/GridOverlay/GridOverlay';
+import { Box } from '@mui/material';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { useProject } from '@shared/hooks/useProject';
+import { useSaveProjectPreview } from '@shared/hooks/useSavePreview';
+import type { Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
 import type { RootState } from '@store/index';
+import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import {
 	addToHistory,
 	historySelector,
@@ -6,14 +15,6 @@ import {
 	pointerSelector,
 	sortedLayersSelector,
 } from '@store/slices/projectsSlice';
-import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
-import { GridOverlay } from '@components/GridOverlay/GridOverlay';
-import { Box } from '@mui/material';
-import type { PayloadAction } from '@reduxjs/toolkit';
-import { useProject } from '@shared/hooks/useProject.tsx';
-import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
-import type { Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
-import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,7 +27,6 @@ import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import { redrawCanvas } from '@components/Canvas/utils/redrawCanvas';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();

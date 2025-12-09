@@ -1,15 +1,15 @@
-import { AppBar, Box, Button, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
-import { useProject } from '@shared/hooks/useProject';
+import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
+import { AppBar, Box, Button, CircularProgress, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
 import { useExportPNG } from '@shared/hooks/useExport';
-import { House } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useState, type MouseEvent } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useProject } from '@shared/hooks/useProject';
+import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
+import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import { type RootState } from '@store/index';
 import { toggleCreateProjectModal } from '@store/slices/modalsSlice.ts';
-import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
-import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
-import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
+import { BadgeCheckIcon, House } from 'lucide-react';
+import { useEffect, useState, type MouseEvent } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export const TopMenu: React.FC = () => {
 	const navigate = useNavigate();
@@ -19,6 +19,8 @@ export const TopMenu: React.FC = () => {
 	const exportPNG = useExportPNG();
 	const { id: projectId } = useParams<{ id: string }>();
 	const { canvases } = useCanvasContext();
+	const lastPreviewSavedAt = useSelector((state: RootState) => state.projects.save.lastPreviewSavedAt);
+	const lastSaveWasManual = useSelector((state: RootState) => state.projects.save.lastSaveWasManual);
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 	const projectLayers = layersByProject[projectId ?? ''] ?? [];
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
@@ -26,9 +28,10 @@ export const TopMenu: React.FC = () => {
 	const editing = useProjectNameEditing({
 		projectId: currentProject.id,
 		initialName: currentProject.name,
-		projects
+		projects,
 	});
 
+	const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 	const [fileAnchorEl, setFileAnchorEl] = useState<null | HTMLElement>(null);
 	const fileMenuOpen = Boolean(fileAnchorEl);
 
@@ -47,8 +50,7 @@ export const TopMenu: React.FC = () => {
 	};
 
 	const handleSave = () => {
-		//todo: сохранить проект
-		saveProjectPreview();
+		saveProjectPreview(true);
 		handleFileMenuClose();
 	};
 
@@ -57,27 +59,47 @@ export const TopMenu: React.FC = () => {
 		handleFileMenuClose();
 	};
 
+	useEffect(() => {
+		if (lastPreviewSavedAt) {
+			setSaveStatus('saved');
+
+			const duration = lastSaveWasManual ? 1500 : 1000;
+			const timer = setTimeout(() => setSaveStatus('idle'), duration);
+
+			return () => clearTimeout(timer);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [lastPreviewSavedAt, lastSaveWasManual]);
+
 	return (
 		<>
-			<AppBar position='static' sx={{ "& .MuiToolbar-root": { pr: '10px', pl: 0 } }}>
+			<AppBar position='static' sx={{ '& .MuiToolbar-root': { pr: '10px', pl: 0 } }}>
 				<Toolbar variant='dense'>
 					<Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-						<Button
-							sx={{ width: '63px' }}
-							variant='graphic-tools'
-							disableElevation
-							onClick={() => navigate('/')}
-						>
+						<Button sx={{ width: '63px' }} variant='graphic-tools' disableElevation onClick={() => navigate('/')}>
 							<House />
 						</Button>
-						<Button
-							variant='tools'
-							disableElevation
-							onClick={handleFileMenuClick}
-							sx={{ textTransform: 'none' }}
-						>
+						<Button variant='tools' disableElevation onClick={handleFileMenuClick} sx={{ textTransform: 'none' }}>
 							Файл
 						</Button>
+
+						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+							{saveStatus == 'saved' && !lastSaveWasManual && (
+								<CircularProgress size={16} sx={{ color: 'var(--color-muted)' }} />
+							)}
+							<Box
+								sx={{
+									color: 'var(--color-muted)',
+									opacity: saveStatus === 'saved' && lastSaveWasManual ? 1 : 0,
+									transition: 'opacity 200ms ease-in-out',
+									pointerEvents: 'none',
+								}}>
+								<Typography variant='body2' sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+									<BadgeCheckIcon size={16} />
+									Сохранено
+								</Typography>
+							</Box>
+						</Box>
 					</Box>
 
 					<Box sx={{ maxWidth: 300 }}>
@@ -100,7 +122,7 @@ export const TopMenu: React.FC = () => {
 										borderBottom: editing.projectNameError ? '2px solid red' : '1px solid var(--color-muted)',
 										outline: 'none',
 										width: '100%',
-										cursor: 'text'
+										cursor: 'text',
 									}}
 									aria-invalid={!!editing.projectNameError}
 									aria-describedby='project-name-error'
@@ -109,8 +131,7 @@ export const TopMenu: React.FC = () => {
 									<Typography
 										id='project-name-error'
 										variant='caption'
-										sx={{ color: 'red', userSelect: 'none', mt: 0.3, display: 'block' }}
-									>
+										sx={{ color: 'red', userSelect: 'none', mt: 0.3, display: 'block' }}>
 										{editing.projectNameError}
 									</Typography>
 								)}
@@ -120,8 +141,7 @@ export const TopMenu: React.FC = () => {
 								noWrap
 								sx={{ color: 'var(--color-muted)', cursor: 'pointer', paddingLeft: '20px' }}
 								onClick={editing.startEditing}
-								title="Нажмите для редактирования"
-							>
+								title='Нажмите для редактирования'>
 								{currentProject?.name}
 							</Typography>
 						)}
@@ -147,8 +167,7 @@ export const TopMenu: React.FC = () => {
 					'& .MuiMenu-list': {
 						padding: 0,
 					},
-				}}
-			>
+				}}>
 				<MenuItem onClick={handleNewProject}>Новый проект</MenuItem>
 				<MenuItem onClick={handleSave}>Сохранить</MenuItem>
 				<MenuItem onClick={handleExportPng}>Экспортировать в png</MenuItem>
