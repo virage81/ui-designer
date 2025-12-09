@@ -12,13 +12,13 @@ import {
 	Typography,
 } from '@mui/material';
 import type { Project } from '@shared/types/project';
+import { validateProjectName } from '@shared/utils/projectNameValidation';
 import { closeCreateProjectModal } from '@store/slices/modalsSlice';
 import { createProject } from '@store/slices/projectsSlice';
 import { type ChangeEvent, type FC, useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getNewProjectName } from './utils';
-import { validateProjectName } from '@shared/utils/projectNameValidation';
 
 type NewProject = Omit<Project, 'id' | 'date'>;
 
@@ -43,6 +43,8 @@ export const Modal: FC = () => {
 	const [widthError, setWidthError] = useState<string>('');
 	const [heightError, setHeightError] = useState<string>('');
 
+	const [isLoading, setIsLoading] = useState(false);
+
 	const resetForm: () => void = useCallback((): void => {
 		setProjectName(newProjectName);
 		setWidth(DEFAULT_SIZE);
@@ -51,13 +53,6 @@ export const Modal: FC = () => {
 		setWidthError('');
 		setHeightError('');
 	}, [newProjectName]);
-
-	useEffect(() => {
-		if (isCreateProjectModalOpen) {
-			const id = setTimeout(resetForm, 0);
-			return (): void => clearTimeout(id);
-		}
-	}, [isCreateProjectModalOpen, resetForm]);
 
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
@@ -72,7 +67,10 @@ export const Modal: FC = () => {
 			case 'width': {
 				const num: number = Number(value);
 				setWidth(value);
-				if (!Number.isInteger(num) || num < 100) {
+
+				if (!Number.isInteger(num) || num < 0) {
+					setWidthError('Введите целое положительное число');
+				} else if (num < 100) {
 					setWidthError('Минимальная ширина холста: 100px');
 				} else {
 					setWidthError('');
@@ -82,7 +80,10 @@ export const Modal: FC = () => {
 			case 'height': {
 				const num: number = Number(value);
 				setHeight(value);
-				if (!Number.isInteger(num) || num < 100) {
+
+				if (!Number.isInteger(num) || num < 0) {
+					setHeightError('Введите целое положительное число');
+				} else if (num < 100) {
 					setHeightError('Минимальная высота холста: 100px');
 				} else {
 					setHeightError('');
@@ -93,6 +94,33 @@ export const Modal: FC = () => {
 				break;
 		}
 	};
+
+	const handleCreate: () => void = (): void => {
+		if (!projectNameError && !widthError && !heightError) {
+			const trimmedName = projectName.trim();
+			const newProject: NewProject = {
+				name: trimmedName,
+				width: Number(width),
+				height: Number(height),
+				preview: '',
+			};
+
+			if (projects.some((p: Project) => p.name === trimmedName)) {
+				setProjectNameError('Проект с таким именем уже существует');
+			} else {
+				setPendingName(trimmedName);
+				setIsLoading(true);
+				dispatch(createProject(newProject));
+			}
+		}
+	};
+
+	useEffect(() => {
+		if (isCreateProjectModalOpen) {
+			const id = setTimeout(resetForm, 0);
+			return (): void => clearTimeout(id);
+		}
+	}, [isCreateProjectModalOpen, resetForm]);
 
 	useEffect(() => {
 		if (!pendingName) return;
@@ -116,28 +144,6 @@ export const Modal: FC = () => {
 			dispatch(closeCreateProjectModal());
 		};
 	}, [dispatch]);
-
-	const handleCreate: () => void = (): void => {
-		if (!projectNameError && !widthError && !heightError) {
-			const trimmedName = projectName.trim();
-			const newProject: NewProject = {
-				name: trimmedName,
-				width: Number(width),
-				height: Number(height),
-				preview: '',
-				history: [],
-				layers: [],
-			} as Omit<Project, 'id' | 'date'>;
-
-			if (projects.some((p: Project) => p.name === trimmedName)) {
-				setProjectNameError('Проект с таким именем уже существует');
-			} else {
-				setPendingName(trimmedName);
-				dispatch(createProject(newProject));
-				dispatch(closeCreateProjectModal());
-			}
-		}
-	};
 
 	return (
 		<Dialog
@@ -222,6 +228,7 @@ export const Modal: FC = () => {
 						Отмена
 					</Button>
 					<Button
+						loading={isLoading}
 						onClick={handleCreate}
 						variant='contained'
 						disabled={!!projectNameError || !!widthError || !!heightError}

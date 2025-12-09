@@ -1,5 +1,6 @@
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import { GridOverlay } from '@components/GridOverlay/GridOverlay.tsx';
+import type { RootState } from '@store/index';
 import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
