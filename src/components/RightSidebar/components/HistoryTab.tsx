@@ -9,8 +9,8 @@ export const HistoryTab = () => {
 	const { id: projectId = '' } = useParams();
 
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
-	const history = useSelector((state: RootState) => historySelector(state, projectId, activeLayer));
-	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId, activeLayer));
+	const history = useSelector((state: RootState) => historySelector(state, projectId));
+	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
@@ -42,7 +42,7 @@ export const HistoryTab = () => {
 						const reversedIndex = history.length - 1 - idx;
 						const el = history[reversedIndex];
 
-						return el && pointer !== undefined ? (
+						return el && el.id !== 0 && pointer !== undefined ? (
 							<HistoryItem
 								key={el.id}
 								{...el}

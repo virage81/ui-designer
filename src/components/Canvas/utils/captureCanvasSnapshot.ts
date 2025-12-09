@@ -1,20 +1,24 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { saveHistorySnapshot } from '@store/slices/projectsSlice';
+import type { Layer } from '@shared/types/project';
+import { addToHistory } from '@store/slices/projectsSlice';
+import type { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
+import type { ACTIONS } from '@store/slices/toolsSlice';
 
 interface CaptureCanvasParams {
 	projectId: string;
-	layerId: string;
+	activeLayer: Layer;
 	canvasRef: HTMLCanvasElement | null;
+	type: HISTORY_ACTIONS | ACTIONS;
 }
 
 /**
  * это middleware для слайса - внутри сохранение изображения слоя
- * в строку и в параметр слоя canvasDataURL
+ * в строку и в параметр canvasDataURL
  */
 export const captureCanvasAndSaveToHistory = createAsyncThunk<void, CaptureCanvasParams>(
 	'projects/captureCanvasAndSave',
 	async (
-		{ projectId, layerId, canvasRef }, { dispatch }
+		{ projectId, activeLayer, canvasRef, type }, { dispatch }
 	) => {
 		let dataURL = '';
 		if (canvasRef) {
@@ -22,11 +26,12 @@ export const captureCanvasAndSaveToHistory = createAsyncThunk<void, CaptureCanva
 		}
 
 		dispatch(
-			saveHistorySnapshot({
-				projectId,
-				layerId,
+			addToHistory({
+				projectId: projectId,
+				activeLayer,
+				type,
 				canvasDataURL: dataURL,
-			})
+			}),
 		);
 	}
 );

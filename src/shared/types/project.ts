@@ -18,7 +18,8 @@ export interface History {
 	id: number;
 	date: number;
 	type: HISTORY_ACTIONS | ACTIONS;
-	canvasData: string;
+	layers: Layer[];
+	activeLayer?: Layer | null;
 }
 
 export interface Layer {
@@ -27,25 +28,24 @@ export interface Layer {
 	opacity: number;
 	zIndex: number;
 	hidden: boolean;
-	canvasDataURL?: string;
+	canvasDataURL: string;
 	canvasData?: string;
 }
 
 export interface AddToHistoryParams {
 	projectId: string;
-	layerId: string;
+	activeLayer: Layer;
 	type: HISTORY_ACTIONS | ACTIONS;
+	canvasDataURL: string;
 }
 
 export interface UndoRedoHistoryParams {
 	projectId: Project['id'];
-	layerId: Layer['id'];
 }
 
 export interface SetHistoryParams {
 	projectId: Project['id'];
-	layerId: Layer['id'];
-	index: number;
+	id: number;
 };
 
 export interface SaveHistorySnapshotParams {

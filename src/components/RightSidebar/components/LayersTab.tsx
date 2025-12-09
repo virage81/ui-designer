@@ -14,14 +14,17 @@ import {
 	updateLayer,
 } from '@store/slices/projectsSlice';
 import { PlusIcon } from 'lucide-react';
-import { useState, type MouseEvent } from 'react';
+import { useRef, useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from '../components';
 import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
+import { captureCanvasAndSaveToHistory } from '@components/Canvas/utils/captureCanvasSnapshot';
+import { useThunkDispatch } from '@components/Canvas/utils/thunkDispatch';
 
 export const LayersTab = () => {
 	const dispatch = useDispatch();
+	const thunkDispatch = useThunkDispatch();
 	const { id: projectId = '' } = useParams();
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
@@ -34,13 +37,35 @@ export const LayersTab = () => {
 	const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
 	const [editingLayerName, setEditingLayerName] = useState('');
 
+	// Нужен для сохранения изображения слоя
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
 	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
 	const isMenuOpen = Boolean(anchorEl);
 
+	/**
+	 * Тут обновляем слой (скрываем его или меняем прозрачность)
+	 * и добавляем это событие в историю
+	 */
 	const handleUpdateLayer = (name: keyof Layer, value: unknown, layerId: string) => {
 		if (!projectId) return;
 
 		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
+
+		if (activeLayer) {
+			thunkDispatch(
+				/**
+				 * Это middleware для слайса - внутри сохранение изображения
+				 * слоя в строку и в параметр canvasDataURL
+				 */
+				captureCanvasAndSaveToHistory({
+					projectId: projectId,
+					activeLayer: activeLayer,
+					canvasRef: canvasRef.current,
+					type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
+				}),
+			);
+		}
 	};
 
 	// Тут очищаем слой и добавляем это событие в историю
@@ -54,16 +79,6 @@ export const LayersTab = () => {
 				}),
 			);
 			dispatch(clearLayerCanvas(activeLayer?.id ?? ''));
-
-			if (!activeLayer?.id) return;
-
-			dispatch(
-				addToHistory({
-					projectId,
-					layerId: activeLayer.id,
-					type: HISTORY_ACTIONS.LAYER_CLEAR,
-				}),
-			);
 		}
 		handleCloseMenu();
 	};
@@ -76,6 +91,7 @@ export const LayersTab = () => {
 		}, 0);
 	};
 
+	// Тут удаляем слой и добавляем это событие в историю
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
 
@@ -84,6 +100,7 @@ export const LayersTab = () => {
 		}
 	};
 
+	// Тут "делаем" активным слой и добавляем это событие в историю
 	const handleLayerClick = (id: string) => {
 		if (id === activeLayer?.id) return;
 
@@ -114,6 +131,18 @@ export const LayersTab = () => {
 				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
 			}),
 		);
+
+		if (activeLayer) {
+			dispatch(
+				addToHistory({
+					projectId,
+					activeLayer,
+					type: HISTORY_ACTIONS.LAYER_RENAME,
+					canvasDataURL: activeLayer.canvasDataURL,
+				}),
+			);
+		}
+
 		setEditingLayerId(null);
 		setEditingLayerName('');
 	};
@@ -123,6 +152,7 @@ export const LayersTab = () => {
 		setEditingLayerName('');
 	};
 
+	// Тут меняем порядок слоёв и добавляем это событие в историю
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 		if (!over || active.id === over.id) return;
@@ -134,6 +164,17 @@ export const LayersTab = () => {
 		newLayers.forEach((layer, index) => {
 			dispatch(updateLayer({ projectId, data: { id: layer.id, zIndex: newLayers.length - index } }));
 		});
+
+		if (activeLayer) {
+			dispatch(
+				addToHistory({
+					projectId,
+					activeLayer,
+					type: HISTORY_ACTIONS.LAYER_ORDER,
+					canvasDataURL: activeLayer.canvasDataURL,
+				}),
+			);
+		}
 	};
 
 	return (
@@ -153,7 +194,9 @@ export const LayersTab = () => {
 									name: 'Новый слой',
 									opacity: 100,
 									zIndex: layers[projectId].length + 1,
+									canvasDataURL: '',
 								},
+								activeLayer: activeLayer,
 							}),
 						);
 					}}>

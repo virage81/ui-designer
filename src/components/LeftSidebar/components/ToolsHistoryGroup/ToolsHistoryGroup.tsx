@@ -20,9 +20,8 @@ const HISTORY_TOOLS = [
 export const ToolsHistoryGroup: React.FC = () => {
 	const dispatch = useDispatch();
 	const { id: projectId = '' } = useParams();
-	const { activeLayer } = useSelector((state: RootState) => state.projects);
-	const isUndoActive = useSelector((state: RootState) => isUndoActiveSelector(state, projectId, activeLayer));
-	const isRedoActive = useSelector((state: RootState) => isRedoActiveSelector(state, projectId, activeLayer));
+	const isUndoActive = useSelector((state: RootState) => isUndoActiveSelector(state, projectId));
+	const isRedoActive = useSelector((state: RootState) => isRedoActiveSelector(state, projectId));
 
 	return (
 		<Box>
@@ -39,21 +38,19 @@ export const ToolsHistoryGroup: React.FC = () => {
 							<Redo2Icon size={16} color={isRedoActive ? 'var(--color)' : 'var(--color-muted)'} />
 						)
 					}
-					onClick={() => {
-						if (activeLayer?.id) {
-							dispatch(
-								tool.id === ACTIONS.UNDO
-									? undoHistory({
-											projectId: projectId,
-											layerId: activeLayer.id,
-									  })
-									: redoHistory({
-											projectId: projectId,
-											layerId: activeLayer.id,
-									  }),
-							);
-						}
-					}}
+					onClick={() =>
+						dispatch(
+							tool.id === ACTIONS.UNDO
+								? undoHistory({
+										projectId: projectId,
+										// layerId: activeLayer.id,
+								  })
+								: redoHistory({
+										projectId: projectId,
+										// layerId: activeLayer.id,
+								  }),
+						)
+					}
 				/>
 			))}
 		</Box>

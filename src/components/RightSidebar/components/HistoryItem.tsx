@@ -36,8 +36,8 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActi
 				dispatch(
 					setHistory({
 						projectId: projectId,
-						layerId,
-						index,
+						// layerId,
+						id,
 					}),
 				)
 			}>

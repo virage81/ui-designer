@@ -1,11 +1,5 @@
 import type { RootState } from '@store/index';
-import {
-	addToHistory,
-	fullHistorySelector,
-	historySelector,
-	pointerSelector,
-	sortedLayersSelector,
-} from '@store/slices/projectsSlice';
+import { historySelector, pointerSelector, sortedLayersSelector } from '@store/slices/projectsSlice';
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
@@ -38,9 +32,8 @@ export const Canvas: React.FC = () => {
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
-	const history = useSelector((state: RootState) => historySelector(state, projectId, activeLayer));
-	const fullHistory = useSelector((state: RootState) => fullHistorySelector(state, projectId));
-	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId, activeLayer));
+	const history = useSelector((state: RootState) => historySelector(state, projectId));
+	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
 	const layerObjects = useSelector((state: RootState) => objectsByLayerSelector(state, activeLayer?.id || ''));
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
@@ -54,13 +47,13 @@ export const Canvas: React.FC = () => {
 	const isDrawingRef = useRef(false);
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const layerChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const initialRenderRef = useRef(false);
 	const currentProject = useProject();
 	const { canvases } = useCanvasContext();
 	const { register, unregister } = useCanvasContext();
 	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
+	const initialRenderRef = useRef(false);
 
 	// @TODO: внедрить в существующую рисовку
 	// const animationFrameRef = useRef<number | null>(null);
@@ -141,26 +134,17 @@ export const Canvas: React.FC = () => {
 				dispatch(removeObject((payload as { id: string }).id));
 			}
 
-			if (activeLayer) {
-				dispatch(
-					addToHistory({
-						projectId: projectId,
-						layerId: activeLayer.id,
-						type: tool,
-					}),
-				);
-			}
-
 			if (canvasRef.current && activeLayer) {
 				thunkDispatch(
 					/**
 					 * Это middleware для слайса - внутри сохранение изображения
-					 * слоя в строку и в параметр слоя canvasDataURL
+					 * слоя в строку и в параметр canvasDataURL
 					 */
 					captureCanvasAndSaveToHistory({
 						projectId: projectId,
-						layerId: activeLayer.id,
+						activeLayer: activeLayer,
 						canvasRef: canvasRef.current,
+						type: tool,
 					}),
 				);
 			}
@@ -304,26 +288,29 @@ export const Canvas: React.FC = () => {
 		//eslint-disable-next-line
 	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
 
-	// Тут перерисовываем canvas всех слоёв
+	// Тут перерисовываем canvas
 	useEffect(() => {
-		if (!fullHistory || !canvasRef.current || initialRenderRef.current === true) return;
+		if (!canvasRef.current || !history || pointer === undefined) return;
 
-		Object.entries(fullHistory).forEach(([key, value]) => {
-			const currentLayerData = value.history[value.pointer]?.canvasData;
-			redrawCanvas(canvasesRef.current[key], currentLayerData);
-		});
+		// Все слои активного элемента истории
+		if (initialRenderRef.current === false) {
+			history[pointer].layers.forEach(l => {
+				redrawCanvas(canvasesRef.current[l.id], l.canvasDataURL);
+			});
 
-		initialRenderRef.current = true;
-	}, [fullHistory]);
+			initialRenderRef.current = true;
+		}
 
-	// Тут перерисовываем canvas текущего слоя
-	useEffect(() => {
-		if (!projectId || !canvasRef.current || !history || pointer === undefined || initialRenderRef.current === false)
-			return;
+		// Активный слой активного элемента истории
+		if (initialRenderRef.current === true && activeLayer?.id) {
+			const activeId = history[pointer].layers.findIndex(l => l.id === activeLayer.id);
+			const layer = history[pointer].layers[activeId];
+			redrawCanvas(canvasesRef.current[layer.id], layer.canvasDataURL);
+		}
+		//eslint-disable-next-line
+	}, [pointer]);
 
-		const currentLayerData = history[pointer]?.canvasData;
-		redrawCanvas(canvasRef.current, currentLayerData);
-	}, [projectId, sortedLayers, history, pointer]);
+	//
 
 	// @TODO: внедрить в существующую рисовку
 	// useEffect(() => {
