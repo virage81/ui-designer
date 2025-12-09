@@ -102,7 +102,7 @@ export const Canvas: React.FC = () => {
 			if (!isDrawingRef.current && !isTextEditingRef.current) {
 				saveProjectPreviewRef.current();
 			}
-		}, 600);
+		}, 30000);
 	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const triggerLayerSave = useCallback(() => {
@@ -117,7 +117,7 @@ export const Canvas: React.FC = () => {
 			if (!isTextEditingRef.current) {
 				saveProjectPreviewRef.current();
 			}
-		}, 300);
+		}, 30000);
 	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const handleToolComplete = useCallback(

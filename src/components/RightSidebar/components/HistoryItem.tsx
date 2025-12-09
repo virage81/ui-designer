@@ -11,7 +11,7 @@ interface HistoryItemProps extends Pick<History, 'id' | 'date' | 'type'> {
 	isActive: boolean;
 }
 
-export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActive, index, layerId }) => {
+export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActive }) => {
 	const dispatch = useDispatch();
 	const { id: projectId = '' } = useParams();
 
@@ -36,7 +36,6 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActi
 				dispatch(
 					setHistory({
 						projectId: projectId,
-						// layerId,
 						id,
 					}),
 				)
