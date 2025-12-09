@@ -22,6 +22,10 @@ const initialState: ProjectsSliceState = {
 	activeLayer: null,
 	zoom: 1,
 	guides: { enabled: false, columns: 1, rows: 1 },
+	save: {
+		lastPreviewSavedAt: null,
+		lastSaveWasManual: false,
+	},
 };
 
 const projectsSlice = createSlice({
@@ -132,6 +136,12 @@ const projectsSlice = createSlice({
 			}
 			state.guides.rows = action.payload;
 		},
+		setPreviewSaved: (state, action: PayloadAction<{ manual?: boolean }>) => {
+			const { manual = false } = action.payload;
+
+			state.save.lastPreviewSavedAt = Date.now();
+			state.save.lastSaveWasManual = manual;
+		},
 	},
 });
 
@@ -160,7 +170,8 @@ export const {
 	setZoom,
 	enableGuides,
 	setGuidesColumns,
-	setGuidesRows
+	setGuidesRows,
+	setPreviewSaved,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;

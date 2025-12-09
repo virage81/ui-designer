@@ -1,10 +1,11 @@
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
-import type { RootState } from '@store/index';
+import { GridOverlay } from '@components/GridOverlay/GridOverlay.tsx';
 import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import type { Brush, Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
+import type { RootState } from '@store/index';
 import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import { sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
@@ -19,7 +20,6 @@ import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import {GridOverlay} from "@components/GridOverlay/GridOverlay.tsx";
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -195,23 +195,26 @@ export const Canvas: React.FC = () => {
 		triggerLayerSave();
 	}, [tool, projectLayers, triggerLayerSave]);
 
-	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
-		if (!guides.enabled) return [x, y];
+	const snapToGrid = useCallback(
+		(x: number, y: number): [number, number] => {
+			if (!guides.enabled) return [x, y];
 
-		const gridW = currentProject.width / guides.columns;
-		const gridH = currentProject.height / guides.rows;
-		const SNAP_TOLERANCE = gridW * 0.1;
+			const gridW = currentProject.width / guides.columns;
+			const gridH = currentProject.height / guides.rows;
+			const SNAP_TOLERANCE = gridW * 0.1;
 
-		const nearestGridX = Math.round(x / gridW) * gridW;
-		const xDiff = Math.abs(x - nearestGridX);
-		const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
+			const nearestGridX = Math.round(x / gridW) * gridW;
+			const xDiff = Math.abs(x - nearestGridX);
+			const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
 
-		const nearestGridY = Math.round(y / gridH) * gridH;
-		const yDiff = Math.abs(y - nearestGridY);
-		const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
+			const nearestGridY = Math.round(y / gridH) * gridH;
+			const yDiff = Math.abs(y - nearestGridY);
+			const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
 
-		return [snappedX, snappedY];
-	}, [guides, currentProject]);
+			return [snappedX, snappedY];
+		},
+		[guides, currentProject],
+	);
 
 	useEffect(() => {
 		if (toolRef.current) {
@@ -262,8 +265,7 @@ export const Canvas: React.FC = () => {
 			}
 		};
 		//eslint-disable-next-line
-	}, [tool, activeLayer, toolStyles, currentProject.id,  layerObjects, zoom, snapToGrid]);
-
+	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer) return;
@@ -275,7 +277,7 @@ export const Canvas: React.FC = () => {
 				dispatch(updateLayer({ projectId, data: { id: activeLayer.id, cleared: false } }));
 			}
 		}
-	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width ]);
+	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer || !currentProject) return;
@@ -400,7 +402,6 @@ export const Canvas: React.FC = () => {
 		return null;
 	}
 
-
 	return (
 		<Box
 			ref={canvasContainerRef}
@@ -421,50 +422,48 @@ export const Canvas: React.FC = () => {
 					transform: `scale(${zoom})`,
 					transformOrigin: `${currentProject.width * zoom <= canvasContainerWidth ? 'top center' : 'top left'}`,
 				}}>
+				<canvas
+					style={{
+						background: 'white',
+						position: 'absolute',
+						inset: 0,
+						zIndex: 0,
+						pointerEvents: 'none',
+						width: `${currentProject.width}px`,
+						height: `${currentProject.height}px`,
+					}}
+				/>
+				{showGrid && <GridOverlay guides={guides} />}
+				{sortedLayers.map(layer => (
 					<canvas
+						id={layer.id}
+						key={layer.id}
+						ref={el => {
+							if (el) {
+								canvasesRef.current[layer.id] = el;
+								if (layer.id === activeLayer?.id) {
+									canvasRef.current = el;
+									setupCanvasDPR(el);
+								}
+								register(layer.id, el);
+							} else {
+								delete canvasesRef.current[layer.id];
+								unregister(layer.id);
+							}
+						}}
 						style={{
-							background: 'white',
+							background: 'transparent',
 							position: 'absolute',
 							inset: 0,
-							zIndex: 0,
-							pointerEvents: 'none',
+							zIndex: layer.zIndex,
+							opacity: layer.hidden ? 0 : layer.opacity / 100,
+							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 							width: `${currentProject.width}px`,
 							height: `${currentProject.height}px`,
 						}}
 					/>
-				{showGrid && (
-					<GridOverlay guides={guides}/>
-				)}
-					{sortedLayers.map(layer => (
-						<canvas
-							id={layer.id}
-							key={layer.id}
-							ref={el => {
-								if (el) {
-									canvasesRef.current[layer.id] = el;
-									if (layer.id === activeLayer?.id) {
-										canvasRef.current = el;
-										setupCanvasDPR(el);
-									}
-									register(layer.id, el);
-								} else {
-									delete canvasesRef.current[layer.id];
-									unregister(layer.id);
-								}
-							}}
-							style={{
-								background: 'transparent',
-								position: 'absolute',
-								inset: 0,
-								zIndex: layer.zIndex,
-								opacity: layer.hidden ? 0 : layer.opacity / 100,
-								pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
-								width: `${currentProject.width}px`,
-								height: `${currentProject.height}px`,
-							}}
-						/>
-					))}	
-			</Box>		
+				))}
+			</Box>
 		</Box>
 	);
 };
