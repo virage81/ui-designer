@@ -50,7 +50,16 @@ export const LayersTab = () => {
 	const handleUpdateLayer = (name: keyof Layer, value: unknown, layerId: string) => {
 		if (!projectId) return;
 
-		dispatch(updateLayer({ projectId: projectId, data: { id: layerId, [name]: value } }));
+		dispatch(
+			updateLayer({
+				projectId: projectId,
+				data: {
+					id: layerId,
+					[name]: value,
+				},
+				canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
+			}),
+		);
 
 		if (activeLayer) {
 			thunkDispatch(
@@ -123,12 +132,14 @@ export const LayersTab = () => {
 		setEditingLayerName(currentName);
 	};
 
+	// Тут переименовываем слой и добавляем это событие в историю
 	const saveLayerName = (layerId: string) => {
 		if (!projectId) return;
 		dispatch(
 			updateLayer({
 				projectId,
 				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
+				canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 			}),
 		);
 
@@ -162,7 +173,16 @@ export const LayersTab = () => {
 		const newLayers = arrayMove(sortedLayers, oldIndex, newIndex);
 
 		newLayers.forEach((layer, index) => {
-			dispatch(updateLayer({ projectId, data: { id: layer.id, zIndex: newLayers.length - index } }));
+			dispatch(
+				updateLayer({
+					projectId,
+					data: {
+						id: layer.id,
+						zIndex: newLayers.length - index,
+					},
+					canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
+				}),
+			);
 		});
 
 		if (activeLayer) {

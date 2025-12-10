@@ -121,7 +121,7 @@ const projectsSlice = createSlice({
 		},
 
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
-			const { data, projectId } = action.payload;
+			const { data, projectId, canvasDataURL } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
 			const layerIndex = state.layers?.[projectId]?.findIndex(item => item.id === data.id);
@@ -129,22 +129,36 @@ const projectsSlice = createSlice({
 
 			state.layers[projectId][layerIndex] = { ...state.layers[projectId][layerIndex], ...data };
 
-			// Тут делаем изменяемый слой активным
-			state.activeLayer = state.layers[projectId][layerIndex];
+			const layer = state.layers[projectId][layerIndex];
+
+			if (layer && canvasDataURL) {
+				layer.canvasDataURL = canvasDataURL;
+			};
+			if (state.activeLayer && canvasDataURL) {
+				state.activeLayer.canvasData = canvasDataURL;
+			}
 
 			/**
-			* Тут действия с иторией.
-			* Увеличиваем указатель на шаг
-			*/
-			const newPointer = ++state.history[projectId].pointer;
-			// и добавляем новый элемент в историю
-			state.history[projectId].history[newPointer] = {
-				layers: [...state.layers[projectId]],
-				type: HISTORY_ACTIONS.LAYER_ACTIVE,
-				id: newPointer,
-				date: new Date().getTime(),
-				activeLayer: state.layers[projectId][layerIndex],
-			};
+			 * Тут делаем изменяемый слой активным
+			 * в случае, если он неактивен
+			 */
+			if (state.activeLayer?.id !== layer.id) {
+				state.activeLayer = layer;
+
+				/**
+				 * Тут действия с иторией.
+				 * Увеличиваем указатель на шаг
+				 */
+				const newPointer = ++state.history[projectId].pointer;
+				// и добавляем новый элемент в историю
+				state.history[projectId].history[newPointer] = {
+					layers: [...state.layers[projectId]],
+					type: HISTORY_ACTIONS.LAYER_ACTIVE,
+					id: newPointer,
+					date: new Date().getTime(),
+					activeLayer: layer,
+				};
+			}
 		},
 
 		deleteLayer: (state, action: PayloadAction<DeleteLayerParams>) => {
@@ -292,9 +306,13 @@ const projectsSlice = createSlice({
 			const layers = state.layers[projectId];
 			const layer = layers.find(l => l.id === activeLayer.id);
 
-			if (layer) {
+			if (layer && canvasDataURL) {
 				layer.canvasDataURL = canvasDataURL;
 			};
+
+			if (state.activeLayer && canvasDataURL) {
+				state.activeLayer.canvasData = canvasDataURL;
+			}
 
 			// Тут увеличиваем указатель на шаг
 			const newPointer = ++state.history[projectId].pointer;
