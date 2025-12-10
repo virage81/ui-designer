@@ -38,6 +38,13 @@ export class SelectTool extends Tool {
 		this.layerObjects = objects;
 	}
 
+	private getRawMousePos(e: PointerEvent): [number, number] {
+		const rect = this.canvas.getBoundingClientRect();
+		const x = (e.clientX - rect.left) / this.zoom;
+		const y = (e.clientY - rect.top) / this.zoom;
+		return [x, y];
+	}
+
 	private getGuideLines(): { vertical: number[], horizontal: number[] } {
 		if (!this.guides.enabled) return { vertical: [], horizontal: [] };
 
@@ -67,7 +74,7 @@ export class SelectTool extends Tool {
 	}
 
 	onPointerDown(e: PointerEvent) {
-		const [x, y] = this.getMousePos(e);
+		const [x, y] = this.getRawMousePos(e);
 		const objects = this.getLayerObjects();
 		const clickedObject = findObjectAtPoint(objects, x, y);
 
@@ -81,8 +88,11 @@ export class SelectTool extends Tool {
 		this.isDragging = true;
 
 		const bbox = getBoundingBox(clickedObject);
-		this.dragOffsetX = x - bbox.x;  // Относительно ЛЕВОГО КРАЯ объекта
-		this.dragOffsetY = y - bbox.y;  // Относительно ВЕРХНЕГО КРАЯ объекта
+		const centerX = bbox.x + bbox.width / 2;
+		const centerY = bbox.y + bbox.height / 2;
+
+		this.dragOffsetX = x - centerX;
+		this.dragOffsetY = y - centerY;
 
 		switch (clickedObject.type) {
 			case 'rect':
@@ -113,11 +123,14 @@ export class SelectTool extends Tool {
 	onPointerMove(e: PointerEvent) {
 		if (!this.isDragging || !this.selectedObject) return;
 
-		const [mouseX, mouseY] = this.getMousePos(e);
+		const [mouseX, mouseY] = this.getRawMousePos(e);
 		const bbox = getBoundingBox(this.selectedObject);
 
-		let baseLeft = mouseX - this.dragOffsetX;
-		let baseTop = mouseY - this.dragOffsetY;
+		const newCenterX = mouseX - this.dragOffsetX;
+		const newCenterY = mouseY - this.dragOffsetY;
+
+		let baseLeft = newCenterX - bbox.width / 2;
+		let baseTop = newCenterY - bbox.height / 2;
 
 
 		if (this.guides.enabled) {
@@ -244,10 +257,8 @@ export class SelectTool extends Tool {
 		const ctx = this.ctx;
 		const objects = this.getLayerObjects();
 
-		// Очистка
 		ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
-		// Рисуем все
 		for (const obj of objects) {
 			if (obj.type === 'rect') this.drawRect(ctx, obj as Rect);
 			if (obj.type === 'circle') this.drawCircle(ctx, obj as Circle);
@@ -256,11 +267,10 @@ export class SelectTool extends Tool {
 			if (obj.type === 'brush') this.drawBrush(ctx, obj as Brush);
 		}
 
-		// Рисуем выделение
 		if (this.selectedObject) {
 			const bbox = getBoundingBox(this.selectedObject);
 			ctx.strokeStyle = '#007bff';
-			ctx.lineWidth = 1 / this.dpr; // компенсация масштаба
+			ctx.lineWidth = 1 / this.dpr;
 			ctx.setLineDash([4 / this.dpr, 4 / this.dpr]);
 			ctx.strokeRect(bbox.x, bbox.y, bbox.width, bbox.height);
 			ctx.setLineDash([]);
