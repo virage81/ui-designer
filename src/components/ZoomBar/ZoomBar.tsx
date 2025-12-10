@@ -2,6 +2,7 @@ import { Box, Button, IconButton, Paper, Slider, Typography } from '@mui/materia
 import type { RootState } from '@store/index';
 import { setZoom } from '@store/slices/projectsSlice';
 import { RefreshCcw, ZoomIn, ZoomOut } from 'lucide-react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 export const ZoomBar = () => {
@@ -15,6 +16,34 @@ export const ZoomBar = () => {
 	const handleMinus = () => dispatch(setZoom(Math.max(0.1, zoom - 0.1)));
 	const handlePlus = () => dispatch(setZoom(Math.min(3, zoom + 0.1)));
 	const handleReset = () => dispatch(setZoom(1));
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement;
+			const isSliderElement = target.closest('[role="slider"], .MuiSlider-root');
+
+			if (
+				!isSliderElement &&
+				(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+			) {
+				return;
+			}
+
+			if (e.key === '+' || e.key === '=') {
+				e.preventDefault();
+				handlePlus();
+			}
+			if (e.key === '-' || e.key === '_') {
+				e.preventDefault();
+				handleMinus();
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+
+		return () => window.removeEventListener('keydown', handleKeyDown);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [zoom]);
 
 	return (
 		<Paper
