@@ -40,6 +40,7 @@ export const Canvas: React.FC = () => {
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
+	const isCtrlPressedRef = useRef(false);
 
 	const isDrawingRef = useRef(false);
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -196,7 +197,7 @@ export const Canvas: React.FC = () => {
 	}, [tool, projectLayers, triggerLayerSave]);
 
 	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
-		if (!guides.enabled) return [x, y];
+		if (!guides.enabled || !isCtrlPressedRef.current) return [x, y];
 
 		const gridW = currentProject.width / guides.columns;
 		const gridH = currentProject.height / guides.rows;
@@ -393,6 +394,28 @@ export const Canvas: React.FC = () => {
 		if (canvasContainerRef.current) {
 			setCanvasContainerWidth(canvasContainerRef.current.getBoundingClientRect().width);
 		}
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Control') {
+				e.preventDefault()
+				isCtrlPressedRef.current = true;
+			}
+		};
+
+		const handleKeyUp = (e: KeyboardEvent) => {
+			if (e.key === 'Control') {
+				e.preventDefault()
+				isCtrlPressedRef.current = false;
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener('keyup', handleKeyUp);
+
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener('keyup', handleKeyUp);
+		};
 	}, []);
 
 	if (!currentProject) {
