@@ -412,7 +412,6 @@ export const Canvas: React.FC = () => {
 
 	return (
 		<Box
-			ref={canvasContainerRef}
 			sx={{
 				width: '100%',
 				padding: '8px',
@@ -420,6 +419,7 @@ export const Canvas: React.FC = () => {
 				overflow: 'auto',
 			}}>
 			<Box
+				ref={canvasContainerRef}
 				sx={{
 					position: 'relative',
 					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
