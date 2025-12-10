@@ -58,7 +58,7 @@ export class Tool {
 		this.container = container;
 
 		this.ctx = canvas.getContext('2d', { willReadFrequently: true })!;
-		this.dpr = window.devicePixelRatio || 1;;
+		this.dpr = window.devicePixelRatio || 1;
 
 		this.logicalWidth = parseInt(canvas.style.width) || canvas.width / this.dpr;
 		this.logicalHeight = parseInt(canvas.style.height) || canvas.height / this.dpr;

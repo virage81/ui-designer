@@ -6,7 +6,7 @@ export const renderProjectCanvas = (
 	projectLayers: Layer[],
 	canvasesRef: Record<string, HTMLCanvasElement>
 ): HTMLCanvasElement => {
-	const dpr = window.devicePixelRatio || 1;;
+	const dpr = window.devicePixelRatio || 1;
 
 	const tempCanvas = document.createElement('canvas');
 	tempCanvas.width = Math.floor(projectWidth * dpr);

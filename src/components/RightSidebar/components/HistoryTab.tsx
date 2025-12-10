@@ -1,17 +1,24 @@
-import { Box, Typography } from '@mui/material';
-import type { RootState } from '@store/index';
-import { historySelector, pointerSelector } from '@store/slices/projectsSlice';
-import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import { HistoryItem } from './HistoryItem';
+import { Box, Paper, Typography } from '@mui/material';
+
+const MOCK_HISTORY = [
+	{ id: 1, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 2, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 3, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 4, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 5, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 6, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 7, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 8, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 9, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 10, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 11, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 12, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 13, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 14, action: 'Создание проекта', timestamp: new Date('2025-11-20T21:00:11') },
+	{ id: 15, action: 'Добавлен слой', timestamp: new Date('2025-11-20T21:00:11') },
+];
 
 export const HistoryTab = () => {
-	const { id: projectId = '' } = useParams();
-
-	const { activeLayer } = useSelector((state: RootState) => state.projects);
-	const history = useSelector((state: RootState) => historySelector(state, projectId));
-	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
-
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
 			<Box sx={{ display: 'flex', alignItems: 'center', minHeight: '36px' }}>
@@ -36,22 +43,30 @@ export const HistoryTab = () => {
 						backgroundColor: 'rgba(0,0,0,0.3)',
 					},
 				}}>
-				{history &&
-					activeLayer?.id &&
-					history.map((_, idx) => {
-						const reversedIndex = history.length - 1 - idx;
-						const el = history[reversedIndex];
-
-						return el && el.id !== 0 && pointer !== undefined ? (
-							<HistoryItem
-								key={el.id}
-								{...el}
-								index={reversedIndex}
-								isActive={pointer >= reversedIndex}
-								layerId={activeLayer.id}
-							/>
-						) : null;
-					})}
+				{MOCK_HISTORY.map(item => (
+					<Paper
+						key={item.id}
+						elevation={0}
+						sx={{
+							p: 1,
+							mb: 0.5,
+							borderRadius: 1,
+							bgcolor: 'var(--header-border-color)',
+							color: 'var(--color)',
+							cursor: 'pointer',
+							transition: 'all 0.2s ease',
+							'&:hover': {
+								bgcolor: 'var(--hover-bg)',
+							},
+						}}>
+						<Typography variant='body2' sx={{ color: 'var(--color)' }}>
+							{item.action}
+						</Typography>
+						<Typography variant='caption' sx={{ color: 'var(--color)', mt: 0.5, display: 'block' }}>
+							{item.timestamp.toLocaleTimeString('ru-RU')}
+						</Typography>
+					</Paper>
+				))}
 			</Box>
 		</Box>
 	);
