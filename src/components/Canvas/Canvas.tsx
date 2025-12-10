@@ -391,6 +391,23 @@ export const Canvas: React.FC = () => {
 	}, [activeLayer?.id, setupCanvasDPR]);
 
 	useEffect(() => {
+		const canvasContainer = canvasContainerRef.current;
+		if (!canvasContainer) return;
+
+		const preventContextMenu = (e: Event) => e.preventDefault();
+		canvasContainer.addEventListener('contextmenu', preventContextMenu);
+
+		canvasContainer.addEventListener('selectstart', preventContextMenu);
+		canvasContainer.addEventListener('controlselect', preventContextMenu);
+
+		return () => {
+			canvasContainer.removeEventListener('contextmenu', preventContextMenu);
+			canvasContainer.removeEventListener('selectstart', preventContextMenu);
+			canvasContainer.removeEventListener('controlselect', preventContextMenu);
+		};
+	}, [])
+
+	useEffect(() => {
 		if (canvasContainerRef.current) {
 			setCanvasContainerWidth(canvasContainerRef.current.getBoundingClientRect().width);
 		}
@@ -432,7 +449,8 @@ export const Canvas: React.FC = () => {
 				padding: '8px',
 				backgroundColor: 'var(--main-bg)',
 				overflow: 'auto',
-			}}>
+			}}
+		>
 			<Box
 				sx={{
 					position: 'relative',

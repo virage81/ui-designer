@@ -25,6 +25,9 @@ export class SelectTool extends Tool {
 	protected layerObjects: Drawable[] = [];
 	private guides: { enabled: boolean, columns: number, rows: number };
 
+	// CTRL key tracking
+	private ctrlPressed = false;
+
 	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number], guides?: { enabled: boolean, columns: number, rows: number }) {
 		super(canvas, styles, options, zoom, snapToGrid);
 
@@ -32,7 +35,28 @@ export class SelectTool extends Tool {
 		this.layerObjects = options.layerObjects || [];
 
 		this.listen();
+		this.setupKeyboardListeners();
 	}
+
+	private setupKeyboardListeners() {
+		this.onKeyDown = this.onKeyDown.bind(this);
+		this.onKeyUp = this.onKeyUp.bind(this);
+
+		window.addEventListener('keydown', this.onKeyDown);
+		window.addEventListener('keyup', this.onKeyUp);
+	}
+
+	private onKeyDown = (e: KeyboardEvent) => {
+		if (e.key === 'Control') {
+			this.ctrlPressed = true;
+		}
+	};
+
+	private onKeyUp = (e: KeyboardEvent) => {
+		if (e.key === 'Control') {
+			this.ctrlPressed = false;
+		}
+	};
 
 	updateLayerObjects(objects: Drawable[]) {
 		this.layerObjects = objects;
@@ -118,8 +142,6 @@ export class SelectTool extends Tool {
 		this.renderWithPreview();
 	}
 
-
-
 	onPointerMove(e: PointerEvent) {
 		if (!this.isDragging || !this.selectedObject) return;
 
@@ -132,10 +154,9 @@ export class SelectTool extends Tool {
 		let baseLeft = newCenterX - bbox.width / 2;
 		let baseTop = newCenterY - bbox.height / 2;
 
-
-		if (this.guides.enabled) {
+		if (this.guides.enabled && this.ctrlPressed) {
 			const { vertical: guidesX, horizontal: guidesY } = this.getGuideLines();
-			const tolerance = 8;
+			const tolerance = 20;
 
 			const findNearestGuide = (pos: number, lines: number[]): number | null => {
 				let nearest = null;
@@ -150,7 +171,6 @@ export class SelectTool extends Tool {
 				return nearest;
 			};
 
-
 			const testLeft = baseLeft;
 			const testRight = baseLeft + bbox.width;
 			const testTop = baseTop;
@@ -161,13 +181,11 @@ export class SelectTool extends Tool {
 			const snapTop = findNearestGuide(testTop, guidesY);
 			const snapBottom = findNearestGuide(testBottom, guidesY);
 
-
 			if (snapLeft !== null) {
 				baseLeft = snapLeft;
 			} else if (snapRight !== null) {
 				baseLeft = snapRight - bbox.width;
 			}
-
 
 			if (snapTop !== null) {
 				baseTop = snapTop;
@@ -175,7 +193,6 @@ export class SelectTool extends Tool {
 				baseTop = snapBottom - bbox.height;
 			}
 		}
-
 
 		switch (this.selectedObject.type) {
 			case 'rect':
@@ -233,6 +250,14 @@ export class SelectTool extends Tool {
 
 		this.isDragging = false;
 		this.selectedObject = null;
+	}
+
+	destroyEvents() {
+		super.destroyEvents();
+
+		// Clean up keyboard listeners
+		window.removeEventListener('keydown', this.onKeyDown);
+		window.removeEventListener('keyup', this.onKeyUp);
 	}
 
 	private getLayerObjects(): Drawable[] {
