@@ -1,6 +1,7 @@
 import type { RootState } from '@store/index';
-import { historySelector, pointerSelector, sortedLayersSelector } from '@store/slices/projectsSlice';
+import { historySelector, pointerSelector, sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
+import { GridOverlay } from '@components/GridOverlay/GridOverlay';
 import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject.tsx';
@@ -22,7 +23,6 @@ import type { Styles, Tools } from './tools/Tool';
 import { captureCanvasAndSaveToHistory } from './utils/captureCanvasSnapshot';
 import { redrawCanvas } from '@components/Canvas/utils/canvasRedraw';
 import { useThunkDispatch } from '@components/Canvas/utils/thunkDispatch';
-import { GridOverlay } from '@components/GridOverlay/GridOverlay.tsx';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -40,7 +40,7 @@ export const Canvas: React.FC = () => {
 
 	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-	const canvasContainerRef = useRef<HTMLCanvasElement | null>(null);
+	const canvasContainerRef = useRef<HTMLDivElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
@@ -243,7 +243,7 @@ export const Canvas: React.FC = () => {
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !activeLayer || !currentProject.id) return;
+		if (!canvasRef.current || !canvasContainerRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
@@ -271,7 +271,15 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom, isTextEditingRef, snapToGrid);
+				toolRef.current = new TextTool(
+					canvasRef.current,
+					toolStyles,
+					toolOptions,
+					zoom,
+					isTextEditingRef,
+					canvasContainerRef.current,
+					snapToGrid,
+				);
 				break;
 			}
 			default: {
@@ -286,7 +294,7 @@ export const Canvas: React.FC = () => {
 			}
 		};
 		//eslint-disable-next-line
-	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
+	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, canvasContainerRef, snapToGrid]);
 
 	// Тут перерисовываем canvas
 	useEffect(() => {
@@ -309,6 +317,24 @@ export const Canvas: React.FC = () => {
 		}
 		//eslint-disable-next-line
 	}, [pointer]);
+
+	useEffect(() => {
+		if (!canvasRef.current || !activeLayer) return;
+
+		if (activeLayer.canvasDataURL === '') {
+			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+			if (ctx) {
+				ctx.clearRect(0, 0, currentProject.width, currentProject.height);
+				dispatch(
+					updateLayer({
+						projectId,
+						data: { id: activeLayer.id },
+						canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
+					}),
+				);
+			}
+		}
+	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width]);
 
 	//
 
