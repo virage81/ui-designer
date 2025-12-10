@@ -223,7 +223,7 @@ export const Canvas: React.FC = () => {
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
-				toolRef.current = new SelectTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new SelectTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid, guides);
 				break;
 			}
 			case ACTIONS.BRUSH: {
@@ -463,8 +463,8 @@ export const Canvas: React.FC = () => {
 								height: `${currentProject.height}px`,
 							}}
 						/>
-					))}	
-			</Box>		
+					))}
+			</Box>
 		</Box>
 	);
 };

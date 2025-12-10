@@ -23,10 +23,12 @@ export class SelectTool extends Tool {
 	private previewTextY = 0;
 
 	protected layerObjects: Drawable[] = [];
+	private guides: { enabled: boolean, columns: number, rows: number };
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number) {
-		super(canvas, styles, options, zoom);
+	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number], guides?: { enabled: boolean, columns: number, rows: number }) {
+		super(canvas, styles, options, zoom, snapToGrid);
 
+		this.guides = guides || { enabled: false, columns: 1, rows: 1 };
 		this.layerObjects = options.layerObjects || [];
 
 		this.listen();
@@ -34,6 +36,28 @@ export class SelectTool extends Tool {
 
 	updateLayerObjects(objects: Drawable[]) {
 		this.layerObjects = objects;
+	}
+
+	private getGuideLines(): { vertical: number[], horizontal: number[] } {
+		if (!this.guides.enabled) return { vertical: [], horizontal: [] };
+
+		const projectWidth = this.canvas.width / this.dpr;
+		const projectHeight = this.canvas.height / this.dpr;
+
+		const gridW = projectWidth / this.guides.columns;
+		const gridH = projectHeight / this.guides.rows;
+
+		const vertical: number[] = [];
+		const horizontal: number[] = [];
+
+		for (let i = 0; i <= this.guides.columns; i++) {
+			vertical.push(i * gridW);
+		}
+		for (let i = 0; i <= this.guides.rows; i++) {
+			horizontal.push(i * gridH);
+		}
+
+		return { vertical, horizontal };
 	}
 
 	listen() {
@@ -56,36 +80,26 @@ export class SelectTool extends Tool {
 		this.selectedObject = clickedObject as Rect | Circle | Line | Text;
 		this.isDragging = true;
 
+		const bbox = getBoundingBox(clickedObject);
+		this.dragOffsetX = x - bbox.x;  // Относительно ЛЕВОГО КРАЯ объекта
+		this.dragOffsetY = y - bbox.y;  // Относительно ВЕРХНЕГО КРАЯ объекта
+
 		switch (clickedObject.type) {
 			case 'rect':
-				this.dragOffsetX = x - clickedObject.x;
-				this.dragOffsetY = y - clickedObject.y;
 				this.previewRectX = clickedObject.x;
 				this.previewRectY = clickedObject.y;
 				break;
-
 			case 'circle':
-				this.dragOffsetX = x - (clickedObject.cx - clickedObject.r);
-				this.dragOffsetY = y - (clickedObject.cy - clickedObject.r);
 				this.previewCircleCx = clickedObject.cx;
 				this.previewCircleCy = clickedObject.cy;
 				break;
-
-			case 'line': {
-				const midX = (clickedObject.x1 + clickedObject.x2) / 2;
-				const midY = (clickedObject.y1 + clickedObject.y2) / 2;
-				this.dragOffsetX = x - midX;
-				this.dragOffsetY = y - midY;
+			case 'line':
 				this.previewLineX1 = clickedObject.x1;
 				this.previewLineY1 = clickedObject.y1;
 				this.previewLineX2 = clickedObject.x2;
 				this.previewLineY2 = clickedObject.y2;
 				break;
-			}
-
 			case 'text':
-				this.dragOffsetX = x - clickedObject.x;
-				this.dragOffsetY = y - clickedObject.y;
 				this.previewTextX = clickedObject.x;
 				this.previewTextY = clickedObject.y;
 				break;
@@ -94,43 +108,84 @@ export class SelectTool extends Tool {
 		this.renderWithPreview();
 	}
 
+
+
 	onPointerMove(e: PointerEvent) {
 		if (!this.isDragging || !this.selectedObject) return;
 
-		const [x, y] = this.getMousePos(e);
+		const [mouseX, mouseY] = this.getMousePos(e);
+		const bbox = getBoundingBox(this.selectedObject);
+
+		let baseLeft = mouseX - this.dragOffsetX;
+		let baseTop = mouseY - this.dragOffsetY;
+
+
+		if (this.guides.enabled) {
+			const { vertical: guidesX, horizontal: guidesY } = this.getGuideLines();
+			const tolerance = 8;
+
+			const findNearestGuide = (pos: number, lines: number[]): number | null => {
+				let nearest = null;
+				let minDist = tolerance + 1;
+				for (const line of lines) {
+					const dist = Math.abs(pos - line);
+					if (dist < minDist) {
+						minDist = dist;
+						nearest = line;
+					}
+				}
+				return nearest;
+			};
+
+
+			const testLeft = baseLeft;
+			const testRight = baseLeft + bbox.width;
+			const testTop = baseTop;
+			const testBottom = baseTop + bbox.height;
+
+			const snapLeft = findNearestGuide(testLeft, guidesX);
+			const snapRight = findNearestGuide(testRight, guidesX);
+			const snapTop = findNearestGuide(testTop, guidesY);
+			const snapBottom = findNearestGuide(testBottom, guidesY);
+
+
+			if (snapLeft !== null) {
+				baseLeft = snapLeft;
+			} else if (snapRight !== null) {
+				baseLeft = snapRight - bbox.width;
+			}
+
+
+			if (snapTop !== null) {
+				baseTop = snapTop;
+			} else if (snapBottom !== null) {
+				baseTop = snapBottom - bbox.height;
+			}
+		}
+
 
 		switch (this.selectedObject.type) {
-			case 'rect': {
-				this.previewRectX = x - this.dragOffsetX;
-				this.previewRectY = y - this.dragOffsetY;
+			case 'rect':
+				this.previewRectX = baseLeft;
+				this.previewRectY = baseTop;
 				break;
-			}
-			case 'circle': {
-				const newLeft = x - this.dragOffsetX;
-				const newTop = y - this.dragOffsetY;
-				this.previewCircleCx = newLeft + this.selectedObject.r;
-				this.previewCircleCy = newTop + this.selectedObject.r;
+			case 'circle':
+				this.previewCircleCx = baseLeft + (this.selectedObject as Circle).r;
+				this.previewCircleCy = baseTop + (this.selectedObject as Circle).r;
 				break;
-			}
+			case 'text':
+				this.previewTextX = baseLeft;
+				this.previewTextY = baseTop;
+				break;
 			case 'line': {
-				const currentMidX = (this.previewLineX1 + this.previewLineX2) / 2;
-				const currentMidY = (this.previewLineY1 + this.previewLineY2) / 2;
-
-				const newMidX = x - this.dragOffsetX;
-				const newMidY = y - this.dragOffsetY;
-
-				const dx = newMidX - currentMidX;
-				const dy = newMidY - currentMidY;
-
+				const centerX = (this.previewLineX1 + this.previewLineX2) / 2;
+				const centerY = (this.previewLineY1 + this.previewLineY2) / 2;
+				const dx = baseLeft + bbox.width / 2 - centerX;
+				const dy = baseTop + bbox.height / 2 - centerY;
 				this.previewLineX1 += dx;
 				this.previewLineY1 += dy;
 				this.previewLineX2 += dx;
 				this.previewLineY2 += dy;
-				break;
-			}
-			case 'text': {
-				this.previewTextX = x - this.dragOffsetX;
-				this.previewTextY = y - this.dragOffsetY;
 				break;
 			}
 		}
