@@ -224,7 +224,7 @@ export const Canvas: React.FC = () => {
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
-				toolRef.current = new SelectTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid, guides);
+				toolRef.current = new SelectTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid, guides, isCtrlPressedRef);
 				break;
 			}
 			case ACTIONS.BRUSH: {

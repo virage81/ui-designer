@@ -23,40 +23,26 @@ export class SelectTool extends Tool {
 	private previewTextY = 0;
 
 	protected layerObjects: Drawable[] = [];
-	private guides: { enabled: boolean, columns: number, rows: number };
+	private guides: { enabled: boolean; columns: number; rows: number };
+	private isCtrlPressedRef?: React.RefObject<boolean>;
 
-	// CTRL key tracking
-	private ctrlPressed = false;
-
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number], guides?: { enabled: boolean, columns: number, rows: number }) {
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		options: ToolOptions = {},
+		zoom: number,
+		snapToGrid?: (x: number, y: number) => [number, number],
+		guides?: { enabled: boolean; columns: number; rows: number },
+		isCtrlPressedRef?: React.RefObject<boolean>
+	) {
 		super(canvas, styles, options, zoom, snapToGrid);
+		this.isCtrlPressedRef = isCtrlPressedRef;
 
 		this.guides = guides || { enabled: false, columns: 1, rows: 1 };
 		this.layerObjects = options.layerObjects || [];
 
 		this.listen();
-		this.setupKeyboardListeners();
 	}
-
-	private setupKeyboardListeners() {
-		this.onKeyDown = this.onKeyDown.bind(this);
-		this.onKeyUp = this.onKeyUp.bind(this);
-
-		window.addEventListener('keydown', this.onKeyDown);
-		window.addEventListener('keyup', this.onKeyUp);
-	}
-
-	private onKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Control') {
-			this.ctrlPressed = true;
-		}
-	};
-
-	private onKeyUp = (e: KeyboardEvent) => {
-		if (e.key === 'Control') {
-			this.ctrlPressed = false;
-		}
-	};
 
 	updateLayerObjects(objects: Drawable[]) {
 		this.layerObjects = objects;
@@ -69,7 +55,7 @@ export class SelectTool extends Tool {
 		return [x, y];
 	}
 
-	private getGuideLines(): { vertical: number[], horizontal: number[] } {
+	private getGuideLines(): { vertical: number[]; horizontal: number[] } {
 		if (!this.guides.enabled) return { vertical: [], horizontal: [] };
 
 		const projectWidth = this.canvas.width / this.dpr;
@@ -98,6 +84,9 @@ export class SelectTool extends Tool {
 	}
 
 	onPointerDown(e: PointerEvent) {
+		this.previewRectX = 0;
+		this.previewRectY = 0;
+		this.previewCircleCx = 0;
 		const [x, y] = this.getRawMousePos(e);
 		const objects = this.getLayerObjects();
 		const clickedObject = findObjectAtPoint(objects, x, y);
@@ -154,7 +143,7 @@ export class SelectTool extends Tool {
 		let baseLeft = newCenterX - bbox.width / 2;
 		let baseTop = newCenterY - bbox.height / 2;
 
-		if (this.guides.enabled && this.ctrlPressed) {
+		if (this.guides.enabled && this.isCtrlPressedRef?.current) {
 			const { vertical: guidesX, horizontal: guidesY } = this.getGuideLines();
 			const tolerance = 20;
 
@@ -241,10 +230,7 @@ export class SelectTool extends Tool {
 
 			const handler = typeHandlers[type];
 			if (handler) {
-				this.onComplete({
-					id,
-					updates: handler(),
-				});
+				this.onComplete({ id, updates: handler() });
 			}
 		}
 
@@ -254,10 +240,6 @@ export class SelectTool extends Tool {
 
 	destroyEvents() {
 		super.destroyEvents();
-
-		// Clean up keyboard listeners
-		window.removeEventListener('keydown', this.onKeyDown);
-		window.removeEventListener('keyup', this.onKeyUp);
 	}
 
 	private getLayerObjects(): Drawable[] {
@@ -329,12 +311,7 @@ export class SelectTool extends Tool {
 		switch (this.selectedObject!.type) {
 			case 'rect': {
 				const rect = this.selectedObject as Rect;
-				return {
-					x: this.previewRectX,
-					y: this.previewRectY,
-					width: rect.width,
-					height: rect.height,
-				};
+				return { x: this.previewRectX, y: this.previewRectY, width: rect.width, height: rect.height };
 			}
 
 			case 'circle': {
@@ -352,21 +329,12 @@ export class SelectTool extends Tool {
 				const y1 = Math.min(this.previewLineY1, this.previewLineY2);
 				const x2 = Math.max(this.previewLineX1, this.previewLineX2);
 				const y2 = Math.max(this.previewLineY1, this.previewLineY2);
-				return {
-					x: x1,
-					y: y1,
-					width: x2 - x1,
-					height: y2 - y1,
-				};
+				return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
 			}
 
 			case 'text': {
 				const text = this.selectedObject as Text;
-				const previewObj = {
-					...text,
-					x: this.previewTextX,
-					y: this.previewTextY,
-				};
+				const previewObj = { ...text, x: this.previewTextX, y: this.previewTextY };
 				return getBoundingBox(previewObj);
 			}
 
