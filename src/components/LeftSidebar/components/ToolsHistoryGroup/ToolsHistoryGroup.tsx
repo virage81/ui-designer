@@ -43,11 +43,9 @@ export const ToolsHistoryGroup: React.FC = () => {
 							tool.id === ACTIONS.UNDO
 								? undoHistory({
 										projectId: projectId,
-										// layerId: activeLayer.id,
 								  })
 								: redoHistory({
 										projectId: projectId,
-										// layerId: activeLayer.id,
 								  }),
 						)
 					}

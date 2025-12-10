@@ -302,7 +302,7 @@ const projectsSlice = createSlice({
 				state.history[projectId].history.splice(pointer + 1, diff);
 			}
 
-			// Тут действия с иторией
+			// Тут действия с историей
 			const layers = state.layers[projectId];
 			const layer = layers.find(l => l.id === activeLayer.id);
 
