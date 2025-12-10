@@ -301,7 +301,7 @@ export const Canvas: React.FC = () => {
 		if (!canvasRef.current || !history || pointer === undefined) return;
 
 		// Все слои активного элемента истории
-		if (initialRenderRef.current === false) {
+		if (!initialRenderRef.current) {
 			history[pointer].layers.forEach(l => {
 				redrawCanvas(canvasesRef.current[l.id], l.canvasDataURL);
 			});
@@ -310,7 +310,7 @@ export const Canvas: React.FC = () => {
 		}
 
 		// Активный слой активного элемента истории
-		if (initialRenderRef.current === true && activeLayer?.id) {
+		if (initialRenderRef.current && activeLayer?.id) {
 			const activeId = history[pointer].layers.findIndex(l => l.id === activeLayer.id);
 			const layer = history[pointer].layers[activeId];
 			redrawCanvas(canvasesRef.current[layer.id], layer.canvasDataURL);
@@ -321,7 +321,7 @@ export const Canvas: React.FC = () => {
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer) return;
 
-		if (activeLayer.canvasDataURL === '') {
+		if (!activeLayer.canvasDataURL) {
 			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
 			if (ctx) {
 				ctx.clearRect(0, 0, currentProject.width, currentProject.height);
