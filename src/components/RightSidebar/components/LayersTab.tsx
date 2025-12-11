@@ -14,17 +14,14 @@ import {
 	updateLayer,
 } from '@store/slices/projectsSlice';
 import { PlusIcon } from 'lucide-react';
-import { useRef, useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from '../components';
 import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
-import { captureCanvasAndSaveToHistory } from '@components/Canvas/utils/captureCanvasSnapshot';
-import { useThunkDispatch } from '@components/Canvas/utils/thunkDispatch';
 
 export const LayersTab = () => {
 	const dispatch = useDispatch();
-	const thunkDispatch = useThunkDispatch();
 	const { id: projectId = '' } = useParams();
 
 	const { layers, activeLayer } = useSelector((state: RootState) => state.projects);
@@ -36,9 +33,6 @@ export const LayersTab = () => {
 	const [currentLayerId, setCurrentLayerId] = useState<string | null>(null);
 	const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
 	const [editingLayerName, setEditingLayerName] = useState('');
-
-	// Нужен для сохранения изображения слоя
-	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
 	const currentLayer = sortedLayers.find(l => l.id === currentLayerId) ?? null;
 	const isMenuOpen = Boolean(anchorEl);
@@ -62,16 +56,12 @@ export const LayersTab = () => {
 		);
 
 		if (activeLayer) {
-			thunkDispatch(
-				/**
-				 * Это middleware для слайса - внутри сохранение изображения
-				 * слоя в строку и в параметр canvasDataURL
-				 */
-				captureCanvasAndSaveToHistory({
+			dispatch(
+				addToHistory({
 					projectId: projectId,
-					activeLayer: activeLayer,
-					canvasRef: canvasRef.current,
+					activeLayer,
 					type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
+					canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -102,7 +92,7 @@ export const LayersTab = () => {
 
 	// Тут удаляем слой и добавляем это событие в историю
 	const handleDelete = (layerId: Layer['id']) => {
-		dispatch(deleteLayer({ id: layerId, projectId: projectId }));
+		dispatch(deleteLayer({ id: layerId, projectId: projectId, activeLayer }));
 
 		if (layerId === activeLayer?.id) {
 			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));

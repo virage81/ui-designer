@@ -60,9 +60,15 @@ const projectsSlice = createSlice({
 					type: HISTORY_ACTIONS.LAYER_ADD,
 					id: 0,
 					date: new Date().getTime(),
+					activeLayer: layer,
 				}],
 				// pointer - общий указатель для истории;
-				pointer: 0
+				pointer: 0,
+				/**
+				 * active - состояние активности истории
+				 * для включения рисования из истории
+				 */
+				active: false,
 			};
 		},
 
@@ -94,7 +100,7 @@ const projectsSlice = createSlice({
 			state.layers[projectId].push({ ...data, id: layerId });
 
 			/**
-			 * Тут действия с иторией.
+			 * Тут действия с историей.
 			 *
 			 * Если длина истории больше указателя
 			 * и добавляем новый элемент истории -> значит,
@@ -146,7 +152,7 @@ const projectsSlice = createSlice({
 				state.activeLayer = layer;
 
 				/**
-				 * Тут действия с иторией.
+				 * Тут действия с историей.
 				 * Увеличиваем указатель на шаг
 				 */
 				const newPointer = ++state.history[projectId].pointer;
@@ -159,10 +165,12 @@ const projectsSlice = createSlice({
 					activeLayer: layer,
 				};
 			}
+			// Устанавливаем активность истории для перерисовки
+			state.history[projectId].active = true;
 		},
 
 		deleteLayer: (state, action: PayloadAction<DeleteLayerParams>) => {
-			const { id, projectId } = action.payload;
+			const { id, projectId, activeLayer } = action.payload;
 
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 			if (state.layers[projectId].length === 1) throw new Error('Cannot delete the last remaining layer');
@@ -170,10 +178,8 @@ const projectsSlice = createSlice({
 			const layerIndex = state.layers?.[projectId]?.findIndex(item => item.id === id);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${id} not found`);
 
-			state.layers[projectId].splice(layerIndex, 1);
-
 			/**
-			 * Тут действия с иторией.
+			 * Тут действия с историей.
 			 *
 			 * Если длина истории больше указателя
 			 * и добавляем новый элемент истории -> значит,
@@ -189,16 +195,30 @@ const projectsSlice = createSlice({
 				state.history[projectId].history.splice(pointer + 1, diff);
 			}
 
+			// Тут теперь задаётся активный слой после удаления
+			let newActiveLayer = null;
+			if (id !== activeLayer?.id) {
+				newActiveLayer = activeLayer;
+			}
+
+			if (id === activeLayer?.id && state.layers[projectId][layerIndex + 1]?.id) {
+				newActiveLayer = state.layers[projectId][layerIndex + 1];
+			} else if (id === activeLayer?.id && state.layers[projectId][layerIndex - 1]?.id) {
+				newActiveLayer = state.layers[projectId][layerIndex - 1];
+			}
+
+			state.layers[projectId].splice(layerIndex, 1);
+
 			const newPointer = ++state.history[projectId].pointer;
 			state.history[projectId].history[newPointer] = {
 				layers: [...state.layers[projectId]],
 				type: HISTORY_ACTIONS.LAYER_DELETE,
 				id: newPointer,
 				date: new Date().getTime(),
-				activeLayer: state.layers[projectId][layerIndex + 1],
+				activeLayer: newActiveLayer,
 			}
 
-			state.activeLayer = state.layers[projectId][layerIndex + 1];
+			state.activeLayer = newActiveLayer;
 		},
 
 		setActiveLayer: (state, action: PayloadAction<SetActiveLayerParams>) => {
@@ -218,7 +238,7 @@ const projectsSlice = createSlice({
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 
 			/**
-			* Тут действия с иторией.
+			* Тут действия с историей.
 			* Увеличиваем указатель на шаг
 			*/
 			const newPointer = ++state.history[payload.projectId].pointer;
@@ -251,7 +271,7 @@ const projectsSlice = createSlice({
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 
 			/**
-			 * Тут действия с иторией.
+			 * Тут действия с историей.
 			 * Увеличиваем указатель на шаг
 			 */
 			const newPointer = ++state.history[payload.projectId].pointer;
@@ -263,6 +283,7 @@ const projectsSlice = createSlice({
 				date: new Date().getTime(),
 				activeLayer: state.layers[payload.projectId][layerIndex],
 			}
+			state.history[payload.projectId].active = true;
 		},
 
 		setZoom: (state, action: PayloadAction<number>) => {
@@ -324,6 +345,22 @@ const projectsSlice = createSlice({
 				date: new Date().getTime(),
 				activeLayer,
 			}
+
+			// Тут задаётся лимит истории
+			const history = state.history[projectId].history;
+			const historyLimit = 16;
+
+			if (history.length > historyLimit) {
+				const limitedHistory = history.slice(-historyLimit);
+				state.history[projectId].history = limitedHistory;
+				limitedHistory.forEach((h, index) => h.id = index);
+
+				state.history[projectId].pointer = state.history[projectId].history.length - 1;
+				state.history[projectId].sliced = true;
+			}
+
+			// Устанавливаем активность истории для перерисовки
+			state.history[projectId].active = false;
 		},
 
 		// Тут отменяем историю на шаг
@@ -338,6 +375,9 @@ const projectsSlice = createSlice({
 			if (state.history[projectId].history[pointer].activeLayer) {
 				state.activeLayer = state.history[projectId].history[pointer].activeLayer;
 			}
+
+			// Устанавливаем активность истории для перерисовки
+			state.history[projectId].active = true;
 		},
 
 		// Тут возвращаем историю на шаг
@@ -352,6 +392,9 @@ const projectsSlice = createSlice({
 			if (state.history[projectId].history[pointer].activeLayer) {
 				state.activeLayer = state.history[projectId].history[pointer].activeLayer;
 			}
+
+			// Устанавливаем активность истории для перерисовки
+			state.history[projectId].active = true;
 		},
 
 		// Тут выставляем историю при клике на список истории
@@ -361,6 +404,9 @@ const projectsSlice = createSlice({
 
 			if (id === undefined) throw new Error(`History with ID ${id} does not exist`);
 
+			// Устанавливаем активность истории для перерисовки
+			state.history[projectId].active = true;
+
 			if (id === 0) {
 				state.history[projectId].pointer = id;
 				state.layers[projectId] = [...state.history[projectId].history[id].layers];
@@ -369,6 +415,7 @@ const projectsSlice = createSlice({
 				if (state.history[projectId].history[id].activeLayer) {
 					state.activeLayer = state.history[projectId].history[id].activeLayer;
 				}
+
 				return;
 			}
 
@@ -443,6 +490,18 @@ export const pointerSelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
 
 	return history[projectId].pointer;
+};
+
+export const isHistoryActiveSelector = (state: RootState, projectId: Project['id']) => {
+	const { history } = state.projects;
+
+	return history[projectId].active;
+};
+
+export const isHistorySlicedSelector = (state: RootState, projectId: Project['id']) => {
+	const { history } = state.projects;
+
+	return history[projectId].sliced;
 };
 
 export const historySelector = (state: RootState, projectId: Project['id']) => {
