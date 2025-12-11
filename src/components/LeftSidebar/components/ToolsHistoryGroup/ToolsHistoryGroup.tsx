@@ -31,13 +31,6 @@ export const ToolsHistoryGroup: React.FC = () => {
 					variant='graphic-tools'
 					title={tool.label}
 					disabled={tool.id === ACTIONS.UNDO ? !isUndoActive : !isRedoActive}
-					startIcon={
-						tool.id === ACTIONS.UNDO ? (
-							<Undo2Icon size={16} color={isUndoActive ? 'var(--color)' : 'var(--color-muted)'} />
-						) : (
-							<Redo2Icon size={16} color={isRedoActive ? 'var(--color)' : 'var(--color-muted)'} />
-						)
-					}
 					onClick={() =>
 						dispatch(
 							tool.id === ACTIONS.UNDO
@@ -48,8 +41,13 @@ export const ToolsHistoryGroup: React.FC = () => {
 										projectId: projectId,
 								  }),
 						)
-					}
-				/>
+					}>
+					{tool.id === ACTIONS.UNDO ? (
+						<Undo2Icon size={16} color={isUndoActive ? 'var(--color)' : 'var(--color-muted)'} />
+					) : (
+						<Redo2Icon size={16} color={isRedoActive ? 'var(--color)' : 'var(--color-muted)'} />
+					)}
+				</Button>
 			))}
 		</Box>
 	);
