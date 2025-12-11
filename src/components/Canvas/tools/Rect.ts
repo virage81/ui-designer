@@ -2,6 +2,7 @@ import { generateId } from '@shared/helpers';
 import type { Rect } from '@shared/types/canvas';
 import { normalizeRect } from '@shared/utils/canvas-helpers';
 import { Tool, type Styles, type ToolOptions } from './Tool';
+import { redrawCanvas } from '../utils/redrawCanvas';
 
 export class RectangleTool extends Tool {
 	private saved: string = '';
@@ -70,9 +71,18 @@ export class RectangleTool extends Tool {
 			stroke: this.stroke,
 			strokeWidth: this.strokeWidth,
 			layerId: this.layerId || 'default',
+			projectId: this.projectId,
+			pointer: this.pointer,
+			removed: this.removed,
 		};
 
 		this.onComplete?.(rect);
+
+		redrawCanvas(
+			this.canvas,
+			[...this.layerObjects, rect],
+			this.pointer,
+		);
 	}
 
 	draw(x: number, y: number, w: number, h: number) {

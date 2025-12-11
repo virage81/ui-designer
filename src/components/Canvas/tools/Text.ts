@@ -2,6 +2,7 @@ import { debounce } from '@shared/debounce';
 import { generateId } from '@shared/helpers';
 import type { Text } from '@shared/types/canvas';
 import { Tool, type Styles, type ToolOptions } from './Tool';
+import { redrawCanvas } from '../utils/redrawCanvas';
 
 interface CanvasBounds {
 	left: number;
@@ -240,9 +241,18 @@ export class TextTool extends Tool {
 			fontSize,
 			fill: color,
 			layerId: this.layerId || 'default',
+			projectId: this.projectId,
+			pointer: this.pointer,
+			removed: this.removed,
 		};
 
 		this.onComplete?.(textObject);
+
+		redrawCanvas(
+			this.canvas,
+			[...this.layerObjects, textObject],
+			this.pointer,
+		);
 
 		tempCtx.restore();
 		this.cleanup();

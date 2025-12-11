@@ -9,6 +9,9 @@ export interface Rect {
 	stroke: string;
 	strokeWidth: number;
 	layerId: string;
+	projectId: string;
+	pointer: number;
+	removed: boolean;
 }
 
 export interface Circle {
@@ -21,6 +24,9 @@ export interface Circle {
 	stroke: string;
 	strokeWidth: number;
 	layerId: string;
+	projectId: string;
+	pointer: number;
+	removed: boolean;
 }
 
 export interface Line {
@@ -33,6 +39,9 @@ export interface Line {
 	stroke: string;
 	strokeWidth: number;
 	layerId: string;
+	projectId: string;
+	pointer: number;
+	removed: boolean;
 }
 
 export interface Text {
@@ -47,6 +56,9 @@ export interface Text {
 	fontSize: number;
 	fill: string;
 	layerId: string;
+	projectId: string;
+	pointer: number;
+	removed: boolean;
 }
 
 export interface Brush {
@@ -56,6 +68,9 @@ export interface Brush {
 	stroke: string;
 	strokeWidth: number;
 	layerId: string;
+	projectId: string;
+	pointer: number;
+	removed: boolean;
 }
 
 export type Drawable = Rect | Circle | Line | Text | Brush;

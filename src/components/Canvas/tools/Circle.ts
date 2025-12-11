@@ -1,6 +1,7 @@
 import { generateId } from '@shared/helpers';
 import type { Circle } from '@shared/types/canvas';
 import { Tool, type Styles, type ToolOptions } from './Tool';
+import { redrawCanvas } from '../utils/redrawCanvas';
 
 export class CircleTool extends Tool {
 	private saved: string = '';
@@ -65,9 +66,18 @@ export class CircleTool extends Tool {
 			stroke: this.stroke,
 			strokeWidth: this.strokeWidth,
 			layerId: this.layerId || 'default',
+			projectId: this.projectId,
+			pointer: this.pointer,
+			removed: this.removed,
 		};
 
 		this.onComplete?.(circle);
+
+		redrawCanvas(
+			this.canvas,
+			[...this.layerObjects, circle],
+			this.pointer,
+		);
 	}
 
 	draw(x: number, y: number, radius: number) {

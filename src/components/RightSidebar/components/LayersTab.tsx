@@ -3,7 +3,6 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-ki
 import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
-import { clearLayerCanvas } from '@store/slices/canvasSlice';
 import {
 	addToHistory,
 	clearActiveLayer,
@@ -19,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from '../components';
 import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
+import { clearLayerCanvas } from '@store/slices/canvasSlice';
 
 export const LayersTab = () => {
 	const dispatch = useDispatch();
@@ -51,7 +51,7 @@ export const LayersTab = () => {
 					id: layerId,
 					[name]: value,
 				},
-				canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
+				// canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 			}),
 		);
 
@@ -61,7 +61,7 @@ export const LayersTab = () => {
 					projectId: projectId,
 					activeLayer,
 					type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
-					canvasDataURL: activeLayer.canvasDataURL,
+					// canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -77,6 +77,7 @@ export const LayersTab = () => {
 					layerId: currentLayer.id,
 				}),
 			);
+			// Тут не будем удалять объекты -> они всё ещё есть в истории
 			dispatch(clearLayerCanvas(activeLayer?.id ?? ''));
 		}
 		handleCloseMenu();
@@ -111,6 +112,9 @@ export const LayersTab = () => {
 	const handleOpenMenu = (event: MouseEvent<HTMLButtonElement>, layerId?: string) => {
 		setAnchorEl(event.currentTarget);
 		setCurrentLayerId(layerId ?? null);
+		if (layerId) {
+			dispatch(setActiveLayer({ projectId, id: layerId }));
+		}
 	};
 	const handleCloseMenu = () => {
 		setAnchorEl(null);
@@ -129,7 +133,7 @@ export const LayersTab = () => {
 			updateLayer({
 				projectId,
 				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
-				canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
+				// canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 			}),
 		);
 
@@ -139,7 +143,7 @@ export const LayersTab = () => {
 					projectId,
 					activeLayer,
 					type: HISTORY_ACTIONS.LAYER_RENAME,
-					canvasDataURL: activeLayer.canvasDataURL,
+					// canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -170,7 +174,7 @@ export const LayersTab = () => {
 						id: layer.id,
 						zIndex: newLayers.length - index,
 					},
-					canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
+					// canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 				}),
 			);
 		});
@@ -181,7 +185,7 @@ export const LayersTab = () => {
 					projectId,
 					activeLayer,
 					type: HISTORY_ACTIONS.LAYER_ORDER,
-					canvasDataURL: activeLayer.canvasDataURL,
+					// canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -204,7 +208,7 @@ export const LayersTab = () => {
 									name: 'Новый слой',
 									opacity: 100,
 									zIndex: layers[projectId].length + 1,
-									canvasDataURL: '',
+									// canvasDataURL: '',
 								},
 								activeLayer: activeLayer,
 							}),

@@ -1,5 +1,6 @@
 import { findObjectAtPointPrecise } from '@shared/utils/canvas-helpers';
 import { Tool, type Styles, type ToolOptions } from './Tool';
+import { redrawCanvas } from '../utils/redrawCanvas';
 
 /**
  * Инструмент Ластик
@@ -20,7 +21,14 @@ export class EraserTool extends Tool {
 		const [x, y] = this.getMousePos(e);
 		const hitObject = this.findObjectAt(x, y);
 
-		if (hitObject) this.onComplete({ id: hitObject.id });
+		if (hitObject) {
+			this.onComplete({ id: hitObject.id });
+			redrawCanvas(
+				this.canvas,
+				[...this.layerObjects],
+				this.pointer,
+			);
+		}
 	};
 
 	private findObjectAt(x: number, y: number) {

@@ -18,6 +18,10 @@ export type ToolOptions = {
 	layerId?: string;
 	onComplete?: (object: unknown) => void;
 	layerObjects?: Drawable[];
+	projectId?: string;
+	// canvasDataURL?: string;
+	pointer?: number;
+	removed?: boolean;
 };
 
 export class Tool {
@@ -43,6 +47,9 @@ export class Tool {
 	protected layerId: string | undefined;
 	protected onComplete: ((obj: unknown) => void) | undefined;
 	protected layerObjects: Drawable[] = [];
+	protected projectId: string;
+	protected pointer: number;
+	protected removed: boolean;
 
 	protected container?: HTMLDivElement;
 
@@ -74,6 +81,9 @@ export class Tool {
 		this.layerId = options.layerId;
 		this.onComplete = options.onComplete;
 		this.layerObjects = options.layerObjects || [];
+		this.projectId = options.projectId || '';
+		this.pointer = options.pointer || 0;
+		this.removed = options.removed || false;
 
 		this.destroyEvents();
 		this.setupEvents();

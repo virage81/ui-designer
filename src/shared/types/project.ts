@@ -14,7 +14,6 @@ export interface HistoryStack {
 	history: History[];
 	pointer: number;
 	active?: boolean;
-	sliced?: boolean;
 }
 export interface History {
 	id: number;
@@ -22,6 +21,7 @@ export interface History {
 	type: HISTORY_ACTIONS | ACTIONS;
 	layers: Layer[];
 	activeLayer?: Layer | null;
+	canceled?: boolean;
 }
 
 export interface Layer {
@@ -30,7 +30,6 @@ export interface Layer {
 	opacity: number;
 	zIndex: number;
 	hidden: boolean;
-	canvasDataURL: string;
 	canvasData?: string;
 }
 
@@ -38,7 +37,6 @@ export interface AddToHistoryParams {
 	projectId: string;
 	activeLayer: Layer;
 	type: HISTORY_ACTIONS | ACTIONS;
-	canvasDataURL: string;
 }
 
 export interface UndoRedoHistoryParams {
@@ -53,5 +51,9 @@ export interface SetHistoryParams {
 export interface SaveHistorySnapshotParams {
 	projectId: Project['id'];
 	layerId: Layer['id'];
-	canvasDataURL: string;
+};
+
+export interface SetHistoryActivityParams {
+	projectId: Project['id'];
+	status: boolean;
 };

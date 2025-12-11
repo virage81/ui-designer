@@ -1,6 +1,7 @@
 import { generateId } from '@shared/helpers';
 import type { Brush } from '@shared/types/canvas';
 import { Tool, type Styles, type ToolOptions } from './Tool';
+import { redrawCanvas } from '../utils/redrawCanvas';
 
 export class BrushTool extends Tool {
 	private currentPath: { x: number; y: number }[] = [];
@@ -55,9 +56,18 @@ export class BrushTool extends Tool {
 			stroke: this.fill,
 			strokeWidth: this.strokeWidth,
 			layerId: this.layerId || 'default',
+			projectId: this.projectId,
+			pointer: this.pointer,
+			removed: this.removed,
 		};
 
 		this.onComplete?.(path);
+
+		redrawCanvas(
+			this.canvas,
+			[...this.layerObjects, path],
+			this.pointer,
+		);
 
 		this.isMouseDown = false;
 		this.currentPath = [];
