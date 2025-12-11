@@ -175,7 +175,6 @@ export const Canvas: React.FC = () => {
 						projectId: projectId,
 						activeLayer,
 						type: tool,
-						// canvasDataURL: '',
 					}),
 				);
 			}
@@ -209,7 +208,6 @@ export const Canvas: React.FC = () => {
 			layerId: activeLayer?.id || '',
 			onComplete: handleToolComplete,
 			layerObjects,
-			// canvasDataURL: history[pointer].layers.find(l => l.id === activeLayer?.id)?.canvasDataURL || '',
 			projectId: projectId,
 			pointer: pointer + 1,
 		}),

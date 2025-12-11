@@ -46,7 +46,6 @@ const projectsSlice = createSlice({
 				name: 'Фон',
 				opacity: 100,
 				zIndex: 1,
-				// canvasDataURL: '',
 			};
 
 			state.layers[id] = [layer];
@@ -127,7 +126,6 @@ const projectsSlice = createSlice({
 		},
 
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
-			// const { data, projectId, canvasDataURL } = action.payload;
 			const { data, projectId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
@@ -137,13 +135,6 @@ const projectsSlice = createSlice({
 			state.layers[projectId][layerIndex] = { ...state.layers[projectId][layerIndex], ...data };
 
 			const layer = state.layers[projectId][layerIndex];
-
-			// if (layer && canvasDataURL) {
-			// 	layer.canvasDataURL = canvasDataURL;
-			// };
-			// if (state.activeLayer && canvasDataURL) {
-			// 	state.activeLayer.canvasData = canvasDataURL;
-			// }
 
 			/**
 			 * Тут делаем изменяемый слой активным
@@ -267,7 +258,6 @@ const projectsSlice = createSlice({
 			const layerIndex = state.layers?.[payload.projectId]?.findIndex(item => item.id === payload.layerId);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.layerId} not found`);
 
-			// state.layers[payload.projectId][layerIndex].canvasDataURL = '';
 			state.layers[payload.projectId][layerIndex].canvasData = undefined;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 
@@ -314,7 +304,6 @@ const projectsSlice = createSlice({
 
 		// Тут добавляем события в историю
 		addToHistory: (state, action: PayloadAction<AddToHistoryParams>) => {
-			// const { projectId, type, activeLayer, canvasDataURL } = action.payload;
 			const { projectId, type, activeLayer } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
@@ -324,18 +313,6 @@ const projectsSlice = createSlice({
 				const diff = state.history[projectId].history.length - pointer;
 				state.history[projectId].history.splice(pointer + 1, diff);
 			}
-
-			// Тут действия с историей
-			// const layers = state.layers[projectId];
-			// const layer = layers.find(l => l.id === activeLayer.id);
-
-			// if (layer && canvasDataURL) {
-			// 	layer.canvasDataURL = canvasDataURL;
-			// };
-
-			// if (state.activeLayer && canvasDataURL) {
-			// 	state.activeLayer.canvasData = canvasDataURL;
-			// }
 
 			state.history[projectId].active = false;
 
@@ -349,22 +326,6 @@ const projectsSlice = createSlice({
 				date: new Date().getTime(),
 				activeLayer,
 			}
-
-			// Тут задаётся лимит истории
-			// const history = state.history[projectId].history;
-			// const historyLimit = 16;
-
-			// if (history.length > historyLimit) {
-			// 	const limitedHistory = history.slice(-historyLimit);
-			// 	state.history[projectId].history = limitedHistory;
-			// 	limitedHistory.forEach((h, index) => h.id = index);
-
-			// 	state.history[projectId].pointer = state.history[projectId].history.length - 1;
-			// 	state.history[projectId].sliced = true;
-			// }
-
-			// Устанавливаем активность истории для перерисовки
-
 		},
 
 		// Тут отменяем историю на шаг
@@ -459,7 +420,7 @@ const projectsSlice = createSlice({
 			}
 		},
 
-		// Тут выставляем, автивна ли история
+		// Тут выставляем активность истории
 		setHistoryActivity: (state, action: PayloadAction<SetHistoryActivityParams>) => {
 			const { projectId, status } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);

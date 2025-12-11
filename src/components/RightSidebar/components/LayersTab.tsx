@@ -51,7 +51,6 @@ export const LayersTab = () => {
 					id: layerId,
 					[name]: value,
 				},
-				// canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 			}),
 		);
 
@@ -61,7 +60,6 @@ export const LayersTab = () => {
 					projectId: projectId,
 					activeLayer,
 					type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
-					// canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -77,7 +75,10 @@ export const LayersTab = () => {
 					layerId: currentLayer.id,
 				}),
 			);
-			// Тут не будем удалять объекты -> они всё ещё есть в истории
+			/**
+			 * Тут не будем удалять объекты -> они всё ещё есть в истории;
+			 * теперь в clearLayerCanvas выставляем параметр removed
+			 */
 			dispatch(clearLayerCanvas(activeLayer?.id ?? ''));
 		}
 		handleCloseMenu();
@@ -133,7 +134,6 @@ export const LayersTab = () => {
 			updateLayer({
 				projectId,
 				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
-				// canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 			}),
 		);
 
@@ -143,7 +143,6 @@ export const LayersTab = () => {
 					projectId,
 					activeLayer,
 					type: HISTORY_ACTIONS.LAYER_RENAME,
-					// canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -174,7 +173,6 @@ export const LayersTab = () => {
 						id: layer.id,
 						zIndex: newLayers.length - index,
 					},
-					// canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 				}),
 			);
 		});
@@ -185,7 +183,6 @@ export const LayersTab = () => {
 					projectId,
 					activeLayer,
 					type: HISTORY_ACTIONS.LAYER_ORDER,
-					// canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -208,7 +205,6 @@ export const LayersTab = () => {
 									name: 'Новый слой',
 									opacity: 100,
 									zIndex: layers[projectId].length + 1,
-									// canvasDataURL: '',
 								},
 								activeLayer: activeLayer,
 							}),

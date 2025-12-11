@@ -10,19 +10,10 @@ import { useParams } from 'react-router-dom';
 interface HistoryItemProps extends Pick<History, 'id' | 'date' | 'type'> {
 	isActive: boolean;
 	layerId: string;
-	historyLength: number;
 	pointer: number;
 }
 
-export const HistoryItem: React.FC<HistoryItemProps> = ({
-	id,
-	date,
-	type,
-	isActive,
-	layerId,
-	historyLength,
-	pointer,
-}) => {
+export const HistoryItem: React.FC<HistoryItemProps> = ({ id, date, type, isActive, layerId, pointer }) => {
 	const dispatch = useDispatch();
 	const { id: projectId = '' } = useParams();
 
@@ -70,7 +61,6 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({
 					!isActive
 				) {
 					dispatch(restoreObjects({ layerId, start: pointer + 1, end: id }));
-					// dispatch(restoreObjects({ layerId, start: historyLength, end: pointer }));
 				}
 
 				// Очистка одиночных объектов
@@ -82,7 +72,6 @@ export const HistoryItem: React.FC<HistoryItemProps> = ({
 						type === HISTORY_ACTIONS.LINE) &&
 					isActive
 				) {
-					// dispatch(clearObjects({ layerId, start: historyLength - 1, end: id }));
 					dispatch(clearObjects({ layerId, start: id, end: pointer }));
 				}
 			}}>

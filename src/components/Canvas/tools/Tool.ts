@@ -19,7 +19,6 @@ export type ToolOptions = {
 	onComplete?: (object: unknown) => void;
 	layerObjects?: Drawable[];
 	projectId?: string;
-	// canvasDataURL?: string;
 	pointer?: number;
 	removed?: boolean;
 };

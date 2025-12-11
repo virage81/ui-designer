@@ -48,7 +48,6 @@ export const HistoryTab = () => {
 								{...el}
 								isActive={pointer >= reversedIndex}
 								layerId={activeLayer?.id}
-								historyLength={history.length}
 								pointer={pointer}
 							/>
 						) : null;
