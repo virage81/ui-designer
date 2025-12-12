@@ -10,10 +10,12 @@ describe('ProjectsList', () => {
 				projects: {
 					history: {},
 					layers: {},
+					zoom: 1,
+					guides: { enabled: false, columns: 1, rows: 1 },
 					activeLayer: null,
 					projects: [
 						{
-							date: new Date().toISOString(),
+							date: new Date().getTime(),
 							id: 'project1',
 							name: 'Project1',
 							height: 800,
@@ -21,7 +23,7 @@ describe('ProjectsList', () => {
 							preview: '',
 						},
 						{
-							date: new Date().toISOString(),
+							date: new Date().getTime(),
 							id: 'project2',
 							name: 'Project2',
 							height: 800,
@@ -57,11 +59,13 @@ describe('ProjectsList', () => {
 			preloadedState: {
 				projects: {
 					history: {},
+					zoom: 1,
+					guides: { enabled: false, columns: 1, rows: 1 },
 					layers: {},
 					activeLayer: null,
 					projects: [
 						{
-							date: new Date().toISOString(),
+							date: new Date().getTime(),
 							id: 'project1',
 							name: 'Project1',
 							height: 800,
@@ -69,7 +73,7 @@ describe('ProjectsList', () => {
 							preview: '',
 						},
 						{
-							date: new Date().toISOString(),
+							date: new Date().getTime(),
 							id: 'project2',
 							name: 'Project2',
 							height: 800,

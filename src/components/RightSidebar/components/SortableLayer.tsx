@@ -2,14 +2,11 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Box, IconButton, Paper, Slider, TextField, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
-import { setActiveLayer } from '@store/slices/projectsSlice';
 import { Ellipsis, EyeIcon, EyeOffIcon, GripVertical } from 'lucide-react';
 import { useState, type MouseEvent } from 'react';
-import { useDispatch } from 'react-redux';
 
 interface SortableLayerProps {
 	layer: Layer;
-	projectId: string;
 	isActive: boolean;
 	editingLayerId: string | null;
 	editingLayerName: string;
@@ -18,11 +15,11 @@ interface SortableLayerProps {
 	cancelEditing: () => void;
 	handleUpdateLayer: (name: keyof Layer, value: unknown, layerId: string) => void;
 	handleOpenMenu: (e: MouseEvent<HTMLButtonElement>, layerId?: string) => void;
+	handleLayerClick: (id: string) => void;
 }
 
 export const SortableLayer: React.FC<SortableLayerProps> = ({
 	layer,
-	projectId,
 	isActive,
 	editingLayerId,
 	editingLayerName,
@@ -31,24 +28,18 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 	cancelEditing,
 	handleUpdateLayer,
 	handleOpenMenu,
+	handleLayerClick,
 }) => {
 	const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: layer.id });
-	const dispatch = useDispatch();
 
 	const [opacity, setOpacity] = useState(layer.opacity);
-
-	const handleLayerClick = () => {
-		if (!editingLayerId) {
-			dispatch(setActiveLayer({ projectId, id: layer.id }));
-		}
-	};
 
 	return (
 		<Paper
 			ref={setNodeRef}
 			style={{ transform: CSS.Transform.toString(transform), transition }}
 			elevation={0}
-			onClick={handleLayerClick}
+			onClick={() => handleLayerClick(layer.id)}
 			sx={{
 				p: 1.5,
 				mb: 0.5,

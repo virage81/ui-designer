@@ -44,11 +44,21 @@ export class Tool {
 	protected onComplete: ((obj: unknown) => void) | undefined;
 	protected layerObjects: Drawable[] = [];
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
+	protected container?: HTMLDivElement;
+
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		options: ToolOptions = {},
+		zoom: number,
+		snapToGrid?: (x: number, y: number) => [number, number],
+		container?: HTMLDivElement,
+	) {
 		this.canvas = canvas;
+		this.container = container;
 
 		this.ctx = canvas.getContext('2d', { willReadFrequently: true })!;
-		this.dpr = window.devicePixelRatio || 1;
+		this.dpr = window.devicePixelRatio || 1;;
 
 		this.logicalWidth = parseInt(canvas.style.width) || canvas.width / this.dpr;
 		this.logicalHeight = parseInt(canvas.style.height) || canvas.height / this.dpr;

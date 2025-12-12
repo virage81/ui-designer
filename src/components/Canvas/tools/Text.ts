@@ -29,11 +29,12 @@ export class TextTool extends Tool {
 		options: ToolOptions = {},
 		zoom: number,
 		isTextEditingRef: React.RefObject<boolean>,
+		container: HTMLDivElement,
 		snapToGrid?: (x: number, y: number) => [number, number],
 		guides?: { enabled: boolean; columns: number; rows: number },
 		isCtrlPressedRef?: React.RefObject<boolean>
 	) {
-		super(canvas, styles, options, zoom, snapToGrid);
+		super(canvas, styles, options, zoom, snapToGrid, container);
 		this.isTextEditingRef = isTextEditingRef;
 		this.isCtrlPressedRef = isCtrlPressedRef;
 		this.guides = guides || { enabled: false, columns: 1, rows: 1 };
@@ -50,15 +51,11 @@ export class TextTool extends Tool {
 		this.isTextEditingRef.current = true;
 		const [canvasX, canvasY] = this.getMousePos(e);
 
-		const rect = this.canvas.getBoundingClientRect();
-		const clientX = rect.left + canvasX * this.zoom;
-		const clientY = rect.top + canvasY * this.zoom;
-
-		this.startTextInput(clientX, clientY, canvasX, canvasY);
+		this.startTextInput(canvasX, canvasY);
 	};
 
 	private createTextInput() {
-		if (this.textInput) return;
+		if (this.textInput || !this.container) return;
 
 		this.textInput = document.createElement('textarea');
 		Object.assign(this.textInput.style, {
@@ -77,7 +74,7 @@ export class TextTool extends Tool {
 			lineHeight: '1.2',
 		});
 
-		document.body.appendChild(this.textInput);
+		this.container.appendChild(this.textInput);
 
 		this.textInput.addEventListener('keydown', this.handleKeyDown.bind(this));
 		this.textInput.addEventListener('blur', this.cancelEditing.bind(this));
@@ -148,7 +145,7 @@ export class TextTool extends Tool {
 		this.textInput.style.borderColor = isOutOfBounds ? 'red' : '#007bff';
 	}
 
-	private startTextInput(clientX: number, clientY: number, x: number, y: number) {
+	private startTextInput(x: number, y: number) {
 		if (!this.ctx) return;
 
 		this.isEditing = true;
@@ -156,8 +153,8 @@ export class TextTool extends Tool {
 
 		Object.assign(this.textInput!.style, {
 			display: 'block',
-			left: clientX + 'px',
-			top: clientY + 'px',
+			left: x + 'px',
+			top: y + 'px',
 			width: '200px',
 			height: 'auto',
 			minHeight: '1lh',

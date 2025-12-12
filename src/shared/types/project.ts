@@ -1,3 +1,6 @@
+import type { HISTORY_ACTIONS } from "@store/slices/projectsSlice.enums";
+import type { ACTIONS } from "@store/slices/toolsSlice";
+
 export interface Project {
 	id: string;
 	name: string;
@@ -7,11 +10,16 @@ export interface Project {
 	preview: string;
 }
 
+export interface HistoryStack {
+	history: History[];
+	pointer: number;
+}
 export interface History {
-	id: string;
-	date: string;
-	typeOfEntry: string;
-	isActive: boolean;
+	id: number;
+	date: number;
+	type: HISTORY_ACTIONS | ACTIONS;
+	layers: Layer[];
+	activeLayer?: Layer | null;
 }
 
 export interface Layer {
@@ -20,6 +28,28 @@ export interface Layer {
 	opacity: number;
 	zIndex: number;
 	hidden: boolean;
-	cleared?: boolean;
+	canvasDataURL: string;
 	canvasData?: string;
 }
+
+export interface AddToHistoryParams {
+	projectId: string;
+	activeLayer: Layer;
+	type: HISTORY_ACTIONS | ACTIONS;
+	canvasDataURL: string;
+}
+
+export interface UndoRedoHistoryParams {
+	projectId: Project['id'];
+}
+
+export interface SetHistoryParams {
+	projectId: Project['id'];
+	id: number;
+};
+
+export interface SaveHistorySnapshotParams {
+	projectId: Project['id'];
+	layerId: Layer['id'];
+	canvasDataURL: string;
+};
