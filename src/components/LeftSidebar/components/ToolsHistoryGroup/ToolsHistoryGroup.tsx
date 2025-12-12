@@ -1,6 +1,6 @@
+import { handleHistoryAction } from '@components/Canvas/utils/historyActions';
 import { Box, Button } from '@mui/material';
 import type { RootState } from '@store/index';
-import { clearLayerCanvas, clearObjects, restoreLayerObjects, restoreObjects } from '@store/slices/canvasSlice';
 import {
 	historyElTypeSelector,
 	isRedoActiveSelector,
@@ -10,7 +10,6 @@ import {
 	redoHistory,
 	undoHistory,
 } from '@store/slices/projectsSlice';
-import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { Redo2Icon, Undo2Icon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -55,52 +54,16 @@ export const ToolsHistoryGroup: React.FC = () => {
 					}
 					onClick={() => {
 						if (tool.id === ACTIONS.UNDO) {
-							dispatch(
-								undoHistory({
-									projectId: projectId,
-								}),
-							);
-
-							// Тут возвращаем объекты очищенного слоя
-							if (historyType === HISTORY_ACTIONS.LAYER_CLEAR && activeLayer?.id) {
-								dispatch(restoreLayerObjects(activeLayer.id));
-							}
-
-							// Очистка одиночных объектов
-							if (
-								(historyType === HISTORY_ACTIONS.RECTANGLE ||
-									historyType === HISTORY_ACTIONS.BRUSH ||
-									historyType === HISTORY_ACTIONS.CIRCLE ||
-									historyType === HISTORY_ACTIONS.TEXT ||
-									historyType === HISTORY_ACTIONS.LINE) &&
-								activeLayer?.id
-							) {
-								dispatch(clearObjects({ layerId: activeLayer.id, start: pointer, end: pointer - 1 }));
+							dispatch(undoHistory({ projectId }));
+							if (historyType && activeLayer?.id) {
+								handleHistoryAction(dispatch, historyType, activeLayer.id, pointer, true);
 							}
 						}
 
 						if (tool.id === ACTIONS.REDO) {
-							dispatch(
-								redoHistory({
-									projectId: projectId,
-								}),
-							);
-
-							// Тут очищаем объекты очищенного слоя
-							if (nextHistoryType === HISTORY_ACTIONS.LAYER_CLEAR && activeLayer?.id) {
-								dispatch(clearLayerCanvas(activeLayer.id));
-							}
-
-							// Возврат одиночных объектов
-							if (
-								(nextHistoryType === HISTORY_ACTIONS.RECTANGLE ||
-									nextHistoryType === HISTORY_ACTIONS.BRUSH ||
-									nextHistoryType === HISTORY_ACTIONS.CIRCLE ||
-									nextHistoryType === HISTORY_ACTIONS.TEXT ||
-									nextHistoryType === HISTORY_ACTIONS.LINE) &&
-								activeLayer?.id
-							) {
-								dispatch(restoreObjects({ layerId: activeLayer.id, start: pointer + 1, end: pointer + 1 }));
+							dispatch(redoHistory({ projectId }));
+							if (nextHistoryType && activeLayer?.id) {
+								handleHistoryAction(dispatch, nextHistoryType, activeLayer.id, pointer, false);
 							}
 						}
 					}}

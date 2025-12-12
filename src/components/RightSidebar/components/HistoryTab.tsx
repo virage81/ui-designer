@@ -43,13 +43,7 @@ export const HistoryTab = () => {
 						const el = history[reversedIndex];
 
 						return el && pointer !== undefined && el.id !== 0 ? (
-							<HistoryItem
-								key={el.id}
-								{...el}
-								isActive={pointer >= reversedIndex}
-								layerId={activeLayer?.id}
-								pointer={pointer}
-							/>
+							<HistoryItem key={el.id} {...el} layerId={activeLayer?.id} pointer={pointer} />
 						) : null;
 					})}
 			</Box>

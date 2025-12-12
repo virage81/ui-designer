@@ -179,7 +179,10 @@ export class SelectTool extends Tool {
 
 		for (const obj of objects) {
 			const previewObj = this.getPreviewObject(obj);
-			this.drawObject(ctx, previewObj);
+
+			if (!previewObj.removed) {
+				this.drawObject(ctx, previewObj);
+			}
 		}
 
 		this.drawBoundingBoxSelected();

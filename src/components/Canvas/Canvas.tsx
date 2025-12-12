@@ -17,6 +17,7 @@ import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import type { Brush, Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
 import {
 	addObject,
+	clearObject,
 	objectsByLayerSelector,
 	objectsByProjectSelector,
 	removeInactiveLayerObjects,
@@ -136,7 +137,7 @@ export const Canvas: React.FC = () => {
 
 	const handleToolComplete = useCallback(
 		(payload: unknown) => {
-			if (!payload || typeof payload !== 'object' || !('type' in payload)) return;
+			if (!payload || typeof payload !== 'object') return;
 
 			switch ((payload as Brush | Rect | Circle | Line | Text).type) {
 				case 'brush':
@@ -157,12 +158,18 @@ export const Canvas: React.FC = () => {
 				default:
 					if ('id' in payload && 'updates' in payload) {
 						dispatch(updateObject(payload as PayloadAction<{ id: string; updates: Partial<Drawable> }>['payload']));
+					} else if ('id' in payload && typeof payload.id === 'string' && activeLayer?.id) {
+						/**
+						 * Тут не будем удалять объекты -> они всё ещё есть в истории;
+						 * пока просто очищаем
+						 */
+						dispatch(
+							clearObject({
+								layerId: activeLayer.id ?? '',
+								id: payload.id,
+							}),
+						);
 					}
-				// Тут не будем удалять объекты -> они всё ещё есть в истории
-				// else if ('id' in payload) {
-				// dispatch(removeObject((payload as { id: string }).id));
-				// dispatch(clearObject);
-				// }
 			}
 
 			if (activeLayer) {
@@ -179,7 +186,7 @@ export const Canvas: React.FC = () => {
 				);
 			}
 		},
-		[projectId, activeLayer, tool, dispatch, isHistoryActive, activeLayers],
+		[projectId, activeLayer, tool, dispatch, isHistoryActive, activeLayers, projectObjects, pointer],
 	);
 
 	const snapToGrid = useCallback(
@@ -352,7 +359,7 @@ export const Canvas: React.FC = () => {
 
 	// Тут перерисовываем canvas
 	useEffect(() => {
-		if (!canvasRef.current || !history) return;
+		if (!canvasesRef.current || !history) return;
 
 		if (!initialRenderRef.current || isHistoryActive) {
 			redrawCanvases(canvasesRef.current, projectObjects, pointer);

@@ -227,6 +227,8 @@ const projectsSlice = createSlice({
 			const layerIndex = state.layers?.[payload.projectId]?.findIndex(item => item.id === payload.id);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.id} not found`);
 
+			if (state.layers[payload.projectId].length <= 1) return;
+
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 
 			/**

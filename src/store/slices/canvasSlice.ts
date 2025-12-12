@@ -16,8 +16,17 @@ const canvasSlice = createSlice({
 		},
 
 		updateObject: (state, action: PayloadAction<{ id: string; updates: Partial<Drawable> }>) => {
-			const obj = state.objects.find(object => object.id === action.payload.id);
-			if (obj) Object.assign(obj, action.payload.updates);
+			const { id, updates } = action.payload;
+			const object = state.objects.find(obj => obj.id === id);
+
+			if (object) {
+				Object.assign({ ...object, ...updates });
+			}
+
+			console.log('updateObject ', action.payload.id, action.payload.updates);
+
+			// const obj = state.objects.find(object => object.id === action.payload.id);
+			// if (obj) Object.assign(obj, action.payload.updates);
 		},
 
 		removeObject: (state, action: PayloadAction<string>) => {
@@ -33,6 +42,15 @@ const canvasSlice = createSlice({
 			});
 		},
 
+		clearObject: (state, action: PayloadAction<{ layerId: string, id: string }>) => {
+			const { layerId, id } = action.payload;
+			state.objects.find(o => {
+				if (o.layerId === layerId && o.id === id) {
+					o.removed = true;
+				}
+			})
+		},
+
 		clearObjects: (state, action: PayloadAction<{ layerId: string, start: number, end: number }>) => {
 			const { layerId, start, end } = action.payload;
 			state.objects.forEach(o => {
@@ -40,6 +58,14 @@ const canvasSlice = createSlice({
 					o.removed = true;
 				}
 			})
+		},
+
+		restoreObject: (state, action) => {
+			const { id } = action.payload;
+			const obj = state.objects[id];
+			if (obj) {
+				obj.removed = false;
+			}
 		},
 
 		restoreObjects: (state, action: PayloadAction<{ layerId: string, start: number, end: number }>) => {
@@ -84,7 +110,9 @@ export const {
 	updateObject,
 	removeObject,
 	removeInactiveLayerObjects,
+	clearObject,
 	clearObjects,
+	restoreObject,
 	restoreObjects,
 	clearLayerCanvas,
 	restoreLayerObjects,

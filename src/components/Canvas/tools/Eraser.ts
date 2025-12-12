@@ -1,6 +1,8 @@
 import { findObjectAtPointPrecise } from '@shared/utils/canvas-helpers';
 import { Tool, type Styles, type ToolOptions } from './Tool';
 import { redrawCanvas } from '../utils/redrawCanvas';
+import { updateObject } from '@store/slices/canvasSlice';
+import { store } from '@store/index';
 
 /**
  * Инструмент Ластик
@@ -23,9 +25,16 @@ export class EraserTool extends Tool {
 
 		if (hitObject) {
 			this.onComplete({ id: hitObject.id });
+
+			// @TODO: передать dispatch через конструктор
+			store.dispatch(updateObject({
+				id: hitObject.id,
+				updates: { removed: true }
+			}));
+
 			redrawCanvas(
 				this.canvas,
-				[...this.layerObjects],
+				this.layerObjects,
 				this.pointer,
 			);
 		}
