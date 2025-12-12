@@ -41,6 +41,7 @@ export const Canvas: React.FC = () => {
 	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+	const textareaContainerRef = useRef<HTMLDivElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
@@ -242,7 +243,7 @@ export const Canvas: React.FC = () => {
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !canvasContainerRef.current || !activeLayer || !currentProject.id) return;
+		if (!canvasRef.current || !textareaContainerRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
@@ -270,7 +271,7 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom, isTextEditingRef, canvasContainerRef.current, snapToGrid, guides, isCtrlPressedRef);
+				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom, isTextEditingRef, textareaContainerRef.current, snapToGrid, guides, isCtrlPressedRef);
 				break;
 			}
 			default: {
@@ -285,7 +286,7 @@ export const Canvas: React.FC = () => {
 			}
 		};
 		//eslint-disable-next-line
-	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, canvasContainerRef, snapToGrid]);
+	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
 
 	// Тут перерисовываем canvas
 	useEffect(() => {
@@ -503,6 +504,7 @@ export const Canvas: React.FC = () => {
 			}}
 		>
 			<Box
+				ref={textareaContainerRef}
 				sx={{
 					position: 'relative',
 					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
