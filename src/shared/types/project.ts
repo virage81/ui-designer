@@ -13,6 +13,8 @@ export interface Project {
 export interface HistoryStack {
 	history: History[];
 	pointer: number;
+	active?: boolean;
+	sliced?: boolean;
 }
 export interface History {
 	id: number;

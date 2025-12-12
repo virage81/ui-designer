@@ -6,8 +6,6 @@ import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 interface HistoryItemProps extends Pick<History, 'id' | 'date' | 'type'> {
-	layerId: string;
-	index: number;
 	isActive: boolean;
 }
 

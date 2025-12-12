@@ -23,6 +23,7 @@ export type UpdateLayerParams = {
 export type DeleteLayerParams = {
 	id: Layer['id'];
 	projectId: Project['id'];
+	activeLayer: Layer | null;
 };
 
 export type SetActiveLayerParams = {

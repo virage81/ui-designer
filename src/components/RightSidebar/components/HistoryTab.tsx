@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import type { RootState } from '@store/index';
-import { historySelector, pointerSelector } from '@store/slices/projectsSlice';
+import { historySelector, isHistorySlicedSelector, pointerSelector } from '@store/slices/projectsSlice';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { HistoryItem } from './HistoryItem';
@@ -11,6 +11,7 @@ export const HistoryTab = () => {
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const history = useSelector((state: RootState) => historySelector(state, projectId));
 	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
+	const isHistorySliced = useSelector((state: RootState) => isHistorySlicedSelector(state, projectId));
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
@@ -42,14 +43,8 @@ export const HistoryTab = () => {
 						const reversedIndex = history.length - 1 - idx;
 						const el = history[reversedIndex];
 
-						return el && el.id !== 0 && pointer !== undefined ? (
-							<HistoryItem
-								key={el.id}
-								{...el}
-								index={reversedIndex}
-								isActive={pointer >= reversedIndex}
-								layerId={activeLayer.id}
-							/>
+						return el && pointer !== undefined && (el.id !== 0 || !isHistorySliced) ? (
+							<HistoryItem key={el.id} {...el} isActive={pointer >= reversedIndex} />
 						) : null;
 					})}
 			</Box>

@@ -1,5 +1,11 @@
 import type { RootState } from '@store/index';
-import { historySelector, pointerSelector, sortedLayersSelector, updateLayer } from '@store/slices/projectsSlice';
+import {
+	addToHistory,
+	historySelector,
+	isHistoryActiveSelector,
+	pointerSelector,
+	sortedLayersSelector,
+} from '@store/slices/projectsSlice';
 import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import { GridOverlay } from '@components/GridOverlay/GridOverlay';
 import { Box } from '@mui/material';
@@ -20,20 +26,18 @@ import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
 import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
-import { captureCanvasAndSaveToHistory } from './utils/captureCanvasSnapshot';
-import { redrawCanvas } from '@components/Canvas/utils/canvasRedraw';
-import { useThunkDispatch } from '@components/Canvas/utils/thunkDispatch';
+import { redrawCanvas } from '@components/Canvas/utils/redrawCanvas';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
 	const dispatch = useDispatch();
-	const thunkDispatch = useThunkDispatch();
 	const guides = useSelector((state: RootState) => state.projects.guides);
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
 	const { tool, fillColor, strokeWidth, strokeStyle, fontSize } = useSelector((state: RootState) => state.tools);
 	const sortedLayers = useSelector((state: RootState) => sortedLayersSelector(state, projectId));
 	const history = useSelector((state: RootState) => historySelector(state, projectId));
 	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
+	const isHistoryActive = useSelector((state: RootState) => isHistoryActiveSelector(state, projectId));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
 	const layerObjects = useSelector((state: RootState) => objectsByLayerSelector(state, activeLayer?.id || ''));
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
@@ -137,21 +141,19 @@ export const Canvas: React.FC = () => {
 			}
 
 			if (canvasRef.current && activeLayer) {
-				thunkDispatch(
-					/**
-					 * Это middleware для слайса - внутри сохранение изображения
-					 * слоя в строку и в параметр canvasDataURL
-					 */
-					captureCanvasAndSaveToHistory({
+				const dataURL = canvasRef.current.toDataURL('image/png', 1);
+
+				dispatch(
+					addToHistory({
 						projectId: projectId,
-						activeLayer: activeLayer,
-						canvasRef: canvasRef.current,
+						activeLayer,
 						type: tool,
+						canvasDataURL: dataURL,
 					}),
 				);
 			}
 		},
-		[projectId, activeLayer, tool, dispatch, thunkDispatch],
+		[projectId, activeLayer, tool, dispatch],
 	);
 
 	const toolOptions = useMemo(
@@ -218,24 +220,26 @@ export const Canvas: React.FC = () => {
 		triggerLayerSave();
 	}, [tool, projectLayers, triggerLayerSave]);
 
+	const snapToGrid = useCallback(
+		(x: number, y: number): [number, number] => {
+			if (!guides.enabled || !isCtrlPressedRef.current) return [x, y];
 
-	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
-		if (!guides.enabled || !isCtrlPressedRef.current) return [x, y];
+			const gridW = currentProject.width / guides.columns;
+			const gridH = currentProject.height / guides.rows;
+			const SNAP_TOLERANCE = gridW * 0.1;
 
-		const gridW = currentProject.width / guides.columns;
-		const gridH = currentProject.height / guides.rows;
-		const SNAP_TOLERANCE = gridW * 0.1;
+			const nearestGridX = Math.round(x / gridW) * gridW;
+			const xDiff = Math.abs(x - nearestGridX);
+			const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
 
-		const nearestGridX = Math.round(x / gridW) * gridW;
-		const xDiff = Math.abs(x - nearestGridX);
-		const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
+			const nearestGridY = Math.round(y / gridH) * gridH;
+			const yDiff = Math.abs(y - nearestGridY);
+			const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
 
-		const nearestGridY = Math.round(y / gridH) * gridH;
-		const yDiff = Math.abs(y - nearestGridY);
-		const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
-
-		return [snappedX, snappedY];
-	}, [guides, currentProject]);
+			return [snappedX, snappedY];
+		},
+		[guides, currentProject],
+	);
 
 	useEffect(() => {
 		if (toolRef.current) {
@@ -247,7 +251,15 @@ export const Canvas: React.FC = () => {
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
-				toolRef.current = new SelectTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid, guides, isCtrlPressedRef);
+				toolRef.current = new SelectTool(
+					canvasRef.current,
+					toolStyles,
+					toolOptions,
+					zoom,
+					snapToGrid,
+					guides,
+					isCtrlPressedRef,
+				);
 				break;
 			}
 			case ACTIONS.BRUSH: {
@@ -271,7 +283,17 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom, isTextEditingRef, textareaContainerRef.current, snapToGrid, guides, isCtrlPressedRef);
+				toolRef.current = new TextTool(
+					canvasRef.current,
+					toolStyles,
+					toolOptions,
+					zoom,
+					isTextEditingRef,
+					textareaContainerRef.current,
+					snapToGrid,
+					guides,
+					isCtrlPressedRef,
+				);
 				break;
 			}
 			default: {
@@ -290,43 +312,16 @@ export const Canvas: React.FC = () => {
 
 	// Тут перерисовываем canvas
 	useEffect(() => {
-		if (!canvasRef.current || !history || pointer === undefined) return;
+		if (!canvasRef.current || !history) return;
 
-		// Все слои активного элемента истории
-		if (!initialRenderRef.current) {
+		if (!initialRenderRef.current || isHistoryActive) {
 			history[pointer].layers.forEach(l => {
 				redrawCanvas(canvasesRef.current[l.id], l.canvasDataURL);
 			});
 
 			initialRenderRef.current = true;
 		}
-
-		// Активный слой активного элемента истории
-		if (initialRenderRef.current && activeLayer?.id) {
-			const activeId = history[pointer].layers.findIndex(l => l.id === activeLayer.id);
-			const layer = history[pointer].layers[activeId];
-			redrawCanvas(canvasesRef.current[layer.id], layer.canvasDataURL);
-		}
-		//eslint-disable-next-line
-	}, [pointer]);
-
-	useEffect(() => {
-		if (!canvasRef.current || !activeLayer) return;
-
-		if (!activeLayer.canvasDataURL) {
-			const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-			if (ctx) {
-				ctx.clearRect(0, 0, currentProject.width, currentProject.height);
-				dispatch(
-					updateLayer({
-						projectId,
-						data: { id: activeLayer.id },
-						canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
-					}),
-				);
-			}
-		}
-	}, [activeLayer, projectId, dispatch, currentProject.height, currentProject.width]);
+	}, [history, pointer, isHistoryActive]);
 
 	//
 
@@ -458,7 +453,7 @@ export const Canvas: React.FC = () => {
 			canvasContainer.removeEventListener('selectstart', preventContextMenu);
 			canvasContainer.removeEventListener('controlselect', preventContextMenu);
 		};
-	}, [])
+	}, []);
 
 	useEffect(() => {
 		if (canvasContainerRef.current) {
@@ -467,14 +462,14 @@ export const Canvas: React.FC = () => {
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === 'Control') {
-				e.preventDefault()
+				e.preventDefault();
 				isCtrlPressedRef.current = true;
 			}
 		};
 
 		const handleKeyUp = (e: KeyboardEvent) => {
 			if (e.key === 'Control') {
-				e.preventDefault()
+				e.preventDefault();
 				isCtrlPressedRef.current = false;
 			}
 		};
@@ -501,8 +496,7 @@ export const Canvas: React.FC = () => {
 				padding: '8px',
 				backgroundColor: 'var(--main-bg)',
 				overflow: 'auto',
-			}}
-		>
+			}}>
 			<Box
 				ref={textareaContainerRef}
 				sx={{
