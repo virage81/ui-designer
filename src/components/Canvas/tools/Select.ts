@@ -23,10 +23,22 @@ export class SelectTool extends Tool {
 	private previewTextY = 0;
 
 	protected layerObjects: Drawable[] = [];
+	private guides: { enabled: boolean; columns: number; rows: number };
+	private isCtrlPressedRef?: React.RefObject<boolean>;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number) {
-		super(canvas, styles, options, zoom);
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		options: ToolOptions = {},
+		zoom: number,
+		snapToGrid?: (x: number, y: number) => [number, number],
+		guides?: { enabled: boolean; columns: number; rows: number },
+		isCtrlPressedRef?: React.RefObject<boolean>
+	) {
+		super(canvas, styles, options, zoom, snapToGrid);
+		this.isCtrlPressedRef = isCtrlPressedRef;
 
+		this.guides = guides || { enabled: false, columns: 1, rows: 1 };
 		this.layerObjects = options.layerObjects || [];
 
 		this.listen();
@@ -36,6 +48,35 @@ export class SelectTool extends Tool {
 		this.layerObjects = objects;
 	}
 
+	private getRawMousePos(e: PointerEvent): [number, number] {
+		const rect = this.canvas.getBoundingClientRect();
+		const x = (e.clientX - rect.left) / this.zoom;
+		const y = (e.clientY - rect.top) / this.zoom;
+		return [x, y];
+	}
+
+	private getGuideLines(): { vertical: number[]; horizontal: number[] } {
+		if (!this.guides.enabled) return { vertical: [], horizontal: [] };
+
+		const projectWidth = this.canvas.width / this.dpr;
+		const projectHeight = this.canvas.height / this.dpr;
+
+		const gridW = projectWidth / this.guides.columns;
+		const gridH = projectHeight / this.guides.rows;
+
+		const vertical: number[] = [];
+		const horizontal: number[] = [];
+
+		for (let i = 0; i <= this.guides.columns; i++) {
+			vertical.push(i * gridW);
+		}
+		for (let i = 0; i <= this.guides.rows; i++) {
+			horizontal.push(i * gridH);
+		}
+
+		return { vertical, horizontal };
+	}
+
 	listen() {
 		this.canvas.onpointerdown = this.onPointerDown.bind(this);
 		this.canvas.onpointermove = this.onPointerMove.bind(this);
@@ -43,7 +84,10 @@ export class SelectTool extends Tool {
 	}
 
 	onPointerDown(e: PointerEvent) {
-		const [x, y] = this.getMousePos(e);
+		this.previewRectX = 0;
+		this.previewRectY = 0;
+		this.previewCircleCx = 0;
+		const [x, y] = this.getRawMousePos(e);
 		const objects = this.getLayerObjects();
 		const clickedObject = findObjectAtPoint(objects, x, y);
 
@@ -56,36 +100,29 @@ export class SelectTool extends Tool {
 		this.selectedObject = clickedObject as Rect | Circle | Line | Text;
 		this.isDragging = true;
 
+		const bbox = getBoundingBox(clickedObject);
+		const centerX = bbox.x + bbox.width / 2;
+		const centerY = bbox.y + bbox.height / 2;
+
+		this.dragOffsetX = x - centerX;
+		this.dragOffsetY = y - centerY;
+
 		switch (clickedObject.type) {
 			case 'rect':
-				this.dragOffsetX = x - clickedObject.x;
-				this.dragOffsetY = y - clickedObject.y;
 				this.previewRectX = clickedObject.x;
 				this.previewRectY = clickedObject.y;
 				break;
-
 			case 'circle':
-				this.dragOffsetX = x - (clickedObject.cx - clickedObject.r);
-				this.dragOffsetY = y - (clickedObject.cy - clickedObject.r);
 				this.previewCircleCx = clickedObject.cx;
 				this.previewCircleCy = clickedObject.cy;
 				break;
-
-			case 'line': {
-				const midX = (clickedObject.x1 + clickedObject.x2) / 2;
-				const midY = (clickedObject.y1 + clickedObject.y2) / 2;
-				this.dragOffsetX = x - midX;
-				this.dragOffsetY = y - midY;
+			case 'line':
 				this.previewLineX1 = clickedObject.x1;
 				this.previewLineY1 = clickedObject.y1;
 				this.previewLineX2 = clickedObject.x2;
 				this.previewLineY2 = clickedObject.y2;
 				break;
-			}
-
 			case 'text':
-				this.dragOffsetX = x - clickedObject.x;
-				this.dragOffsetY = y - clickedObject.y;
 				this.previewTextX = clickedObject.x;
 				this.previewTextY = clickedObject.y;
 				break;
@@ -97,40 +134,77 @@ export class SelectTool extends Tool {
 	onPointerMove(e: PointerEvent) {
 		if (!this.isDragging || !this.selectedObject) return;
 
-		const [x, y] = this.getMousePos(e);
+		const [mouseX, mouseY] = this.getRawMousePos(e);
+		const bbox = getBoundingBox(this.selectedObject);
+
+		const newCenterX = mouseX - this.dragOffsetX;
+		const newCenterY = mouseY - this.dragOffsetY;
+
+		let baseLeft = newCenterX - bbox.width / 2;
+		let baseTop = newCenterY - bbox.height / 2;
+
+		if (this.guides.enabled && this.isCtrlPressedRef?.current) {
+			const { vertical: guidesX, horizontal: guidesY } = this.getGuideLines();
+			const tolerance = 20;
+
+			const findNearestGuide = (pos: number, lines: number[]): number | null => {
+				let nearest = null;
+				let minDist = tolerance + 1;
+				for (const line of lines) {
+					const dist = Math.abs(pos - line);
+					if (dist < minDist) {
+						minDist = dist;
+						nearest = line;
+					}
+				}
+				return nearest;
+			};
+
+			const testLeft = baseLeft;
+			const testRight = baseLeft + bbox.width;
+			const testTop = baseTop;
+			const testBottom = baseTop + bbox.height;
+
+			const snapLeft = findNearestGuide(testLeft, guidesX);
+			const snapRight = findNearestGuide(testRight, guidesX);
+			const snapTop = findNearestGuide(testTop, guidesY);
+			const snapBottom = findNearestGuide(testBottom, guidesY);
+
+			if (snapLeft !== null) {
+				baseLeft = snapLeft;
+			} else if (snapRight !== null) {
+				baseLeft = snapRight - bbox.width;
+			}
+
+			if (snapTop !== null) {
+				baseTop = snapTop;
+			} else if (snapBottom !== null) {
+				baseTop = snapBottom - bbox.height;
+			}
+		}
 
 		switch (this.selectedObject.type) {
-			case 'rect': {
-				this.previewRectX = x - this.dragOffsetX;
-				this.previewRectY = y - this.dragOffsetY;
+			case 'rect':
+				this.previewRectX = baseLeft;
+				this.previewRectY = baseTop;
 				break;
-			}
-			case 'circle': {
-				const newLeft = x - this.dragOffsetX;
-				const newTop = y - this.dragOffsetY;
-				this.previewCircleCx = newLeft + this.selectedObject.r;
-				this.previewCircleCy = newTop + this.selectedObject.r;
+			case 'circle':
+				this.previewCircleCx = baseLeft + (this.selectedObject as Circle).r;
+				this.previewCircleCy = baseTop + (this.selectedObject as Circle).r;
 				break;
-			}
+			case 'text':
+				this.previewTextX = baseLeft;
+				this.previewTextY = baseTop;
+				break;
 			case 'line': {
-				const currentMidX = (this.previewLineX1 + this.previewLineX2) / 2;
-				const currentMidY = (this.previewLineY1 + this.previewLineY2) / 2;
-
-				const newMidX = x - this.dragOffsetX;
-				const newMidY = y - this.dragOffsetY;
-
-				const dx = newMidX - currentMidX;
-				const dy = newMidY - currentMidY;
-
+				const centerX = (this.previewLineX1 + this.previewLineX2) / 2;
+				const centerY = (this.previewLineY1 + this.previewLineY2) / 2;
+				const dx = baseLeft + bbox.width / 2 - centerX;
+				const dy = baseTop + bbox.height / 2 - centerY;
 				this.previewLineX1 += dx;
 				this.previewLineY1 += dy;
 				this.previewLineX2 += dx;
 				this.previewLineY2 += dy;
-				break;
-			}
-			case 'text': {
-				this.previewTextX = x - this.dragOffsetX;
-				this.previewTextY = y - this.dragOffsetY;
 				break;
 			}
 		}
@@ -156,15 +230,16 @@ export class SelectTool extends Tool {
 
 			const handler = typeHandlers[type];
 			if (handler) {
-				this.onComplete({
-					id,
-					updates: handler(),
-				});
+				this.onComplete({ id, updates: handler() });
 			}
 		}
 
 		this.isDragging = false;
 		this.selectedObject = null;
+	}
+
+	destroyEvents() {
+		super.destroyEvents();
 	}
 
 	private getLayerObjects(): Drawable[] {
@@ -189,10 +264,8 @@ export class SelectTool extends Tool {
 		const ctx = this.ctx;
 		const objects = this.getLayerObjects();
 
-		// Очистка
 		ctx.clearRect(0, 0, this.logicalWidth, this.logicalHeight);
 
-		// Рисуем все
 		for (const obj of objects) {
 			if (obj.type === 'rect') this.drawRect(ctx, obj as Rect);
 			if (obj.type === 'circle') this.drawCircle(ctx, obj as Circle);
@@ -201,11 +274,10 @@ export class SelectTool extends Tool {
 			if (obj.type === 'brush') this.drawBrush(ctx, obj as Brush);
 		}
 
-		// Рисуем выделение
 		if (this.selectedObject) {
 			const bbox = getBoundingBox(this.selectedObject);
 			ctx.strokeStyle = '#007bff';
-			ctx.lineWidth = 1 / this.dpr; // компенсация масштаба
+			ctx.lineWidth = 1 / this.dpr;
 			ctx.setLineDash([4 / this.dpr, 4 / this.dpr]);
 			ctx.strokeRect(bbox.x, bbox.y, bbox.width, bbox.height);
 			ctx.setLineDash([]);
@@ -239,12 +311,7 @@ export class SelectTool extends Tool {
 		switch (this.selectedObject!.type) {
 			case 'rect': {
 				const rect = this.selectedObject as Rect;
-				return {
-					x: this.previewRectX,
-					y: this.previewRectY,
-					width: rect.width,
-					height: rect.height,
-				};
+				return { x: this.previewRectX, y: this.previewRectY, width: rect.width, height: rect.height };
 			}
 
 			case 'circle': {
@@ -262,21 +329,12 @@ export class SelectTool extends Tool {
 				const y1 = Math.min(this.previewLineY1, this.previewLineY2);
 				const x2 = Math.max(this.previewLineX1, this.previewLineX2);
 				const y2 = Math.max(this.previewLineY1, this.previewLineY2);
-				return {
-					x: x1,
-					y: y1,
-					width: x2 - x1,
-					height: y2 - y1,
-				};
+				return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
 			}
 
 			case 'text': {
 				const text = this.selectedObject as Text;
-				const previewObj = {
-					...text,
-					x: this.previewTextX,
-					y: this.previewTextY,
-				};
+				const previewObj = { ...text, x: this.previewTextX, y: this.previewTextY };
 				return getBoundingBox(previewObj);
 			}
 

@@ -20,6 +20,8 @@ export class TextTool extends Tool {
 	private pendingText: { x: number; y: number; fontSize: number; color: string } | null = null;
 	private resizeObserver: ResizeObserver | null = null;
 	private isTextEditingRef: React.RefObject<boolean>;
+	private guides: { enabled: boolean; columns: number; rows: number } = { enabled: false, columns: 1, rows: 1 };
+	private isCtrlPressedRef?: React.RefObject<boolean>;
 
 	constructor(
 		canvas: HTMLCanvasElement,
@@ -29,9 +31,13 @@ export class TextTool extends Tool {
 		isTextEditingRef: React.RefObject<boolean>,
 		container: HTMLDivElement,
 		snapToGrid?: (x: number, y: number) => [number, number],
+		guides?: { enabled: boolean; columns: number; rows: number },
+		isCtrlPressedRef?: React.RefObject<boolean>
 	) {
 		super(canvas, styles, options, zoom, snapToGrid, container);
 		this.isTextEditingRef = isTextEditingRef;
+		this.isCtrlPressedRef = isCtrlPressedRef;
+		this.guides = guides || { enabled: false, columns: 1, rows: 1 };
 		this.createTextInput();
 		this.listen();
 	}
@@ -185,6 +191,37 @@ export class TextTool extends Tool {
 		this.updateBorderColor(rect, bounds);
 	};
 
+	private snapToGuideLines(x: number, y: number): [number, number] {
+		if (!this.guides.enabled || !this.isCtrlPressedRef?.current) return [x, y];
+
+		const projectWidth = this.logicalWidth;
+		const projectHeight = this.logicalHeight;
+		const gridW = projectWidth / this.guides.columns;
+		const gridH = projectHeight / this.guides.rows;
+		const tolerance = 30;
+
+		const verticalLines = Array.from({ length: this.guides.columns + 1 }, (_, i) => i * gridW);
+		const horizontalLines = Array.from({ length: this.guides.rows + 1 }, (_, i) => i * gridH);
+
+		const findNearestLine = (pos: number, lines: number[]): number | null => {
+			let nearest = null;
+			let minDist = tolerance + 1;
+			for (const line of lines) {
+				const dist = Math.abs(pos - line);
+				if (dist < minDist) {
+					minDist = dist;
+					nearest = line;
+				}
+			}
+			return nearest;
+		};
+
+		const snappedX = findNearestLine(x, verticalLines) ?? x;
+		const snappedY = findNearestLine(y, horizontalLines) ?? y;
+
+		return [snappedX, snappedY];
+	}
+
 	private handleKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
@@ -203,7 +240,10 @@ export class TextTool extends Tool {
 			return;
 		}
 
-		const { x, y, fontSize, color } = this.pendingText;
+		let { x, y } = this.pendingText;
+		const {fontSize, color} = this.pendingText;
+
+		[x, y] = this.snapToGuideLines(x, y);
 
 		const tempCtx = this.ctx;
 		if (!tempCtx) {
@@ -267,7 +307,6 @@ export class TextTool extends Tool {
 
 				if (width > maxWidth && currentLine === '') {
 					const broken = this.breakLongWordLogical(ctx, word, maxWidth);
-
 					lines.push(...broken);
 					continue;
 				}
@@ -294,7 +333,6 @@ export class TextTool extends Tool {
 			const test = current + char;
 			if (ctx.measureText(test).width > maxWidth) {
 				if (current) parts.push(current);
-
 				current = char;
 			} else {
 				current = test;

@@ -45,6 +45,7 @@ export const Canvas: React.FC = () => {
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
+	const isCtrlPressedRef = useRef(false);
 	const isDrawingRef = useRef(false);
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const layerChangeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,27 +154,6 @@ export const Canvas: React.FC = () => {
 		[projectId, activeLayer, tool, dispatch, thunkDispatch],
 	);
 
-	const snapToGrid = useCallback(
-		(x: number, y: number): [number, number] => {
-			if (!guides.enabled) return [x, y];
-
-			const gridW = currentProject.width / guides.columns;
-			const gridH = currentProject.height / guides.rows;
-			const SNAP_TOLERANCE = gridW * 0.1;
-
-			const nearestGridX = Math.round(x / gridW) * gridW;
-			const xDiff = Math.abs(x - nearestGridX);
-			const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
-
-			const nearestGridY = Math.round(y / gridH) * gridH;
-			const yDiff = Math.abs(y - nearestGridY);
-			const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
-
-			return [snappedX, snappedY];
-		},
-		[guides, currentProject],
-	);
-
 	const toolOptions = useMemo(
 		() => ({
 			layerId: activeLayer?.id || '',
@@ -238,6 +218,25 @@ export const Canvas: React.FC = () => {
 		triggerLayerSave();
 	}, [tool, projectLayers, triggerLayerSave]);
 
+
+	const snapToGrid = useCallback((x: number, y: number): [number, number] => {
+		if (!guides.enabled || !isCtrlPressedRef.current) return [x, y];
+
+		const gridW = currentProject.width / guides.columns;
+		const gridH = currentProject.height / guides.rows;
+		const SNAP_TOLERANCE = gridW * 0.1;
+
+		const nearestGridX = Math.round(x / gridW) * gridW;
+		const xDiff = Math.abs(x - nearestGridX);
+		const snappedX = xDiff < SNAP_TOLERANCE ? nearestGridX : x;
+
+		const nearestGridY = Math.round(y / gridH) * gridH;
+		const yDiff = Math.abs(y - nearestGridY);
+		const snappedY = yDiff < SNAP_TOLERANCE ? nearestGridY : y;
+
+		return [snappedX, snappedY];
+	}, [guides, currentProject]);
+
 	useEffect(() => {
 		if (toolRef.current) {
 			toolRef.current.destroyEvents();
@@ -248,7 +247,7 @@ export const Canvas: React.FC = () => {
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
-				toolRef.current = new SelectTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new SelectTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid, guides, isCtrlPressedRef);
 				break;
 			}
 			case ACTIONS.BRUSH: {
@@ -272,15 +271,7 @@ export const Canvas: React.FC = () => {
 				break;
 			}
 			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(
-					canvasRef.current,
-					toolStyles,
-					toolOptions,
-					zoom,
-					isTextEditingRef,
-					textareaContainerRef.current,
-					snapToGrid,
-				);
+				toolRef.current = new TextTool(canvasRef.current, toolStyles, toolOptions, zoom, isTextEditingRef, textareaContainerRef.current, snapToGrid, guides, isCtrlPressedRef);
 				break;
 			}
 			default: {
@@ -453,9 +444,48 @@ export const Canvas: React.FC = () => {
 	}, [activeLayer?.id, setupCanvasDPR]);
 
 	useEffect(() => {
+		const canvasContainer = canvasContainerRef.current;
+		if (!canvasContainer) return;
+
+		const preventContextMenu = (e: Event) => e.preventDefault();
+		canvasContainer.addEventListener('contextmenu', preventContextMenu);
+
+		canvasContainer.addEventListener('selectstart', preventContextMenu);
+		canvasContainer.addEventListener('controlselect', preventContextMenu);
+
+		return () => {
+			canvasContainer.removeEventListener('contextmenu', preventContextMenu);
+			canvasContainer.removeEventListener('selectstart', preventContextMenu);
+			canvasContainer.removeEventListener('controlselect', preventContextMenu);
+		};
+	}, [])
+
+	useEffect(() => {
 		if (canvasContainerRef.current) {
 			setCanvasContainerWidth(canvasContainerRef.current.getBoundingClientRect().width);
 		}
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Control') {
+				e.preventDefault()
+				isCtrlPressedRef.current = true;
+			}
+		};
+
+		const handleKeyUp = (e: KeyboardEvent) => {
+			if (e.key === 'Control') {
+				e.preventDefault()
+				isCtrlPressedRef.current = false;
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener('keyup', handleKeyUp);
+
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener('keyup', handleKeyUp);
+		};
 	}, []);
 
 	if (!currentProject) {
@@ -471,7 +501,8 @@ export const Canvas: React.FC = () => {
 				padding: '8px',
 				backgroundColor: 'var(--main-bg)',
 				overflow: 'auto',
-			}}>
+			}}
+		>
 			<Box
 				ref={textareaContainerRef}
 				sx={{
