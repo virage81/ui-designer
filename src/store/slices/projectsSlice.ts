@@ -542,12 +542,10 @@ export const {
 	enableGuides,
 	setGuidesColumns,
 	setGuidesRows,
-
 	addToHistory,
 	undoHistory,
 	redoHistory,
 	setHistory,
-
 	setPreviewSaved,
 } = projectsSlice.actions;
 
