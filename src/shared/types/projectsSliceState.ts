@@ -11,4 +11,8 @@ export interface ProjectsSliceState {
 		columns: number;
 		rows: number;
 	};
+	save: {
+		lastPreviewSavedAt: number | null;
+		lastSaveWasManual: boolean;
+	};
 }
