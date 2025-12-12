@@ -37,6 +37,7 @@ export const Canvas: React.FC = () => {
 	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+	const textareaContainerRef = useRef<HTMLDivElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
@@ -222,7 +223,7 @@ export const Canvas: React.FC = () => {
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !canvasContainerRef.current || !activeLayer || !currentProject.id) return;
+		if (!canvasRef.current || !textareaContainerRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
@@ -256,7 +257,7 @@ export const Canvas: React.FC = () => {
 					toolOptions,
 					zoom,
 					isTextEditingRef,
-					canvasContainerRef.current,
+					textareaContainerRef.current,
 					snapToGrid,
 				);
 				break;
@@ -273,7 +274,7 @@ export const Canvas: React.FC = () => {
 			}
 		};
 		//eslint-disable-next-line
-	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, canvasContainerRef, snapToGrid]);
+	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
 
 	useEffect(() => {
 		if (!canvasRef.current || !activeLayer) return;
@@ -412,6 +413,7 @@ export const Canvas: React.FC = () => {
 
 	return (
 		<Box
+			ref={canvasContainerRef}
 			sx={{
 				width: '100%',
 				padding: '8px',
@@ -419,7 +421,7 @@ export const Canvas: React.FC = () => {
 				overflow: 'auto',
 			}}>
 			<Box
-				ref={canvasContainerRef}
+				ref={textareaContainerRef}
 				sx={{
 					position: 'relative',
 					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
