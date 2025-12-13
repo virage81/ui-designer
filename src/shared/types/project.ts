@@ -55,3 +55,8 @@ export interface SaveHistorySnapshotParams {
 	layerId: Layer['id'];
 	canvasDataURL: string;
 };
+
+export interface SetHistoryActivityParams {
+	projectId: Project['id'];
+};
+

@@ -1,6 +1,7 @@
-import { generateId } from '@shared/helpers';
-import type { Line } from '@shared/types/canvas';
-import { Tool, type Styles, type ToolOptions } from './Tool';
+// import { generateId } from '@shared/helpers';
+// import type { Line } from '@shared/types/canvas';
+// import { Tool, type Styles, type ToolOptions } from './Tool';
+import { Tool, type Styles } from './Tool';
 
 export class LineTool extends Tool {
 	private saved: string = '';
@@ -9,8 +10,19 @@ export class LineTool extends Tool {
 	private currentX: number = 0;
 	private currentY: number = 0;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
-		super(canvas, styles, options, zoom, snapToGrid);
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		// options: ToolOptions = {},
+		zoom: number,
+		snapToGrid?: (x: number, y: number) => [number, number]) {
+		super(
+			canvas,
+			styles,
+			// options,
+			zoom,
+			snapToGrid
+		);
 		this.listen();
 	}
 
@@ -48,6 +60,11 @@ export class LineTool extends Tool {
 	mouseMoveHandler(e: PointerEvent) {
 		if (!this.isMouseDown) return;
 
+		// const [x, y] = this.getMousePos(e);
+		// this.currentX = x;
+		// this.currentY = y;
+		// this.draw(this.startX, this.startY, this.currentX, this.currentY);
+
 		const [x, y] = this.getMousePos(e);
 		this.currentX = x;
 		this.currentY = y;
@@ -57,19 +74,19 @@ export class LineTool extends Tool {
 	mouseUpHandler() {
 		this.isMouseDown = false;
 
-		const line: Line = {
-			id: generateId(),
-			type: 'line',
-			x1: this.startX,
-			y1: this.startY,
-			x2: this.currentX,
-			y2: this.currentY,
-			stroke: this.fill,
-			strokeWidth: this.strokeWidth,
-			layerId: this.layerId || 'default',
-		};
+		// const line: Line = {
+		// 	id: generateId(),
+		// 	type: 'line',
+		// 	x1: this.startX,
+		// 	y1: this.startY,
+		// 	x2: this.currentX,
+		// 	y2: this.currentY,
+		// 	stroke: this.fill,
+		// 	strokeWidth: this.strokeWidth,
+		// 	layerId: this.layerId || 'default',
+		// };
 
-		this.onComplete?.(line);
+		// this.onComplete?.(line);
 	}
 
 	draw(x1: number, y1: number, x2: number, y2: number) {

@@ -1,10 +1,12 @@
 import { Box, FormControlLabel, Slider, Switch, TextField, Typography } from '@mui/material';
-import { COLOR_PALETTE, SIZE_PRESETS, WIDTH_PRESETS } from '@shared/config';
+import { SIZE_PRESETS, WIDTH_PRESETS } from '@shared/config';
 import type { RootState } from '@store/index';
 import { ACTIONS, setFillColor, setFontSize, setStrokeColor, setStrokeWidth } from '@store/slices/toolsSlice';
 import { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { enableGuides, setGuidesColumns, setGuidesRows } from '@store/slices/projectsSlice.ts';
+import { SketchPicker } from 'react-color';
+import styles from './MenuContent.module.css';
 
 interface MenuContentProps {
 	currentSetting: ACTIONS | null;
@@ -102,38 +104,26 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 							border: '1px solid var(--header-border-color)',
 							borderRadius: 1,
 						}}>
-						<Box
-							sx={{
-								width: 24,
-								height: 24,
-								backgroundColor: `${currentSetting === ACTIONS.COLOR ? selectedColor : selectedContourColor}`,
-								border: '1px solid var(--header-border-color)',
-								mr: 2,
+						<SketchPicker
+							className={styles.sketchPicker}
+							color={currentSetting === ACTIONS.COLOR ? selectedColor : selectedContourColor}
+							onChangeComplete={color => {
+								const { r, g, b, a } = color.rgb;
+								const rgbaString = `rgba(${r}, ${g}, ${b}, ${a})`;
+								const selectedHandler = currentSetting === ACTIONS.COLOR ? handleColorSelect : handleContourColorSelect;
+
+								selectedHandler(rgbaString);
+							}}
+							styles={{
+								default: {
+									picker: {
+										background: 'var(--picker-bg)',
+										boxShadow: 'unset',
+										border: 'unset',
+									},
+								},
 							}}
 						/>
-						<Typography variant='body2'>
-							{currentSetting === ACTIONS.COLOR ? selectedColor : selectedContourColor}
-						</Typography>
-					</Box>
-					<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 0.5 }}>
-						{COLOR_PALETTE.map(color => (
-							<Box
-								key={color}
-								sx={{
-									width: 24,
-									height: 24,
-									backgroundColor: color,
-									border: '1px solid var(--header-border-color)',
-									cursor: 'pointer',
-									'&:hover': { border: '2px solid #000' },
-								}}
-								onClick={
-									currentSetting === ACTIONS.COLOR
-										? () => handleColorSelect(color)
-										: () => handleContourColorSelect(color)
-								}
-							/>
-						))}
 					</Box>
 				</Box>
 			);

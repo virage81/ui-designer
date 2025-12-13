@@ -1,6 +1,7 @@
-import { generateId } from '@shared/helpers';
-import type { Circle } from '@shared/types/canvas';
-import { Tool, type Styles, type ToolOptions } from './Tool';
+// import { generateId } from '@shared/helpers';
+// import type { Circle } from '@shared/types/canvas';
+// import { Tool, type Styles, type ToolOptions } from './Tool';
+import { Tool, type Styles } from './Tool';
 
 export class CircleTool extends Tool {
 	private saved: string = '';
@@ -8,8 +9,20 @@ export class CircleTool extends Tool {
 	private startX: number = 0;
 	private startY: number = 0;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number]) {
-		super(canvas, styles, options, zoom, snapToGrid);
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		// options: ToolOptions = {},
+		zoom: number,
+		snapToGrid?: (x: number, y: number) => [number, number]
+	) {
+		super(
+			canvas,
+			styles,
+			// options,
+			zoom,
+			snapToGrid
+		);
 		this.listen();
 	}
 
@@ -55,19 +68,19 @@ export class CircleTool extends Tool {
 	mouseUpHandler() {
 		this.isMouseDown = false;
 
-		const circle: Circle = {
-			id: generateId(),
-			type: 'circle',
-			cx: this.startX,
-			cy: this.startY,
-			r: this.radius,
-			fill: this.fill,
-			stroke: this.stroke,
-			strokeWidth: this.strokeWidth,
-			layerId: this.layerId || 'default',
-		};
+		// const circle: Circle = {
+		// 	id: generateId(),
+		// 	type: 'circle',
+		// 	cx: this.startX,
+		// 	cy: this.startY,
+		// 	r: this.radius,
+		// 	fill: this.fill,
+		// 	stroke: this.stroke,
+		// 	strokeWidth: this.strokeWidth,
+		// 	layerId: this.layerId || 'default',
+		// };
 
-		this.onComplete?.(circle);
+		// this.onComplete?.(circle);
 	}
 
 	draw(x: number, y: number, radius: number) {

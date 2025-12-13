@@ -79,6 +79,9 @@ h1 {
 		--tab-bg: #e3e3e3;
 		--tab-color: white;
 		--active-tab-bg: #1976d2;
+
+		--picker-bg: #ffffff;
+		--picker-label: #000000;
 	}
 }
 
@@ -109,5 +112,8 @@ h1 {
 		--tab-bg: #222222;
 		--tab-color: white;
 		--active-tab-bg: #0d0d0d;
+
+		--picker-bg: #181818;
+		--picker-label: #ffffff;
 	}
 }

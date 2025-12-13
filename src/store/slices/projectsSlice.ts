@@ -4,6 +4,7 @@ import type {
 	AddToHistoryParams,
 	Project,
 	SaveHistorySnapshotParams,
+	SetHistoryActivityParams,
 	SetHistoryParams,
 	UndoRedoHistoryParams,
 } from '@shared/types/project';
@@ -177,8 +178,9 @@ const projectsSlice = createSlice({
 					activeLayer: layer,
 				};
 			}
+
 			// Устанавливаем активность истории для перерисовки
-			state.history[projectId].active = true;
+			// state.history[projectId].active = state.history[projectId].pointer !== state.history[projectId].history.length - 1;
 		},
 
 		deleteLayer: (state, action: PayloadAction<DeleteLayerParams>) => {
@@ -372,7 +374,7 @@ const projectsSlice = createSlice({
 			}
 
 			// Устанавливаем активность истории для перерисовки
-			state.history[projectId].active = false;
+			// state.history[projectId].active = state.history[projectId].pointer !== state.history[projectId].history.length - 1;
 		},
 
 		// Тут отменяем историю на шаг
@@ -389,7 +391,7 @@ const projectsSlice = createSlice({
 			}
 
 			// Устанавливаем активность истории для перерисовки
-			state.history[projectId].active = true;
+			// state.history[projectId].active = state.history[projectId].pointer !== state.history[projectId].history.length - 1;
 		},
 
 		// Тут возвращаем историю на шаг
@@ -406,7 +408,7 @@ const projectsSlice = createSlice({
 			}
 
 			// Устанавливаем активность истории для перерисовки
-			state.history[projectId].active = true;
+			// state.history[projectId].active = state.history[projectId].pointer !== state.history[projectId].history.length - 1;
 		},
 
 		// Тут выставляем историю при клике на список истории
@@ -417,7 +419,7 @@ const projectsSlice = createSlice({
 			if (id === undefined) throw new Error(`History with ID ${id} does not exist`);
 
 			// Устанавливаем активность истории для перерисовки
-			state.history[projectId].active = true;
+			state.history[projectId].active = state.history[projectId].pointer !== state.history[projectId].history.length - 1;
 
 			if (id === 0) {
 				state.history[projectId].pointer = id;
@@ -465,6 +467,14 @@ const projectsSlice = createSlice({
 					state.activeLayer = state.history[projectId].history[id].activeLayer;
 				}
 			}
+		},
+
+		// Тут выставляем активность истории
+		setHistoryActivity: (state, action: PayloadAction<SetHistoryActivityParams>) => {
+			const { projectId } = action.payload;
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
+
+			state.history[projectId].active = state.history[projectId].pointer !== state.history[projectId].history.length - 1;
 		},
 
 		setPreviewSaved: (state, action: PayloadAction<{ manual?: boolean }>) => {
@@ -546,6 +556,7 @@ export const {
 	undoHistory,
 	redoHistory,
 	setHistory,
+	setHistoryActivity,
 	setPreviewSaved,
 } = projectsSlice.actions;
 
