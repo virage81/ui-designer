@@ -4,8 +4,8 @@ import type { CircleTool } from './Circle';
 import type { EraserTool } from './Eraser';
 import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
-import type { SelectTool } from './Select';
-import type { TextTool } from './Text';
+// import type { SelectTool } from './Select';
+// import type { TextTool } from './Text';
 
 export type Styles = {
 	fontSize: number;
@@ -46,14 +46,15 @@ export class Tool {
 
 	protected container?: HTMLDivElement;
 
-	constructor(
-		canvas: HTMLCanvasElement,
-		styles: Styles,
-		options: ToolOptions = {},
-		zoom: number,
-		snapToGrid?: (x: number, y: number) => [number, number],
-		container?: HTMLDivElement,
-	) {
+	constructor(canvas: HTMLCanvasElement, styles: Styles, zoom: number, snapToGrid?: (x: number, y: number) => [number, number], container?: HTMLDivElement,) {
+		// constructor(
+		// 	canvas: HTMLCanvasElement,
+		// 	styles: Styles,
+		// 	options: ToolOptions = {},
+		// 	zoom: number,
+		// 	snapToGrid?: (x: number, y: number) => [number, number],
+		// 	container?: HTMLDivElement,
+		// ) {
 		this.canvas = canvas;
 		this.container = container;
 
@@ -71,9 +72,9 @@ export class Tool {
 		this.zoom = zoom;
 
 		this.snapToGrid = snapToGrid;
-		this.layerId = options.layerId;
-		this.onComplete = options.onComplete;
-		this.layerObjects = options.layerObjects || [];
+		// this.layerId = options.layerId;
+		// this.onComplete = options.onComplete;
+		// this.layerObjects = options.layerObjects || [];
 
 		this.destroyEvents();
 		this.setupEvents();
@@ -123,4 +124,5 @@ export class Tool {
 	}
 }
 
-export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
+// export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
+export type Tools = BrushTool | RectangleTool | CircleTool | LineTool | EraserTool;

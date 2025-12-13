@@ -2,12 +2,12 @@ import { useCanvasContext } from '@/contexts/useCanvasContext.ts';
 import { redrawCanvas } from '@components/Canvas/utils/redrawCanvas';
 import { GridOverlay } from '@components/GridOverlay/GridOverlay';
 import { Box } from '@mui/material';
-import type { PayloadAction } from '@reduxjs/toolkit';
+// import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview';
-import type { Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
+// import type { Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
 import type { RootState } from '@store/index';
-import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
+// import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import {
 	addToHistory,
 	historySelector,
@@ -24,8 +24,8 @@ import { CircleTool } from './tools/Circle';
 import { EraserTool } from './tools/Eraser';
 import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
-import { SelectTool } from './tools/Select';
-import { TextTool } from './tools/Text';
+// import { SelectTool } from './tools/Select';
+// import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
 
 export const Canvas: React.FC = () => {
@@ -39,7 +39,7 @@ export const Canvas: React.FC = () => {
 	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
 	const isHistoryActive = useSelector((state: RootState) => isHistoryActiveSelector(state, projectId));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
-	const layerObjects = useSelector((state: RootState) => objectsByLayerSelector(state, activeLayer?.id || ''));
+	// const layerObjects = useSelector((state: RootState) => objectsByLayerSelector(state, activeLayer?.id || ''));
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 
 	const isTextEditingRef = useRef(false);
@@ -126,44 +126,44 @@ export const Canvas: React.FC = () => {
 		}, 30000);
 	}, [isTextEditingRef, saveProjectPreviewRef]);
 
-	const handleToolComplete = useCallback(
-		(payload: unknown) => {
-			if (!payload || typeof payload !== 'object') return;
+	// const handleToolComplete = useCallback(
+	// 	(payload: unknown) => {
+	// 		if (!payload || typeof payload !== 'object') return;
 
-			if ('type' in payload) {
-				dispatch(addObject(payload as Rect | Circle | Line | Text));
-			}
-			if ('id' in payload && 'updates' in payload) {
-				dispatch(updateObject(payload as PayloadAction<{ id: string; updates: Partial<Drawable> }>['payload']));
-			}
-			if ('id' in payload && !('type' in payload) && !('updates' in payload)) {
-				dispatch(removeObject((payload as { id: string }).id));
-			}
+	// 		if ('type' in payload) {
+	// 			dispatch(addObject(payload as Rect | Circle | Line | Text));
+	// 		}
+	// 		if ('id' in payload && 'updates' in payload) {
+	// 			dispatch(updateObject(payload as PayloadAction<{ id: string; updates: Partial<Drawable> }>['payload']));
+	// 		}
+	// 		if ('id' in payload && !('type' in payload) && !('updates' in payload)) {
+	// 			dispatch(removeObject((payload as { id: string }).id));
+	// 		}
 
-			if (canvasRef.current && activeLayer) {
-				const dataURL = canvasRef.current.toDataURL('image/png', 1);
+	// 		if (canvasRef.current && activeLayer) {
+	// 			const dataURL = canvasRef.current.toDataURL('image/png', 1);
 
-				dispatch(
-					addToHistory({
-						projectId: projectId,
-						activeLayer,
-						type: tool,
-						canvasDataURL: dataURL,
-					}),
-				);
-			}
-		},
-		[projectId, activeLayer, tool, dispatch],
-	);
+	// 			dispatch(
+	// 				addToHistory({
+	// 					projectId: projectId,
+	// 					activeLayer,
+	// 					type: tool,
+	// 					canvasDataURL: dataURL,
+	// 				}),
+	// 			);
+	// 		}
+	// 	},
+	// 	[projectId, activeLayer, tool, dispatch],
+	// );
 
-	const toolOptions = useMemo(
-		() => ({
-			layerId: activeLayer?.id || '',
-			onComplete: handleToolComplete,
-			layerObjects,
-		}),
-		[activeLayer?.id, handleToolComplete, layerObjects],
-	);
+	// const toolOptions = useMemo(
+	// 	() => ({
+	// 		layerId: activeLayer?.id || '',
+	// 		onComplete: handleToolComplete,
+	// 		layerObjects,
+	// 	}),
+	// 	[activeLayer?.id, handleToolComplete, layerObjects],
+	// );
 
 	// @TODO: внедрить в существующую рисовку
 	// const baseStyles = useMemo(
@@ -250,52 +250,57 @@ export const Canvas: React.FC = () => {
 		if (!canvasRef.current || !textareaContainerRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
-			case ACTIONS.SELECT: {
-				toolRef.current = new SelectTool(
-					canvasRef.current,
-					toolStyles,
-					toolOptions,
-					zoom,
-					snapToGrid,
-					guides,
-					isCtrlPressedRef,
-				);
-				break;
-			}
+			// case ACTIONS.SELECT: {
+			// 	toolRef.current = new SelectTool(
+			// 		canvasRef.current,
+			// 		toolStyles,
+			// 		toolOptions,
+			// 		zoom,
+			// 		snapToGrid,
+			// 		guides,
+			// 		isCtrlPressedRef,
+			// 	);
+			// 	break;
+			// }
 			case ACTIONS.BRUSH: {
-				toolRef.current = new BrushTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
+				// toolRef.current = new BrushTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
+				toolRef.current = new BrushTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.RECTANGLE: {
-				toolRef.current = new RectangleTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
+				toolRef.current = new RectangleTool(canvasRef.current, toolStyles, zoom, snapToGrid);
+				// toolRef.current = new RectangleTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.CIRCLE: {
-				toolRef.current = new CircleTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
+				// toolRef.current = new CircleTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
+				toolRef.current = new CircleTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.LINE: {
-				toolRef.current = new LineTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
+				// toolRef.current = new LineTool(canvasRef.current, toolStyles, toolOptions, zoom, snapToGrid);
+				toolRef.current = new LineTool(canvasRef.current, toolStyles, zoom, snapToGrid);
 				break;
 			}
 			case ACTIONS.ERASER: {
-				toolRef.current = new EraserTool(canvasRef.current, toolStyles, toolOptions, zoom);
+				toolRef.current = new EraserTool(canvasRef.current, toolStyles, zoom);
+				// toolRef.current = new EraserTool(canvasRef.current, toolStyles, toolOptions, zoom);
 				break;
 			}
-			case ACTIONS.TEXT: {
-				toolRef.current = new TextTool(
-					canvasRef.current,
-					toolStyles,
-					toolOptions,
-					zoom,
-					isTextEditingRef,
-					textareaContainerRef.current,
-					snapToGrid,
-					guides,
-					isCtrlPressedRef,
-				);
-				break;
-			}
+			// case ACTIONS.TEXT: {
+			// 	toolRef.current = new TextTool(
+			// 		canvasRef.current,
+			// 		toolStyles,
+			// 		// toolOptions,
+			// 		zoom,
+			// 		isTextEditingRef,
+			// 		textareaContainerRef.current,
+			// 		snapToGrid,
+			// 		guides,
+			// 		// isCtrlPressedRef,
+			// 	);
+			// 	break;
+			// }
 			default: {
 				break;
 			}
@@ -307,8 +312,8 @@ export const Canvas: React.FC = () => {
 				toolRef.current = null;
 			}
 		};
-		//eslint-disable-next-line
-	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
+		// }, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
+	}, [tool, activeLayer, toolStyles, currentProject.id, zoom, textareaContainerRef, snapToGrid, guides]);
 
 	// Тут перерисовываем canvas
 	useEffect(() => {
@@ -432,11 +437,12 @@ export const Canvas: React.FC = () => {
 	// 	//eslint-disable-next-line
 	// }, [layerObjects, activeLayer?.id, currentProject?.width, currentProject?.height]);
 
+	// Тут увеличиваем DPR теперь у всех слоёв
 	useEffect(() => {
-		if (canvasRef.current) {
-			setupCanvasDPR(canvasRef.current);
-		}
-	}, [activeLayer?.id, setupCanvasDPR]);
+		Object.values(canvasesRef.current).forEach(canvas => {
+			setupCanvasDPR(canvas);
+		});
+	}, [setupCanvasDPR]);
 
 	useEffect(() => {
 		const canvasContainer = canvasContainerRef.current;
@@ -504,7 +510,8 @@ export const Canvas: React.FC = () => {
 					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
 					width: currentProject.width,
 					height: currentProject.height,
-					cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+					// cursor: tool !== ACTIONS.SELECT ? 'crosshair' : 'auto',
+					cursor: tool !== ACTIONS.POINTER ? 'crosshair' : 'auto',
 					boxShadow: '0px 0px 10px 5px rgba(0, 0, 0, 0.1)',
 					transform: `scale(${zoom})`,
 					transformOrigin: `${currentProject.width * zoom <= canvasContainerWidth ? 'top center' : 'top left'}`,
@@ -530,7 +537,6 @@ export const Canvas: React.FC = () => {
 								canvasesRef.current[layer.id] = el;
 								if (layer.id === activeLayer?.id) {
 									canvasRef.current = el;
-									setupCanvasDPR(el);
 								}
 								register(layer.id, el);
 							} else {
@@ -547,6 +553,19 @@ export const Canvas: React.FC = () => {
 							pointerEvents: layer.id === activeLayer?.id ? 'auto' : 'none',
 							width: `${currentProject.width}px`,
 							height: `${currentProject.height}px`,
+						}}
+						onPointerUp={() => {
+							if (activeLayer && canvasRef.current) {
+								const dataURL = canvasRef.current.toDataURL('image/png', 1);
+								dispatch(
+									addToHistory({
+										projectId: projectId,
+										activeLayer,
+										type: tool,
+										canvasDataURL: dataURL,
+									}),
+								);
+							}
 						}}
 					/>
 				))}

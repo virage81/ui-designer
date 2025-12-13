@@ -35,7 +35,8 @@ export class SelectTool extends Tool {
 		guides?: { enabled: boolean; columns: number; rows: number },
 		isCtrlPressedRef?: React.RefObject<boolean>
 	) {
-		super(canvas, styles, options, zoom, snapToGrid);
+		// super(canvas, styles, options, zoom, snapToGrid);
+		super(canvas, styles, zoom, snapToGrid);
 		this.isCtrlPressedRef = isCtrlPressedRef;
 
 		this.guides = guides || { enabled: false, columns: 1, rows: 1 };

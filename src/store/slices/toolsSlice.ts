@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export enum ACTIONS {
+	POINTER = 'pointer',
 	SELECT = 'select',
 	BRUSH = 'brush',
 	RECTANGLE = 'rectangle',
@@ -26,7 +27,8 @@ interface State {
 }
 
 const initialState: State = {
-	tool: ACTIONS.SELECT,
+	// tool: ACTIONS.SELECT,
+	tool: ACTIONS.BRUSH,
 	fontSize: 16,
 	strokeWidth: 1,
 	fillColor: '#000000',
