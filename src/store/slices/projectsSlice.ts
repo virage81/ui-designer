@@ -1,7 +1,9 @@
 import { createAction, createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
+import type { Drawable } from '@shared/types/canvas';
 import type {
 	AddToHistoryParams,
+	ClearHistoryParams,
 	Project,
 	SaveHistorySnapshotParams,
 	SetHistoryParams,
@@ -29,10 +31,13 @@ const initialState: ProjectsSliceState = {
 	activeLayer: null,
 	zoom: 1,
 	guides: { enabled: false, columns: 1, rows: 1 },
+
 	save: {
 		lastPreviewSavedAt: null,
 		lastSaveWasManual: false,
 	},
+
+	canvasObjects: [],
 };
 
 const projectsSlice = createSlice({
@@ -68,6 +73,7 @@ const projectsSlice = createSlice({
 				history: [
 					{
 						layers: [...state.layers[id]],
+						objects: [...state.canvasObjects],
 						type: HISTORY_ACTIONS.LAYER_ADD,
 						id: 0,
 						date: new Date().getTime(),
@@ -131,6 +137,7 @@ const projectsSlice = createSlice({
 			const newPointer = ++state.history[projectId].pointer;
 			state.history[projectId].history[newPointer] = {
 				layers: [...state.layers[projectId]],
+				objects: [...state.canvasObjects],
 				type: HISTORY_ACTIONS.LAYER_ADD,
 				id: newPointer,
 				date: new Date().getTime(),
@@ -171,6 +178,7 @@ const projectsSlice = createSlice({
 				// и добавляем новый элемент в историю
 				state.history[projectId].history[newPointer] = {
 					layers: [...state.layers[projectId]],
+					objects: [...state.canvasObjects],
 					type: HISTORY_ACTIONS.LAYER_ACTIVE,
 					id: newPointer,
 					date: new Date().getTime(),
@@ -221,9 +229,13 @@ const projectsSlice = createSlice({
 
 			state.layers[projectId].splice(layerIndex, 1);
 
+			state.canvasObjects = state.canvasObjects.filter(object => object.layerId !== id);
+
 			const newPointer = ++state.history[projectId].pointer;
+			// и добавляем новый элемент в историю
 			state.history[projectId].history[newPointer] = {
 				layers: [...state.layers[projectId]],
+				objects: [...state.canvasObjects],
 				type: HISTORY_ACTIONS.LAYER_DELETE,
 				id: newPointer,
 				date: new Date().getTime(),
@@ -257,6 +269,7 @@ const projectsSlice = createSlice({
 			// и добавляем новый элемент в историю
 			state.history[payload.projectId].history[newPointer] = {
 				layers: [...state.layers[payload.projectId]],
+				objects: [...state.canvasObjects],
 				type: HISTORY_ACTIONS.LAYER_ACTIVE,
 				id: newPointer,
 				date: new Date().getTime(),
@@ -281,6 +294,7 @@ const projectsSlice = createSlice({
 			state.layers[payload.projectId][layerIndex].canvasDataURL = '';
 			state.layers[payload.projectId][layerIndex].canvasData = undefined;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
+			state.canvasObjects = state.canvasObjects.filter(object => object.layerId !== payload.layerId);
 
 			/**
 			 * Тут действия с историей.
@@ -290,11 +304,13 @@ const projectsSlice = createSlice({
 			// и добавляем новый элемент в историю
 			state.history[payload.projectId].history[newPointer] = {
 				layers: [...state.layers[payload.projectId]],
+				objects: [...state.canvasObjects],
 				type: HISTORY_ACTIONS.LAYER_CLEAR,
 				id: newPointer,
 				date: new Date().getTime(),
 				activeLayer: state.layers[payload.projectId][layerIndex],
 			};
+
 			state.history[payload.projectId].active = true;
 		},
 
@@ -352,6 +368,7 @@ const projectsSlice = createSlice({
 			// и добавляем новый элемент в историю
 			state.history[projectId].history[newPointer] = {
 				layers: [...state.layers[projectId]],
+				objects: [...state.canvasObjects],
 				type,
 				id: newPointer,
 				date: new Date().getTime(),
@@ -359,17 +376,17 @@ const projectsSlice = createSlice({
 			};
 
 			// Тут задаётся лимит истории
-			const history = state.history[projectId].history;
-			const historyLimit = 16;
+			// const history = state.history[projectId].history;
+			// const historyLimit = 16;
 
-			if (history.length > historyLimit) {
-				const limitedHistory = history.slice(-historyLimit);
-				state.history[projectId].history = limitedHistory;
-				limitedHistory.forEach((h, index) => (h.id = index));
+			// if (history.length > historyLimit) {
+			// 	const limitedHistory = history.slice(-historyLimit);
+			// 	state.history[projectId].history = limitedHistory;
+			// 	limitedHistory.forEach((h, index) => (h.id = index));
 
-				state.history[projectId].pointer = state.history[projectId].history.length - 1;
-				state.history[projectId].sliced = true;
-			}
+			// 	state.history[projectId].pointer = state.history[projectId].history.length - 1;
+			// 	state.history[projectId].sliced = true;
+			// }
 
 			// Устанавливаем активность истории для перерисовки
 			state.history[projectId].active = false;
@@ -382,6 +399,10 @@ const projectsSlice = createSlice({
 
 			const pointer = --state.history[projectId].pointer;
 			state.layers[projectId] = [...state.history[projectId].history[pointer].layers];
+
+			if (state.history[projectId].history[pointer].objects) {
+				state.canvasObjects = [...state.history[projectId].history[pointer].objects];
+			}
 
 			// Устанавливаем активный слой из истории
 			if (state.history[projectId].history[pointer].activeLayer) {
@@ -399,6 +420,10 @@ const projectsSlice = createSlice({
 
 			const pointer = ++state.history[projectId].pointer;
 			state.layers[projectId] = [...state.history[projectId].history[pointer].layers];
+
+			if (state.history[projectId].history[pointer].objects) {
+				state.canvasObjects = [...state.history[projectId].history[pointer].objects];
+			}
 
 			// Устанавливаем активный слой из истории
 			if (state.history[projectId].history[pointer].activeLayer) {
@@ -423,6 +448,10 @@ const projectsSlice = createSlice({
 				state.history[projectId].pointer = id;
 				state.layers[projectId] = [...state.history[projectId].history[id].layers];
 
+				if (state.history[projectId].history[id].objects) {
+					state.canvasObjects = [...state.history[projectId].history[id].objects];
+				}
+
 				// Устанавливаем активный слой из истории
 				if (state.history[projectId].history[id].activeLayer) {
 					state.activeLayer = state.history[projectId].history[id].activeLayer;
@@ -443,6 +472,10 @@ const projectsSlice = createSlice({
 				const pointer = state.history[projectId].pointer;
 				state.layers[projectId] = [...state.history[projectId].history[pointer].layers];
 
+				if (state.history[projectId].history[pointer].objects) {
+					state.canvasObjects = [...state.history[projectId].history[pointer].objects];
+				}
+
 				// Устанавливаем активный слой из истории
 				if (state.history[projectId].history[pointer].activeLayer) {
 					state.activeLayer = state.history[projectId].history[pointer].activeLayer;
@@ -460,10 +493,59 @@ const projectsSlice = createSlice({
 				state.history[projectId].pointer = id;
 				state.layers[projectId] = [...state.history[projectId].history[id].layers];
 
+				if (state.history[projectId].history[id].objects) {
+					state.canvasObjects = [...state.history[projectId].history[id].objects];
+				}
+
 				// Устанавливаем активный слой из истории
 				if (state.history[projectId].history[id].activeLayer) {
 					state.activeLayer = state.history[projectId].history[id].activeLayer;
 				}
+			}
+		},
+
+		clearHistory: (state, action: PayloadAction<ClearHistoryParams>) => {
+			const { projectId } = action.payload;
+
+			// Валидация: проверяем существование проекта
+			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
+
+			// Валидация: проверяем наличие истории для проекта
+			if (!state.history[projectId]) throw new Error(`No history found for project with ID ${projectId}`);
+
+			// Валидация: запрещаем очистку, если в истории только одна запись
+			if (state.history[projectId].history.length <= 1)
+				throw new Error('Cannot clear history: only initial state exists');
+
+			// Сохраняем начальную запись истории (самый первый снимок)
+			const initialHistoryEntry = state.history[projectId].history[0];
+
+			// Очищаем историю
+			state.history[projectId].history = [initialHistoryEntry];
+			state.history[projectId].pointer = 0;
+			state.history[projectId].active = true;
+
+			// Сбрасываем sliced флаг (если он есть)
+			if (state.history[projectId].sliced !== undefined) {
+				state.history[projectId].sliced = false;
+			}
+
+			// Восстанавливаем состояние из начальной записи истории
+			state.layers[projectId] = [...initialHistoryEntry.layers];
+
+			// Восстанавливаем состояние из начальной записи истории
+			if (initialHistoryEntry.objects) {
+				state.canvasObjects = [...initialHistoryEntry.objects];
+			} else {
+				// Если в начальной записи нет объектов, очищаем canvasObjects
+				state.canvasObjects = state.canvasObjects.filter(
+					object => !state.layers[projectId].some(layer => layer.id === object.layerId),
+				);
+			}
+
+			// Устанавливаем активный слой из начальной записи истории
+			if (initialHistoryEntry.activeLayer) {
+				state.activeLayer = initialHistoryEntry.activeLayer;
 			}
 		},
 
@@ -472,6 +554,19 @@ const projectsSlice = createSlice({
 
 			state.save.lastPreviewSavedAt = Date.now();
 			state.save.lastSaveWasManual = manual;
+		},
+
+		addCanvasObject: (state, action: PayloadAction<Drawable>) => {
+			state.canvasObjects.push(action.payload);
+		},
+
+		updateCanvasObject: (state, action: PayloadAction<{ id: string; updates: Partial<Drawable> }>) => {
+			const obj = state.canvasObjects.find(object => object.id === action.payload.id);
+			if (obj) Object.assign(obj, action.payload.updates);
+		},
+
+		removeCanvasObject: (state, action: PayloadAction<string>) => {
+			state.canvasObjects = state.canvasObjects.filter(object => object.id !== action.payload);
 		},
 	},
 });
@@ -529,6 +624,9 @@ export const historySelector = (state: RootState, projectId: Project['id']) => {
 	return [...history[projectId].history];
 };
 
+export const canvasObjectsByLayerSelector = (state: RootState, layerId: string) =>
+	state.projects.canvasObjects.filter(obj => obj.layerId === layerId);
+
 export const {
 	createProject,
 	updateProject,
@@ -546,6 +644,10 @@ export const {
 	undoHistory,
 	redoHistory,
 	setHistory,
+	clearHistory,
+	addCanvasObject,
+	updateCanvasObject,
+	removeCanvasObject,
 	setPreviewSaved,
 } = projectsSlice.actions;
 

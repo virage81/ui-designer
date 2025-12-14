@@ -4,15 +4,18 @@ import { Box } from '@mui/material';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { useProject } from '@shared/hooks/useProject';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview';
-import type { Circle, Drawable, Line, Rect, Text } from '@shared/types/canvas';
+import type { Drawable } from '@shared/types/canvas';
 import type { RootState } from '@store/index';
-import { addObject, objectsByLayerSelector, removeObject, updateObject } from '@store/slices/canvasSlice';
 import {
+	addCanvasObject,
 	addToHistory,
+	canvasObjectsByLayerSelector,
 	historySelector,
 	isHistoryActiveSelector,
 	pointerSelector,
+	removeCanvasObject,
 	sortedLayersSelector,
+	updateCanvasObject,
 } from '@store/slices/projectsSlice';
 import { ACTIONS } from '@store/slices/toolsSlice';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -25,9 +28,8 @@ import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
 // import { TextTool } from './tools/Text';
-import { redrawCanvas } from '@components/Canvas/utils/redrawCanvas';
-
 import type { Styles, Tools } from './tools/Tool';
+import { renderLayerObjects } from './utils/renderLayerObjects';
 
 export const Canvas: React.FC = () => {
 	const { id: projectId = '' } = useParams();
@@ -40,7 +42,8 @@ export const Canvas: React.FC = () => {
 	const pointer = useSelector((state: RootState) => pointerSelector(state, projectId));
 	const isHistoryActive = useSelector((state: RootState) => isHistoryActiveSelector(state, projectId));
 	const zoom = useSelector((state: RootState) => state.projects.zoom);
-	const layerObjects = useSelector((state: RootState) => objectsByLayerSelector(state, activeLayer?.id || ''));
+	const layerObjects = useSelector((state: RootState) => canvasObjectsByLayerSelector(state, activeLayer?.id || ''));
+	const allObjects = useSelector((state: RootState) => state.projects.canvasObjects);
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 
 	// const isTextEditingRef = useRef(false);
@@ -60,10 +63,8 @@ export const Canvas: React.FC = () => {
 	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
-	const initialRenderRef = useRef(false);
-
-	// @TODO: внедрить в существующую рисовку
 	// const animationFrameRef = useRef<number | null>(null);
+	// const initialRenderRef = useRef(false);
 
 	const [canvasContainerWidth, setCanvasContainerWidth] = useState(currentProject.width);
 
@@ -138,24 +139,22 @@ export const Canvas: React.FC = () => {
 			if (!payload || typeof payload !== 'object') return;
 
 			if ('type' in payload) {
-				dispatch(addObject(payload as Rect | Circle | Line | Text));
+				dispatch(addCanvasObject(payload as Drawable));
 			}
 			if ('id' in payload && 'updates' in payload) {
-				dispatch(updateObject(payload as PayloadAction<{ id: string; updates: Partial<Drawable> }>['payload']));
+				dispatch(updateCanvasObject(payload as PayloadAction<{ id: string; updates: Partial<Drawable> }>['payload']));
 			}
 			if ('id' in payload && !('type' in payload) && !('updates' in payload)) {
-				dispatch(removeObject((payload as { id: string }).id));
+				dispatch(removeCanvasObject((payload as { id: string }).id));
 			}
 
-			if (canvasRef.current && activeLayer) {
-				const dataURL = canvasRef.current.toDataURL('image/png', 1);
-
+			if (activeLayer && projectId) {
 				dispatch(
 					addToHistory({
-						projectId: projectId,
+						projectId,
 						activeLayer,
 						type: tool,
-						canvasDataURL: dataURL,
+						canvasDataURL: '',
 					}),
 				);
 			}
@@ -171,19 +170,6 @@ export const Canvas: React.FC = () => {
 		}),
 		[activeLayer?.id, handleToolComplete, layerObjects],
 	);
-
-	// @TODO: внедрить в существующую рисовку
-	// const baseStyles = useMemo(
-	// 	() => ({
-	// 		lineCap: 'round' as CanvasLineCap,
-	// 		lineJoin: 'round' as CanvasLineJoin,
-	// 		font: `${toolStyles.fontSize}px Arial`,
-	// 		lineWidth: toolStyles.strokeWidth,
-	// 		fillStyle: toolStyles.fill,
-	// 		strokeStyle: toolStyles.strokeStyle,
-	// 	}),
-	// 	[toolStyles],
-	// );
 
 	useEffect(() => {
 		saveProjectPreviewRef.current = saveProjectPreview;
@@ -319,127 +305,91 @@ export const Canvas: React.FC = () => {
 	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
 	// }, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
 
-	// Тут перерисовываем canvas
+	// эффект для SelectTool
 	useEffect(() => {
-		if (!canvasRef.current || !history) return;
+		if (toolRef.current instanceof SelectTool) {
+			const historyObjects = history[pointer].objects || [];
 
-		if (!initialRenderRef.current || isHistoryActive) {
-			history[pointer].layers.forEach(l => {
-				redrawCanvas(canvasesRef.current[l.id], l.canvasDataURL);
-			});
+			// Передаём ТОЛЬКО актуальные объекты активного слоя из истории
+			const activeLayerObjects = historyObjects.filter(obj => obj.layerId === activeLayer?.id);
 
-			initialRenderRef.current = true;
+			toolRef.current.updateLayerObjects(activeLayerObjects);
 		}
-	}, [history, pointer, isHistoryActive]);
+	}, [activeLayer?.id, tool, history, pointer]);
 
-	//
-
-	// @TODO: внедрить в существующую рисовку
+	// // Тут перерисовываем canvas
 	// useEffect(() => {
-	// 	if (!canvasRef.current || !activeLayer || !currentProject) return;
+	// 	if (!canvasRef.current || !history) return;
 
-	// 	const draw = () => {
-	// 		const ctx = canvasRef.current?.getContext('2d');
-	// 		if (!ctx) return;
-
-	// 		ctx.clearRect(0, 0, currentProject.width, currentProject.height);
-
-	// 		Object.assign(ctx, baseStyles);
-
-	// 		layerObjects.forEach(obj => {
-	// 			switch (obj.type) {
-	// 				case 'rect': {
-	// 					const r = obj as Rect;
-	// 					ctx.fillStyle = r.fill;
-	// 					ctx.strokeStyle = r.stroke;
-	// 					ctx.lineWidth = r.strokeWidth;
-	// 					ctx.beginPath();
-	// 					ctx.rect(r.x, r.y, r.width, r.height);
-	// 					ctx.fill();
-	// 					if (r.strokeWidth > 0) ctx.stroke();
-	// 					break;
-	// 				}
-
-	// 				case 'circle': {
-	// 					const c = obj as Circle;
-	// 					ctx.fillStyle = c.fill;
-	// 					ctx.strokeStyle = c.stroke;
-	// 					ctx.lineWidth = c.strokeWidth;
-	// 					ctx.beginPath();
-	// 					ctx.arc(c.cx, c.cy, c.r, 0, Math.PI * 2);
-	// 					ctx.fill();
-	// 					if (c.strokeWidth > 0) ctx.stroke();
-	// 					break;
-	// 				}
-
-	// 				case 'line': {
-	// 					const l = obj as Line;
-	// 					ctx.strokeStyle = l.stroke;
-	// 					ctx.lineWidth = l.strokeWidth;
-	// 					ctx.beginPath();
-	// 					ctx.moveTo(l.x1, l.y1);
-	// 					ctx.lineTo(l.x2, l.y2);
-	// 					ctx.stroke();
-	// 					break;
-	// 				}
-
-	// 				case 'text': {
-	// 					const t = obj as Text;
-	// 					ctx.fillStyle = t.fill;
-	// 					ctx.font = `${t.fontSize}px Arial`;
-	// 					ctx.textBaseline = 'top';
-	// 					ctx.textAlign = 'left';
-
-	// 					const lines = t.lines || t.text.split('\n');
-	// 					const lineHeight = t.fontSize * 1.2;
-
-	// 					for (let i = 0; i < lines.length; i++) {
-	// 						const lineY = t.y + i * lineHeight;
-	// 						if (lineY > currentProject.height) break;
-	// 						ctx.fillText(lines[i], t.x, lineY);
-	// 					}
-	// 					break;
-	// 				}
-
-	// 				case 'brush': {
-	// 					const b = obj as Brush;
-	// 					if (b.points.length === 0) break;
-
-	// 					ctx.strokeStyle = b.stroke;
-	// 					ctx.lineWidth = b.strokeWidth;
-	// 					ctx.lineCap = 'round';
-	// 					ctx.lineJoin = 'round';
-
-	// 					ctx.beginPath();
-	// 					ctx.moveTo(b.points[0].x, b.points[0].y);
-
-	// 					for (let i = 1; i < b.points.length; i++) {
-	// 						ctx.lineTo(b.points[i].x, b.points[i].y);
-	// 					}
-
-	// 					ctx.stroke();
-	// 					break;
-	// 				}
-	// 				default:
-	// 					break;
-	// 			}
+	// 	if (!initialRenderRef.current || isHistoryActive) {
+	// 		history[pointer].layers.forEach(l => {
+	// 			redrawCanvas(canvasesRef.current[l.id], l.canvasDataURL);
 	// 		});
-	// 	};
 
-	// 	if (animationFrameRef.current) {
-	// 		cancelAnimationFrame(animationFrameRef.current);
+	// 		initialRenderRef.current = true;
 	// 	}
+	// }, [history, pointer, isHistoryActive]);
 
-	// 	animationFrameRef.current = requestAnimationFrame(draw);
+	// Перерисовка canvas через векторный рендер по объектам
+	useEffect(() => {
+		if (!currentProject || !canvasesRef.current || !sortedLayers) return;
 
-	// 	return () => {
-	// 		if (animationFrameRef.current) {
-	// 			cancelAnimationFrame(animationFrameRef.current);
-	// 		}
-	// 	};
+		const dpr = window.devicePixelRatio || 1;
 
-	// 	//eslint-disable-next-line
-	// }, [layerObjects, activeLayer?.id, currentProject?.width, currentProject?.height]);
+		sortedLayers.forEach(layer => {
+			const canvas = canvasesRef.current[layer.id];
+			if (!canvas) return;
+
+			let objectsToRender: Drawable[] = [];
+
+			if (isHistoryActive && history && history[pointer]) {
+				const historyObjects = history[pointer].objects || [];
+				objectsToRender = historyObjects.filter(obj => obj.layerId === layer.id);
+			} else {
+				objectsToRender = allObjects.filter(obj => obj.layerId === layer.id);
+			}
+
+			renderLayerObjects(canvas, objectsToRender, dpr);
+		});
+
+		// TODO: можно через requestAnimationFrame, но тогда не будет анимации
+		// const renderFrame = () => {
+		// 	const dpr = window.devicePixelRatio || 1;
+
+		// 	sortedLayers.forEach(layer => {
+		// 		const canvas = canvasesRef.current[layer.id];
+		// 		if (!canvas) return;
+
+		// 		let objectsToRender: Drawable[] = [];
+
+		// 		if (isHistoryActive && history && history[pointer]) {
+		// 			const historyObjects = history[pointer].objects || [];
+		// 			objectsToRender = historyObjects.filter(obj => obj.layerId === layer.id);
+		// 		} else {
+		// 			objectsToRender = allObjects.filter(obj => obj.layerId === layer.id);
+		// 		}
+
+		// 		renderLayerObjects(canvas, objectsToRender, dpr);
+		// 	});
+
+		// 	// Запрашиваем следующий кадр анимации
+		// 	animationFrameRef.current = requestAnimationFrame(renderFrame);
+		// };
+
+		// // Отменяем предыдущий кадр анимации
+		// if (animationFrameRef.current) {
+		// 	cancelAnimationFrame(animationFrameRef.current);
+		// }
+
+		// // Запускаем рендеринг
+		// animationFrameRef.current = requestAnimationFrame(renderFrame);
+
+		// return () => {
+		// 	if (animationFrameRef.current) {
+		// 		cancelAnimationFrame(animationFrameRef.current);
+		// 	}
+		// };
+	}, [allObjects, sortedLayers, currentProject, isHistoryActive, history, pointer, projectId]);
 
 	useEffect(() => {
 		if (canvasRef.current) {
@@ -547,6 +497,8 @@ export const Canvas: React.FC = () => {
 								unregister(layer.id);
 							}
 						}}
+						width={`${currentProject.width}px`}
+						height={`${currentProject.height}px`}
 						style={{
 							background: 'transparent',
 							position: 'absolute',

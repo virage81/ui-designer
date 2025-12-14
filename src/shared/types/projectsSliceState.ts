@@ -1,4 +1,5 @@
-import type { Layer, Project, HistoryStack } from '@shared/types/project.ts';
+import type { HistoryStack, Layer, Project } from '@shared/types/project.ts';
+import type { Drawable } from './canvas';
 
 export interface ProjectsSliceState {
 	projects: Project[];
@@ -15,4 +16,5 @@ export interface ProjectsSliceState {
 		lastPreviewSavedAt: number | null;
 		lastSaveWasManual: boolean;
 	};
+	canvasObjects: Drawable[];
 }

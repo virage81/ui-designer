@@ -23,12 +23,12 @@ export const GraphicEditor: React.FC = () => {
 		<div>
 			<CanvasContextProvider>
 				<TopMenu />
-				<Box sx={{ display: 'flex', height: 'calc(100vh - 89px)', width: '100%' }}>
+				<Box sx={{ display: 'flex', height: 'calc(100vh - 90px)', width: '100%' }}>
 					<LeftSidebar />
 					<Canvas />
 					<RightSideBar />
 				</Box>
-				<ZoomBar/>
+				<ZoomBar />
 				<Modal />
 			</CanvasContextProvider>
 		</div>

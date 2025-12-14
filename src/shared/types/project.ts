@@ -1,5 +1,6 @@
-import type { HISTORY_ACTIONS } from "@store/slices/projectsSlice.enums";
-import type { ACTIONS } from "@store/slices/toolsSlice";
+import type { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
+import type { ACTIONS } from '@store/slices/toolsSlice';
+import type { Drawable } from './canvas';
 
 export interface Project {
 	id: string;
@@ -22,6 +23,7 @@ export interface History {
 	type: HISTORY_ACTIONS | ACTIONS;
 	layers: Layer[];
 	activeLayer?: Layer | null;
+	objects: Drawable[];
 }
 
 export interface Layer {
@@ -48,10 +50,14 @@ export interface UndoRedoHistoryParams {
 export interface SetHistoryParams {
 	projectId: Project['id'];
 	id: number;
-};
+}
+
+export interface ClearHistoryParams {
+	projectId: string;
+}
 
 export interface SaveHistorySnapshotParams {
 	projectId: Project['id'];
 	layerId: Layer['id'];
 	canvasDataURL: string;
-};
+}
