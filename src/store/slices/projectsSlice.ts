@@ -1,7 +1,13 @@
 import { createAction, createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
+import type {
+	AddToHistoryParams,
+	Project,
+	SaveHistorySnapshotParams,
+	SetHistoryParams,
+	UndoRedoHistoryParams,
+} from '@shared/types/project';
 import type { ProjectsSliceState } from '@shared/types/projectsSliceState';
-import type { AddToHistoryParams, Project, SaveHistorySnapshotParams, SetHistoryParams, UndoRedoHistoryParams } from '@shared/types/project';
 import { checkProjectExistence } from '@store/utils/projects';
 import type { RootState } from '..';
 import type {
@@ -23,6 +29,10 @@ const initialState: ProjectsSliceState = {
 	activeLayer: null,
 	zoom: 1,
 	guides: { enabled: false, columns: 1, rows: 1 },
+	save: {
+		lastPreviewSavedAt: null,
+		lastSaveWasManual: false,
+	},
 };
 
 const projectsSlice = createSlice({
@@ -37,7 +47,7 @@ const projectsSlice = createSlice({
 				...action.payload,
 				id,
 				preview: '',
-				date: new Date().getTime()
+				date: new Date().getTime(),
 			});
 
 			const layer = {
@@ -55,13 +65,15 @@ const projectsSlice = createSlice({
 
 			// Инициализируем историю для проекта и начального слоя
 			state.history[id] = {
-				history: [{
-					layers: [...state.layers[id]],
-					type: HISTORY_ACTIONS.LAYER_ADD,
-					id: 0,
-					date: new Date().getTime(),
-					activeLayer: layer,
-				}],
+				history: [
+					{
+						layers: [...state.layers[id]],
+						type: HISTORY_ACTIONS.LAYER_ADD,
+						id: 0,
+						date: new Date().getTime(),
+						activeLayer: layer,
+					},
+				],
 				// pointer - общий указатель для истории;
 				pointer: 0,
 				/**
@@ -122,8 +134,8 @@ const projectsSlice = createSlice({
 				type: HISTORY_ACTIONS.LAYER_ADD,
 				id: newPointer,
 				date: new Date().getTime(),
-				activeLayer: activeLayer
-			}
+				activeLayer: activeLayer,
+			};
 		},
 
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
@@ -139,7 +151,7 @@ const projectsSlice = createSlice({
 
 			if (layer && canvasDataURL) {
 				layer.canvasDataURL = canvasDataURL;
-			};
+			}
 			if (state.activeLayer && canvasDataURL) {
 				state.activeLayer.canvasData = canvasDataURL;
 			}
@@ -216,7 +228,7 @@ const projectsSlice = createSlice({
 				id: newPointer,
 				date: new Date().getTime(),
 				activeLayer: newActiveLayer,
-			}
+			};
 
 			state.activeLayer = newActiveLayer;
 		},
@@ -238,9 +250,9 @@ const projectsSlice = createSlice({
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 
 			/**
-			* Тут действия с историей.
-			* Увеличиваем указатель на шаг
-			*/
+			 * Тут действия с историей.
+			 * Увеличиваем указатель на шаг
+			 */
 			const newPointer = ++state.history[payload.projectId].pointer;
 			// и добавляем новый элемент в историю
 			state.history[payload.projectId].history[newPointer] = {
@@ -282,7 +294,7 @@ const projectsSlice = createSlice({
 				id: newPointer,
 				date: new Date().getTime(),
 				activeLayer: state.layers[payload.projectId][layerIndex],
-			}
+			};
 			state.history[payload.projectId].active = true;
 		},
 
@@ -329,7 +341,7 @@ const projectsSlice = createSlice({
 
 			if (layer && canvasDataURL) {
 				layer.canvasDataURL = canvasDataURL;
-			};
+			}
 
 			if (state.activeLayer && canvasDataURL) {
 				state.activeLayer.canvasData = canvasDataURL;
@@ -344,7 +356,7 @@ const projectsSlice = createSlice({
 				id: newPointer,
 				date: new Date().getTime(),
 				activeLayer,
-			}
+			};
 
 			// Тут задаётся лимит истории
 			const history = state.history[projectId].history;
@@ -353,7 +365,7 @@ const projectsSlice = createSlice({
 			if (history.length > historyLimit) {
 				const limitedHistory = history.slice(-historyLimit);
 				state.history[projectId].history = limitedHistory;
-				limitedHistory.forEach((h, index) => h.id = index);
+				limitedHistory.forEach((h, index) => (h.id = index));
 
 				state.history[projectId].pointer = state.history[projectId].history.length - 1;
 				state.history[projectId].sliced = true;
@@ -454,6 +466,13 @@ const projectsSlice = createSlice({
 				}
 			}
 		},
+
+		setPreviewSaved: (state, action: PayloadAction<{ manual?: boolean }>) => {
+			const { manual = false } = action.payload;
+
+			state.save.lastPreviewSavedAt = Date.now();
+			state.save.lastSaveWasManual = manual;
+		},
 	},
 });
 
@@ -477,14 +496,14 @@ export const isUndoActiveSelector = (state: RootState, projectId: Project['id'])
 	const pointer = history[projectId].pointer;
 
 	return pointer >= 1;
-}
+};
 
 export const isRedoActiveSelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
 	const pointer = history[projectId].pointer;
 
 	return pointer < history[projectId].history.length - 1;
-}
+};
 
 export const pointerSelector = (state: RootState, projectId: Project['id']) => {
 	const { history } = state.projects;
@@ -527,6 +546,7 @@ export const {
 	undoHistory,
 	redoHistory,
 	setHistory,
+	setPreviewSaved,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
