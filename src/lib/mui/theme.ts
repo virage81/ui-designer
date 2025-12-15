@@ -1,3 +1,143 @@
-import { createTheme } from '@mui/material';
+import { createTheme, type ThemeOptions } from '@mui/material/styles';
+declare module '@mui/material/Button' {
+	interface ButtonPropsVariantOverrides {
+		'graphic-tools': true;
+		tools: true;
+		canceled: true;
+	}
+}
 
-export const theme = createTheme();
+interface ExtendedThemeOptions extends ThemeOptions {
+	colorSchemes?: { light?: ThemeOptions; dark?: ThemeOptions };
+}
+
+const shared: ThemeOptions = {
+	components: {
+		MuiAppBar: {
+			styleOverrides: {
+				root: {
+					background: 'var(--header-bg)',
+					borderBottom: '1px solid',
+					borderColor: 'var(--header-border-color)',
+					color: 'var(--color)',
+					boxShadow: 'none',
+				},
+			},
+		},
+		MuiDialog: {
+			styleOverrides: {
+				paper: { background: 'var(--main-bg)', color: 'var(--color)', border: '1px solid var(--header-border-color)' },
+			},
+		},
+		MuiButton: {
+			variants: [
+				{
+					props: { variant: 'canceled' },
+					style: {
+						minWidth: 'auto',
+						border: '1px solid var(--tab-bg)',
+						color: 'var(--color)',
+						textTransform: 'none',
+						':hover': { backgroundColor: 'var(--hover-bg)', color: 'var(--hover-color)' },
+					},
+				},
+				{
+					props: { variant: 'tools' },
+					style: {
+						minWidth: 'auto',
+						color: 'var(--color)',
+						padding: '3px 10px',
+						textTransform: 'none',
+						':hover': { backgroundColor: 'var(--hover-bg)', color: 'var(--hover-color)' },
+					},
+				},
+				{
+					props: { variant: 'graphic-tools' },
+					style: {
+						width: '48px',
+						height: '48px',
+						minWidth: '48px',
+						minHeight: '48px',
+						color: 'var(--color)',
+						padding: '0',
+						textTransform: 'none',
+						':hover': { backgroundColor: 'var(--hover-bg)', color: 'var(--hover-color)' },
+					},
+				},
+			],
+		},
+		MuiTabs: {
+			styleOverrides: {
+				root: {
+					minHeight: 'auto',
+					width: '100%',
+					backgroundColor: 'var(--header-bg)',
+					padding: '0.5rem',
+				},
+				list: {
+					width: '100%',
+					display: 'flex',
+					alignItems: 'center',
+					padding: '0.25rem',
+					border: '1px solid var(--header-border-color)',
+					borderRadius: '4px',
+					color: 'var(--color)',
+					backgroundColor: 'var(--tabs-container-bg)',
+				},
+				indicator: {
+					display: 'none',
+				},
+			},
+		},
+		MuiTab: {
+			defaultProps: {
+				disableRipple: true,
+			},
+			styleOverrides: {
+				root: {
+					display: 'flex',
+					flexGrow: 1,
+					textTransform: 'none',
+					fontSize: '0.875rem',
+					maxHeight: '29px',
+					minHeight: '29px',
+					borderRadius: '4px',
+					padding: 0,
+					color: 'var(--color)',
+					backgroundColor: 'var(--tab-bg)',
+
+					'&.Mui-selected': {
+						color: 'var(--tab-color)',
+						backgroundColor: 'var(--active-tab-bg)',
+					},
+				},
+			},
+		},
+		MuiStack: {
+			styleOverrides: {
+				root: {
+					maxHeight: '100%',
+					display: 'flex',
+					flexDirection: 'column',
+					gap: 0.5,
+					overflowY: 'auto',
+					scrollbarWidth: 'none',
+					'&::-webkit-scrollbar': { display: 'none' },
+					position: 'relative',
+				},
+			},
+		},
+	},
+};
+
+export const theme = createTheme({
+	...shared,
+	colorSchemes: {
+		light: {
+			palette: { mode: 'light' },
+		},
+		dark: {
+			palette: { mode: 'dark', primary: { main: '#4285F4' }, error: { main: '#d40924' }, divider: '#31313A' },
+		},
+	},
+} as ExtendedThemeOptions);

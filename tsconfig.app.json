@@ -10,7 +10,9 @@
 		],
 		"module": "ESNext",
 		"types": [
-			"vite/client"
+			"vite/client",
+			"jest",
+			"@types/wicg-file-system-access"
 		],
 		"skipLibCheck": true,
 		/* Bundler mode */
@@ -24,7 +26,7 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"erasableSyntaxOnly": true,
+		"erasableSyntaxOnly": false,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true,
 		"baseUrl": "./src",
@@ -47,7 +49,8 @@
 		}
 	},
 	"include": [
-		"src"
+		"src",
+		"tests"
 	],
 	"exclude": [
 		"node_modules"
