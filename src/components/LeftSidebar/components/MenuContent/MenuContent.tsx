@@ -2,7 +2,7 @@ import { Box, FormControlLabel, Slider, Switch, TextField, Typography } from '@m
 import { COLOR_PALETTE, SIZE_PRESETS, WIDTH_PRESETS } from '@shared/config';
 import type { RootState } from '@store/index';
 import { ACTIONS, setFillColor, setFontSize, setStrokeColor, setStrokeWidth } from '@store/slices/toolsSlice';
-import { useCallback, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { enableGuides, setGuidesColumns, setGuidesRows } from '@store/slices/projectsSlice.ts';
 
@@ -18,6 +18,9 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 	const [selectedColor, setSelectedColor] = useState<string>(fillColor);
 	const [selectedContourColor, setSelectedContourColor] = useState<string>(strokeStyle);
 	const dispatch = useDispatch();
+
+	const isFill: boolean = currentSetting === ACTIONS.COLOR;
+	const currentColor: string = isFill ? selectedColor : selectedContourColor;
 
 	const handleFontSizeChange = useCallback(
 		(newValue: number) => {
@@ -106,13 +109,42 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 							sx={{
 								width: 24,
 								height: 24,
-								backgroundColor: `${currentSetting === ACTIONS.COLOR ? selectedColor : selectedContourColor}`,
+								backgroundColor: currentColor,
 								border: '1px solid var(--header-border-color)',
 								mr: 2,
 							}}
-						/>
+						>
+							<input
+								type="color"
+								style={{
+									backgroundColor: currentColor,
+									border: 'none',
+									width: '100%',
+									height: '100%',
+									padding: 0,
+									margin: 0,
+									cursor: 'pointer'
+								}}
+								value={currentColor}
+								onChange={(e: ChangeEvent<HTMLInputElement>) => {
+									const value = e.target.value;
+									if (isFill) {
+										setSelectedColor(value);
+									} else {
+										setSelectedContourColor(value);
+									}
+								}}
+								onBlur={() => {
+									if (isFill) {
+										dispatch(setFillColor(selectedColor));
+									} else {
+										dispatch(setStrokeColor(selectedContourColor));
+									}
+								}}
+							/>
+						</Box>
 						<Typography variant='body2'>
-							{currentSetting === ACTIONS.COLOR ? selectedColor : selectedContourColor}
+							{currentColor}
 						</Typography>
 					</Box>
 					<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 0.5 }}>
