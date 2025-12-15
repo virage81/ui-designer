@@ -1,8 +1,8 @@
-import type { History, Layer, Project } from '@shared/types/project.ts';
+import type { Layer, Project, HistoryStack } from '@shared/types/project.ts';
 
 export interface ProjectsSliceState {
 	projects: Project[];
-	history: Record<Project['id'], History[]>;
+	history: Record<Project['id'], HistoryStack>;
 	layers: Record<Project['id'], Layer[]>;
 	activeLayer: Layer | null;
 	zoom: number;
@@ -10,5 +10,9 @@ export interface ProjectsSliceState {
 		enabled: boolean;
 		columns: number;
 		rows: number;
+	};
+	save: {
+		lastPreviewSavedAt: number | null;
+		lastSaveWasManual: boolean;
 	};
 }

@@ -208,6 +208,9 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 							sx={{ width: '100%' }}
 						/>
 					</Box>
+					<Typography variant='caption' sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+						Для привязки удерживайте CTRL
+					</Typography>
 				</Box>
 			);
 
