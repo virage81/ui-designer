@@ -27,7 +27,7 @@ import { EraserTool } from './tools/Eraser';
 import { LineTool } from './tools/Line';
 import { RectangleTool } from './tools/Rect';
 import { SelectTool } from './tools/Select';
-// import { TextTool } from './tools/Text';
+import { TextTool } from './tools/Text';
 import type { Styles, Tools } from './tools/Tool';
 import { renderLayerObjects } from './utils/renderLayerObjects';
 
@@ -46,10 +46,10 @@ export const Canvas: React.FC = () => {
 	const allObjects = useSelector((state: RootState) => state.projects.canvasObjects);
 	const layersByProject = useSelector((state: RootState) => state.projects.layers);
 
-	// const isTextEditingRef = useRef(false);
+	const isTextEditingRef = useRef(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const canvasContainerRef = useRef<HTMLDivElement | null>(null);
-	// const textareaContainerRef = useRef<HTMLDivElement | null>(null);
+	const textareaContainerRef = useRef<HTMLDivElement | null>(null);
 	const toolRef = useRef<Tools | null>(null);
 	const dprSetupsRef = useRef<Record<string, boolean>>({});
 	const canvasesRef = useRef<Record<string, HTMLCanvasElement>>({});
@@ -99,10 +99,10 @@ export const Canvas: React.FC = () => {
 	);
 
 	const triggerDrawingSave = useCallback(() => {
-		// if (isTextEditingRef.current) {
-		// 	if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-		// 	return;
-		// }
+		if (isTextEditingRef.current) {
+			if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+			return;
+		}
 
 		if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
@@ -110,29 +110,29 @@ export const Canvas: React.FC = () => {
 			if (!isDrawingRef.current) {
 				saveProjectPreviewRef.current();
 			}
-			// if (!isDrawingRef.current && !isTextEditingRef.current) {
-			// 	saveProjectPreviewRef.current();
-			// }
+			if (!isDrawingRef.current && !isTextEditingRef.current) {
+				saveProjectPreviewRef.current();
+			}
 		}, 30000);
-	}, [saveProjectPreviewRef]);
-	// }, [isTextEditingRef, saveProjectPreviewRef]);
+		// }, [saveProjectPreviewRef]);
+	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const triggerLayerSave = useCallback(() => {
-		// if (isTextEditingRef.current) {
-		// 	if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
-		// 	return;
-		// }
+		if (isTextEditingRef.current) {
+			if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
+			return;
+		}
 
 		if (layerChangeTimeoutRef.current) clearTimeout(layerChangeTimeoutRef.current);
 
 		layerChangeTimeoutRef.current = setTimeout(() => {
 			saveProjectPreviewRef.current();
-			// if (!isTextEditingRef.current) {
-			// 	saveProjectPreviewRef.current();
-			// }
+			if (!isTextEditingRef.current) {
+				saveProjectPreviewRef.current();
+			}
 		}, 30000);
-	}, [saveProjectPreviewRef]);
-	// }, [isTextEditingRef, saveProjectPreviewRef]);
+		// }, [saveProjectPreviewRef]);
+	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const handleToolComplete = useCallback(
 		(payload: unknown) => {
@@ -240,8 +240,7 @@ export const Canvas: React.FC = () => {
 			toolRef.current = null;
 		}
 
-		if (!canvasRef.current || !activeLayer || !currentProject.id) return;
-		// if (!canvasRef.current || !textareaContainerRef.current || !activeLayer || !currentProject.id) return;
+		if (!canvasRef.current || !textareaContainerRef.current || !activeLayer || !currentProject.id) return;
 
 		switch (tool) {
 			case ACTIONS.SELECT: {
@@ -276,20 +275,20 @@ export const Canvas: React.FC = () => {
 				toolRef.current = new EraserTool(canvasRef.current, toolStyles, toolOptions, zoom);
 				break;
 			}
-			// case ACTIONS.TEXT: {
-			// 	toolRef.current = new TextTool(
-			// 		canvasRef.current,
-			// 		toolStyles,
-			// 		toolOptions,
-			// 		zoom,
-			// 		isTextEditingRef,
-			// 		textareaContainerRef.current,
-			// 		snapToGrid,
-			// 		guides,
-			// 		isCtrlPressedRef,
-			// 	);
-			// 	break;
-			// }
+			case ACTIONS.TEXT: {
+				toolRef.current = new TextTool(
+					canvasRef.current,
+					toolStyles,
+					toolOptions,
+					zoom,
+					isTextEditingRef,
+					textareaContainerRef.current,
+					snapToGrid,
+					guides,
+					isCtrlPressedRef,
+				);
+				break;
+			}
 			default: {
 				break;
 			}
@@ -302,8 +301,7 @@ export const Canvas: React.FC = () => {
 			}
 		};
 		//eslint-disable-next-line
-	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, snapToGrid]);
-	// }, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
+	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
 
 	// эффект для SelectTool
 	useEffect(() => {
@@ -334,8 +332,6 @@ export const Canvas: React.FC = () => {
 	useEffect(() => {
 		if (!currentProject || !canvasesRef.current || !sortedLayers) return;
 
-		const dpr = window.devicePixelRatio || 1;
-
 		sortedLayers.forEach(layer => {
 			const canvas = canvasesRef.current[layer.id];
 			if (!canvas) return;
@@ -349,7 +345,7 @@ export const Canvas: React.FC = () => {
 				objectsToRender = allObjects.filter(obj => obj.layerId === layer.id);
 			}
 
-			renderLayerObjects(canvas, objectsToRender, dpr);
+			renderLayerObjects(canvas, objectsToRender);
 		});
 
 		// TODO: можно через requestAnimationFrame, но тогда не будет анимации
@@ -457,7 +453,7 @@ export const Canvas: React.FC = () => {
 				overflow: 'auto',
 			}}>
 			<Box
-				// ref={textareaContainerRef}
+				ref={textareaContainerRef}
 				sx={{
 					position: 'relative',
 					m: `${currentProject.width * zoom <= canvasContainerWidth ? '0 auto' : '0'}`,
