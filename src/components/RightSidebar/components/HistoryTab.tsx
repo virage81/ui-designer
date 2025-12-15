@@ -1,11 +1,13 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import type { RootState } from '@store/index';
-import { historySelector, isHistorySlicedSelector, pointerSelector } from '@store/slices/projectsSlice';
-import { useSelector } from 'react-redux';
+import { clearHistory, historySelector, isHistorySlicedSelector, pointerSelector } from '@store/slices/projectsSlice';
+import { Trash2Icon } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { HistoryItem } from './HistoryItem';
 
 export const HistoryTab = () => {
+	const dispatch = useDispatch();
 	const { id: projectId = '' } = useParams();
 
 	const { activeLayer } = useSelector((state: RootState) => state.projects);
@@ -15,8 +17,18 @@ export const HistoryTab = () => {
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
-			<Box sx={{ display: 'flex', alignItems: 'center', minHeight: '36px' }}>
+			<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '36px' }}>
 				<Typography variant='subtitle2'>История действий</Typography>
+				<Button
+					variant='tools'
+					title='Очистить историю'
+					sx={{ padding: '10px' }}
+					onClick={() => {
+						if (!projectId) return;
+						dispatch(clearHistory({ projectId }));
+					}}>
+					<Trash2Icon size={16} color='var(--color)' />
+				</Button>
 			</Box>
 
 			<Box

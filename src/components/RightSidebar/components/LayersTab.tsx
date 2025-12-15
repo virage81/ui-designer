@@ -3,7 +3,6 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-ki
 import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import type { Layer } from '@shared/types/project';
 import type { RootState } from '@store/index';
-import { clearLayerCanvas } from '@store/slices/canvasSlice';
 import {
 	addToHistory,
 	clearActiveLayer,
@@ -13,12 +12,12 @@ import {
 	sortedLayersSelector,
 	updateLayer,
 } from '@store/slices/projectsSlice';
+import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 import { PlusIcon } from 'lucide-react';
 import { useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from '../components';
-import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 
 export const LayersTab = () => {
 	const dispatch = useDispatch();
@@ -77,7 +76,6 @@ export const LayersTab = () => {
 					layerId: currentLayer.id,
 				}),
 			);
-			dispatch(clearLayerCanvas(activeLayer?.id ?? ''));
 		}
 		handleCloseMenu();
 	};
@@ -193,6 +191,7 @@ export const LayersTab = () => {
 				<Typography variant='subtitle2'>Слои</Typography>
 				<Button
 					variant='tools'
+					title='Добавить слой'
 					sx={{ padding: '10px' }}
 					onClick={() => {
 						if (!projectId) return;

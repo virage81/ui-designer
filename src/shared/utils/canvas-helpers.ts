@@ -34,6 +34,7 @@ export const isPointInBBox = (
 };
 
 export const findObjectAtPoint = (objects: Drawable[], x: number, y: number): Drawable | null => {
+	objects = objects.filter(obj => ['rect', 'circle', 'line', 'text'].includes(obj.type));
 	for (let i = objects.length - 1; i >= 0; i--) {
 		const obj = objects[i];
 		const bbox = getBoundingBox(obj);

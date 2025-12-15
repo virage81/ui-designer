@@ -5,7 +5,7 @@ import type { EraserTool } from './Eraser';
 import type { LineTool } from './Line';
 import type { RectangleTool } from './Rect';
 import type { SelectTool } from './Select';
-import type { TextTool } from './Text';
+// import type { TextTool } from './Text';
 
 export type Styles = {
 	fontSize: number;
@@ -123,4 +123,5 @@ export class Tool {
 	}
 }
 
-export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
+// export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
+export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool;
