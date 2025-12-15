@@ -153,9 +153,9 @@ const projectsSlice = createSlice({
 			if (layer && canvasDataURL) {
 				layer.canvasDataURL = canvasDataURL;
 			}
-			if (state.activeLayer && canvasDataURL) {
-				state.activeLayer.canvasData = canvasDataURL;
-			}
+			// if (state.activeLayer && canvasDataURL) {
+			// 	state.activeLayer.canvasData = canvasDataURL;
+			// }
 
 			/**
 			 * Тут делаем изменяемый слой активным
@@ -345,9 +345,9 @@ const projectsSlice = createSlice({
 				layer.canvasDataURL = canvasDataURL;
 			}
 
-			if (state.activeLayer && canvasDataURL) {
-				state.activeLayer.canvasData = canvasDataURL;
-			}
+			// if (state.activeLayer && canvasDataURL) {
+			// 	state.activeLayer.canvasData = canvasDataURL;
+			// }
 
 			// Тут увеличиваем указатель на шаг
 			const newPointer = ++state.history[projectId].pointer;
