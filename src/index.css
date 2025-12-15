@@ -55,6 +55,20 @@ h1 {
 	line-height: 1.1;
 }
 
+input {
+	&::-webkit-color-swatch {
+		border: none;
+	}
+
+	&::-webkit-color-swatch-wrapper {
+		padding: 0;
+	}
+
+	&::-moz-color-swatch {
+		border: none;
+	}
+}
+
 @media (prefers-color-scheme: light) {
 	:root {
 		--main-bg: white;
