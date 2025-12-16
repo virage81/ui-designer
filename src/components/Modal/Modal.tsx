@@ -108,8 +108,8 @@ export const Modal: FC = () => {
 			if (projects.some((p: Project) => p.name === trimmedName)) {
 				setProjectNameError('Проект с таким именем уже существует');
 			} else {
-				setPendingName(trimmedName);
 				setIsLoading(true);
+				setPendingName(trimmedName);
 				dispatch(createProject(newProject));
 			}
 		}
@@ -135,15 +135,18 @@ export const Modal: FC = () => {
 		}
 
 		return () => {
-			setPendingName(null);
-		};
-	}, [projects, pendingName, navigate, location.pathname]);
-
-	useEffect(() => {
-		return () => {
 			dispatch(closeCreateProjectModal());
+			setPendingName(null);
+			setIsLoading(false);
 		};
-	}, [dispatch]);
+	}, [projects, pendingName, navigate, location.pathname, dispatch]);
+
+	// TODO: удалить, тк не отрабатывает при создании нового проекта на странице редактора
+	// useEffect(() => {
+	// 	return () => {
+	// 		dispatch(closeCreateProjectModal());
+	// 	};
+	// }, [dispatch]);
 
 	return (
 		<Dialog
