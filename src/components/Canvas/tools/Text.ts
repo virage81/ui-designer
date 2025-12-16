@@ -32,7 +32,7 @@ export class TextTool extends Tool {
 		container: HTMLDivElement,
 		snapToGrid?: (x: number, y: number) => [number, number],
 		guides?: { enabled: boolean; columns: number; rows: number },
-		isCtrlPressedRef?: React.RefObject<boolean>
+		isCtrlPressedRef?: React.RefObject<boolean>,
 	) {
 		super(canvas, styles, options, zoom, snapToGrid, container);
 		this.isTextEditingRef = isTextEditingRef;
@@ -241,7 +241,7 @@ export class TextTool extends Tool {
 		}
 
 		let { x, y } = this.pendingText;
-		const {fontSize, color} = this.pendingText;
+		const { fontSize, color } = this.pendingText;
 
 		[x, y] = this.snapToGuideLines(x, y);
 
@@ -260,6 +260,8 @@ export class TextTool extends Tool {
 		const maxWidth = (this.logicalWidth - x - 10) * this.dpr;
 		const lines = this.wrapTextLogical(tempCtx, text, maxWidth);
 		const lineHeight = fontSize * 1.2;
+
+		console.log('lines:', lines);
 
 		let width = 0;
 		for (const line of lines) {
