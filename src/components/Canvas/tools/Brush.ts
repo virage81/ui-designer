@@ -7,7 +7,13 @@ export class BrushTool extends Tool {
 	private pathId: string = '';
 	private savedImage?: ImageData;
 
-	constructor(canvas: HTMLCanvasElement, styles: Styles, options: ToolOptions = {}, zoom: number, snapToGrid?: (x: number, y: number) => [number, number],) {
+	constructor(
+		canvas: HTMLCanvasElement,
+		styles: Styles,
+		options: ToolOptions = {},
+		zoom: number,
+		snapToGrid?: (x: number, y: number) => [number, number],
+	) {
 		super(canvas, styles, options, zoom, snapToGrid);
 		this.listen();
 	}
@@ -22,6 +28,7 @@ export class BrushTool extends Tool {
 		if (!this.ctx) return;
 
 		this.isMouseDown = true;
+		this.canvas.setPointerCapture(e.pointerId);
 		const [x, y] = this.getMousePos(e);
 
 		this.currentPath = [{ x, y }];
@@ -36,13 +43,21 @@ export class BrushTool extends Tool {
 	mouseMoveHandler = (e: PointerEvent) => {
 		if (!this.isMouseDown || !this.ctx) return;
 
-		const [x, y] = this.getMousePos(e);
+		const rect = this.canvas.getBoundingClientRect();
+		const isInside =
+			e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+		const [x, y] = this.getConstrainedMousePos(e);
 		this.currentPath.push({ x, y });
 
 		this.draw(x, y);
+
+		if (!isInside) {
+			this.mouseUpHandler(e);
+		}
 	};
 
-	mouseUpHandler = () => {
+	mouseUpHandler = (e: PointerEvent) => {
 		if (!this.isMouseDown || !this.ctx || this.currentPath.length < 2) {
 			this.isMouseDown = false;
 			return;
@@ -62,6 +77,8 @@ export class BrushTool extends Tool {
 		this.isMouseDown = false;
 		this.currentPath = [];
 		this.savedImage = undefined;
+
+		this.canvas.releasePointerCapture(e.pointerId);
 	};
 
 	draw(x: number, y: number) {
@@ -80,5 +97,28 @@ export class BrushTool extends Tool {
 		this.ctx.lineWidth = this.strokeWidth;
 		this.ctx.lineTo(x, y);
 		this.ctx.stroke();
+	}
+
+	private getConstrainedMousePos(e: PointerEvent): [number, number] {
+		const rect = this.canvas.getBoundingClientRect();
+
+		const isInside =
+			e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+		let clientX = e.clientX;
+		let clientY = e.clientY;
+
+		if (!isInside) {
+			clientX = Math.max(rect.left, Math.min(e.clientX, rect.right));
+			clientY = Math.max(rect.top, Math.min(e.clientY, rect.bottom));
+		}
+
+		const x = clientX - rect.left;
+		const y = clientY - rect.top;
+
+		const logicalX = (x * this.logicalWidth) / rect.width;
+		const logicalY = (y * this.logicalHeight) / rect.height;
+
+		return this.snapToGrid ? this.snapToGrid(logicalX, logicalY) : [logicalX, logicalY];
 	}
 }
