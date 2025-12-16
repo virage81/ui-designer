@@ -556,6 +556,11 @@ const projectsSlice = createSlice({
 			state.save.lastSaveWasManual = manual;
 		},
 
+		resetPreviewSave: state => {
+			state.save.lastPreviewSavedAt = null;
+			state.save.lastSaveWasManual = false;
+		},
+
 		addCanvasObject: (state, action: PayloadAction<Drawable>) => {
 			state.canvasObjects.push(action.payload);
 		},
@@ -649,6 +654,7 @@ export const {
 	updateCanvasObject,
 	removeCanvasObject,
 	setPreviewSaved,
+	resetPreviewSave,
 } = projectsSlice.actions;
 
 export default projectsSlice.reducer;
