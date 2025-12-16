@@ -2,7 +2,7 @@ import { Box, Button } from '@mui/material';
 import type { RootState } from '@store/index';
 import { ACTIONS, setTool } from '@store/slices/toolsSlice';
 import { BrushIcon, CircleIcon, EraserIcon, MinusIcon, NavigationIcon, SquareIcon, TypeIcon } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 const TOOLS = [
@@ -14,6 +14,16 @@ const TOOLS = [
 	{ id: ACTIONS.CIRCLE, icon: <CircleIcon size={16} color={'var(--color)'} />, label: 'Круг' },
 	{ id: ACTIONS.LINE, icon: <MinusIcon size={16} color={'var(--color)'} />, label: 'Линия' },
 ];
+
+const KEY_TO_TOOL: Record<string, ACTIONS> = {
+	'1': ACTIONS.SELECT,
+	'2': ACTIONS.BRUSH,
+	'3': ACTIONS.ERASER,
+	'4': ACTIONS.TEXT,
+	'5': ACTIONS.RECTANGLE,
+	'6': ACTIONS.CIRCLE,
+	'7': ACTIONS.LINE,
+};
 
 export const ToolsGroup: React.FC = () => {
 	const { tool } = useSelector((state: RootState) => state.tools);
@@ -29,13 +39,44 @@ export const ToolsGroup: React.FC = () => {
 		[dispatch],
 	);
 
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement;
+
+			if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+				return;
+			}
+
+			let digit: string | null = null;
+
+			if (e.code?.startsWith('Digit')) {
+				digit = e.code.replace('Digit', '');
+			} else if (e.code?.startsWith('Numpad')) {
+				digit = e.code.replace('Numpad', '');
+			}
+
+			if (digit && digit >= '1' && digit <= '7') {
+				e.preventDefault();
+
+				const toolId = KEY_TO_TOOL[digit];
+
+				if (toolId) {
+					dispatch(setTool(toolId));
+				}
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [dispatch]);
+
 	return (
 		<Box>
-			{TOOLS.map(tool => (
+			{TOOLS.map((tool, i) => (
 				<Button
 					key={tool.id}
 					variant='graphic-tools'
-					title={tool.label}
+					title={`${tool.label} (${i + 1})`}
 					onClick={() => handleToolClick(tool.id)}
 					sx={{
 						backgroundColor: isToolActive(tool.id) ? 'var(--color-primary)' : 'transparent',

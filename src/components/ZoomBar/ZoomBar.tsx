@@ -80,7 +80,7 @@ export const ZoomBar = () => {
 			</Box>
 
 			<Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '35%' }}>
-				<IconButton onClick={handleMinus} size='small' sx={{ color: 'var(--color)' }}>
+				<IconButton onClick={handleMinus} size='small' sx={{ color: 'var(--color)' }} title='Уменьшить (-)'>
 					<ZoomOut size={18} />
 				</IconButton>
 
@@ -96,7 +96,7 @@ export const ZoomBar = () => {
 					}}
 				/>
 
-				<IconButton onClick={handlePlus} size='small' sx={{ color: 'var(--color)' }}>
+				<IconButton onClick={handlePlus} size='small' sx={{ color: 'var(--color)' }} title='Увеличить (+)'>
 					<ZoomIn size={18} />
 				</IconButton>
 			</Box>
