@@ -6,6 +6,7 @@ import { useProjectNameEditing } from '@shared/hooks/useProjectNameEditing';
 import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import { type RootState } from '@store/index';
 import { toggleCreateProjectModal } from '@store/slices/modalsSlice.ts';
+import { resetPreviewSave } from '@store/slices/projectsSlice';
 import { BadgeCheckIcon, House } from 'lucide-react';
 import { useEffect, useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,6 +32,7 @@ export const TopMenu: React.FC = () => {
 		projects,
 	});
 
+	const [isInitialMount, setIsInitialMount] = useState<boolean>(true);
 	const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 	const [fileAnchorEl, setFileAnchorEl] = useState<null | HTMLElement>(null);
 	const fileMenuOpen = Boolean(fileAnchorEl);
@@ -60,16 +62,23 @@ export const TopMenu: React.FC = () => {
 	};
 
 	useEffect(() => {
-		if (lastPreviewSavedAt) {
-			setSaveStatus('saved');
-
-			const duration = lastSaveWasManual ? 1500 : 1000;
-			const timer = setTimeout(() => setSaveStatus('idle'), duration);
-
-			return () => clearTimeout(timer);
+		if (isInitialMount) {
+			dispatch(resetPreviewSave());
+			setIsInitialMount(false);
 		}
+	}, [dispatch, isInitialMount]);
+
+	useEffect(() => {
+		if (isInitialMount || !lastPreviewSavedAt) return;
+
+		setSaveStatus('saved');
+
+		const duration = lastSaveWasManual ? 1500 : 1000;
+		const timer = setTimeout(() => setSaveStatus('idle'), duration);
+
+		return () => clearTimeout(timer);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [lastPreviewSavedAt, lastSaveWasManual]);
+	}, [lastPreviewSavedAt, lastSaveWasManual, isInitialMount]);
 
 	return (
 		<>
