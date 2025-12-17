@@ -7,7 +7,7 @@ import { useSaveProjectPreview } from '@shared/hooks/useSavePreview.tsx';
 import { type RootState } from '@store/index';
 import { toggleCreateProjectModal } from '@store/slices/modalsSlice.ts';
 import { BadgeCheckIcon, House } from 'lucide-react';
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -43,21 +43,21 @@ export const TopMenu: React.FC = () => {
 		setFileAnchorEl(null);
 	};
 
-	const handleNewProject = () => {
+	const handleNewProject = useCallback(() => {
 		dispatch(toggleCreateProjectModal());
 		handleFileMenuClose();
 		saveProjectPreview();
-	};
+	}, [dispatch, saveProjectPreview]);
 
-	const handleSave = () => {
+	const handleSave = useCallback(() => {
 		saveProjectPreview(true);
 		handleFileMenuClose();
-	};
+	}, [saveProjectPreview]);
 
-	const handleExportPng = () => {
+	const handleExportPng = useCallback(() => {
 		exportPNG();
 		handleFileMenuClose();
-	};
+	}, [exportPNG]);
 
 	useEffect(() => {
 		if (lastPreviewSavedAt) {
@@ -70,6 +70,48 @@ export const TopMenu: React.FC = () => {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [lastPreviewSavedAt, lastSaveWasManual]);
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement;
+
+			if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+				return;
+			}
+
+			if (e.code === 'F1') {
+				e.preventDefault();
+				console.log('F1');
+				return;
+			}
+
+			if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+				switch (e.code) {
+					case 'KeyS':
+						e.preventDefault();
+						handleSave();
+						return;
+
+					case 'KeyE':
+						e.preventDefault();
+						handleExportPng();
+						return;
+
+					default:
+						break;
+				}
+			}
+
+			if (e.ctrlKey && e.altKey && !e.shiftKey && e.code === 'KeyN') {
+				e.preventDefault();
+				handleNewProject();
+				return;
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [handleSave, handleExportPng, handleNewProject]);
 
 	return (
 		<>
@@ -168,9 +210,9 @@ export const TopMenu: React.FC = () => {
 						padding: 0,
 					},
 				}}>
-				<MenuItem onClick={handleNewProject}>Новый проект</MenuItem>
-				<MenuItem onClick={handleSave}>Сохранить</MenuItem>
-				<MenuItem onClick={handleExportPng}>Экспортировать в png</MenuItem>
+				<MenuItem onClick={handleNewProject}>Новый проект (Ctrl+Alt+N)</MenuItem>
+				<MenuItem onClick={handleSave}>Сохранить (Ctrl+S)</MenuItem>
+				<MenuItem onClick={handleExportPng}>Экспортировать в png (Ctrl+E)</MenuItem>
 			</Menu>
 		</>
 	);
