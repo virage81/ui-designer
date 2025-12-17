@@ -10,6 +10,7 @@ import { BadgeCheckIcon, House } from 'lucide-react';
 import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
+import { HelpModal } from './components';
 
 export const TopMenu: React.FC = () => {
 	const navigate = useNavigate();
@@ -33,6 +34,7 @@ export const TopMenu: React.FC = () => {
 
 	const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
 	const [fileAnchorEl, setFileAnchorEl] = useState<null | HTMLElement>(null);
+	const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 	const fileMenuOpen = Boolean(fileAnchorEl);
 
 	const handleFileMenuClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -59,6 +61,11 @@ export const TopMenu: React.FC = () => {
 		handleFileMenuClose();
 	}, [exportPNG]);
 
+	const handleOpenHelpModal = () => {
+		setIsHelpModalOpen(true);
+		handleFileMenuClose();
+	};
+
 	useEffect(() => {
 		if (lastPreviewSavedAt) {
 			setSaveStatus('saved');
@@ -81,7 +88,7 @@ export const TopMenu: React.FC = () => {
 
 			if (e.code === 'F1') {
 				e.preventDefault();
-				console.log('F1');
+				setIsHelpModalOpen(true);
 				return;
 			}
 
@@ -213,7 +220,9 @@ export const TopMenu: React.FC = () => {
 				<MenuItem onClick={handleNewProject}>Новый проект (Ctrl+Alt+N)</MenuItem>
 				<MenuItem onClick={handleSave}>Сохранить (Ctrl+S)</MenuItem>
 				<MenuItem onClick={handleExportPng}>Экспортировать в png (Ctrl+E)</MenuItem>
+				<MenuItem onClick={handleOpenHelpModal}>Горячие клавиши (F1)</MenuItem>
 			</Menu>
+			<HelpModal open={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
 		</>
 	);
 };
