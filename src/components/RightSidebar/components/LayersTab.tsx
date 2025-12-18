@@ -14,7 +14,7 @@ import {
 } from '@store/slices/projectsSlice';
 import { HISTORY_ACTIONS } from '@store/slices/projectsSlice.enums';
 import { PlusIcon } from 'lucide-react';
-import { useState, type MouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SortableLayer } from '../components';
@@ -184,6 +184,83 @@ export const LayersTab = () => {
 			);
 		}
 	};
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!activeLayer || !projectId || editingLayerId) return;
+
+			const target = e.target as HTMLElement;
+			if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+			const currentIndex = sortedLayers.findIndex(l => l.id === activeLayer.id);
+			if (currentIndex === -1) return;
+
+			if (!e.ctrlKey && !e.shiftKey && !e.altKey) {
+				if (e.key === 'ArrowUp' && currentIndex > 0) {
+					e.preventDefault();
+					dispatch(setActiveLayer({ projectId, id: sortedLayers[currentIndex - 1].id }));
+					return;
+				}
+
+				if (e.key === 'ArrowDown' && currentIndex < sortedLayers.length - 1) {
+					e.preventDefault();
+					dispatch(setActiveLayer({ projectId, id: sortedLayers[currentIndex + 1].id }));
+					return;
+				}
+			}
+
+			if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+				let newIndex;
+				if (e.key === 'ArrowUp') {
+					newIndex = Math.max(0, currentIndex - 1);
+				} else if (e.key === 'ArrowDown') {
+					newIndex = Math.min(sortedLayers.length - 1, currentIndex + 1);
+				} else {
+					return;
+				}
+
+				e.preventDefault();
+				if (currentIndex === newIndex) return;
+
+				const newLayers = arrayMove(sortedLayers, currentIndex, newIndex);
+
+				newLayers.forEach((layer, index) => {
+					dispatch(
+						updateLayer({
+							projectId,
+							data: {
+								id: layer.id,
+								zIndex: newLayers.length - index,
+							},
+							canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
+						}),
+					);
+				});
+				
+				dispatch(
+					setActiveLayer({
+						projectId,
+						id: activeLayer.id,
+					}),
+				);
+
+				if (activeLayer) {
+					dispatch(
+						addToHistory({
+							projectId,
+							activeLayer,
+							type: HISTORY_ACTIONS.LAYER_ORDER,
+							canvasDataURL: activeLayer.canvasDataURL,
+						}),
+					);
+				}
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [activeLayer, sortedLayers, projectId, dispatch]);
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>

@@ -63,7 +63,7 @@ export const SortableLayer: React.FC<SortableLayerProps> = ({
 					}}
 					{...attributes}
 					{...listeners}
-					onClick={e => e.stopPropagation()}>
+					onClick={e => e.stopPropagation()} title='Переместить (Ctrl+↑/↓)'>
 					<GripVertical size={16} />
 				</IconButton>
 

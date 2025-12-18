@@ -167,24 +167,24 @@ const projectsSlice = createSlice({
 			 * Тут делаем изменяемый слой активным
 			 * в случае, если он неактивен
 			 */
-			if (state.activeLayer?.id !== layer.id) {
-				state.activeLayer = layer;
+			// if (state.activeLayer?.id !== layer.id) {
+			// 	state.activeLayer = layer;
 
-				/**
-				 * Тут действия с историей.
-				 * Увеличиваем указатель на шаг
-				 */
-				const newPointer = ++state.history[projectId].pointer;
-				// и добавляем новый элемент в историю
-				state.history[projectId].history[newPointer] = {
-					layers: [...state.layers[projectId]],
-					objects: [...state.canvasObjects],
-					type: HISTORY_ACTIONS.LAYER_ACTIVE,
-					id: newPointer,
-					date: new Date().getTime(),
-					activeLayer: layer,
-				};
-			}
+			// 	/**
+			// 	 * Тут действия с историей.
+			// 	 * Увеличиваем указатель на шаг
+			// 	 */
+			// 	const newPointer = ++state.history[projectId].pointer;
+			// 	// и добавляем новый элемент в историю
+			// 	state.history[projectId].history[newPointer] = {
+			// 		layers: [...state.layers[projectId]],
+			// 		objects: [...state.canvasObjects],
+			// 		type: HISTORY_ACTIONS.LAYER_ACTIVE,
+			// 		id: newPointer,
+			// 		date: new Date().getTime(),
+			// 		activeLayer: layer,
+			// 	};
+			// }
 			// Устанавливаем активность истории для перерисовки
 			state.history[projectId].active = true;
 		},
@@ -259,7 +259,13 @@ const projectsSlice = createSlice({
 			const layerIndex = state.layers?.[payload.projectId]?.findIndex(item => item.id === payload.id);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.id} not found`);
 
-			state.activeLayer = state.layers[payload.projectId][layerIndex];
+			const nextActiveLayer = state.layers[payload.projectId][layerIndex];
+
+			if (state.activeLayer?.id === nextActiveLayer.id) {
+				return;
+			}
+
+			state.activeLayer = nextActiveLayer;
 
 			/**
 			 * Тут действия с историей.
