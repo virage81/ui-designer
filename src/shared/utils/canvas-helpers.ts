@@ -37,12 +37,38 @@ export const findObjectAtPoint = (objects: Drawable[], x: number, y: number): Dr
 	objects = objects.filter(obj => ['rect', 'circle', 'line', 'text'].includes(obj.type));
 	for (let i = objects.length - 1; i >= 0; i--) {
 		const obj = objects[i];
-		const bbox = getBoundingBox(obj);
+		const bbox = getBoundingBoxWithStroke(obj);
 		if (isPointInBBox(x, y, bbox)) {
 			return obj;
 		}
 	}
 	return null;
+};
+
+export const getBoundingBoxWithStroke = (obj: Drawable): { x: number; y: number; width: number; height: number } => {
+	const strokeWidth = getStrokeWidth(obj);
+
+	const bbox = getBoundingBox(obj);
+
+	return {
+		x: bbox.x - strokeWidth / 2,
+		y: bbox.y - strokeWidth / 2,
+		width: bbox.width + strokeWidth,
+		height: bbox.height + strokeWidth,
+	};
+};
+
+const getStrokeWidth = (obj: Drawable): number => {
+	switch (obj.type) {
+		case 'rect':
+			return (obj as Rect).strokeWidth || 0;
+		case 'circle':
+			return (obj as Circle).strokeWidth || 0;
+		case 'line':
+			return (obj as Line).strokeWidth || 0;
+		default:
+			return 0;
+	}
 };
 
 export const normalizeRect = (x: number, y: number, width: number, height: number) => {
@@ -112,7 +138,15 @@ export const findObjectAtPointPrecise = (
 		switch (obj.type) {
 			case 'rect': {
 				const r = obj as Rect;
-				if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) {
+				const strokeWidth = r.strokeWidth || 0;
+				const effectiveTolerance = tolerance + strokeWidth / 2;
+
+				if (
+					x >= r.x - effectiveTolerance &&
+					x <= r.x + r.width + effectiveTolerance &&
+					y >= r.y - effectiveTolerance &&
+					y <= r.y + r.height + effectiveTolerance
+				) {
 					return obj;
 				}
 				break;
@@ -120,10 +154,13 @@ export const findObjectAtPointPrecise = (
 
 			case 'circle': {
 				const c = obj as Circle;
+				const strokeWidth = c.strokeWidth || 0;
+				const effectiveTolerance = tolerance + strokeWidth / 2;
 				const dx = x - c.cx;
 				const dy = y - c.cy;
-				const distSq = dx * dx + dy * dy;
-				if (distSq <= c.r * c.r) {
+				const dist = Math.sqrt(dx * dx + dy * dy);
+
+				if (dist <= c.r + effectiveTolerance) {
 					return obj;
 				}
 				break;
@@ -131,8 +168,11 @@ export const findObjectAtPointPrecise = (
 
 			case 'line': {
 				const l = obj as Line;
+				const strokeWidth = l.strokeWidth || 0;
+				const effectiveTolerance = tolerance + strokeWidth / 2;
 				const dist = distanceFromPointToSegment(x, y, l.x1, l.y1, l.x2, l.y2);
-				if (dist <= tolerance) {
+
+				if (dist <= effectiveTolerance) {
 					return obj;
 				}
 				break;
@@ -152,8 +192,8 @@ export const findObjectAtPointPrecise = (
 				for (const point of b.points) {
 					const dx = x - point.x;
 					const dy = y - point.y;
-					const distSq = dx * dx + dy * dy;
-					if (distSq <= tol * tol) {
+					const dist = Math.sqrt(dx * dx + dy * dy);
+					if (dist <= tol) {
 						return obj;
 					}
 				}

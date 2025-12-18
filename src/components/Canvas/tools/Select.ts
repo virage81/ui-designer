@@ -33,7 +33,7 @@ export class SelectTool extends Tool {
 		zoom: number,
 		snapToGrid?: (x: number, y: number) => [number, number],
 		guides?: { enabled: boolean; columns: number; rows: number },
-		isCtrlPressedRef?: React.RefObject<boolean>
+		isCtrlPressedRef?: React.RefObject<boolean>,
 	) {
 		super(canvas, styles, options, zoom, snapToGrid);
 		this.isCtrlPressedRef = isCtrlPressedRef;
@@ -275,11 +275,20 @@ export class SelectTool extends Tool {
 		}
 
 		if (this.selectedObject) {
+			const strokeWidth = this.getSelectedObjectStrokeWidth();
 			const bbox = getBoundingBox(this.selectedObject);
+
+			const paddedBbox = {
+				x: bbox.x - strokeWidth / 2,
+				y: bbox.y - strokeWidth / 2,
+				width: bbox.width + strokeWidth,
+				height: bbox.height + strokeWidth,
+			};
+
 			ctx.strokeStyle = '#007bff';
 			ctx.lineWidth = 1 / this.dpr;
 			ctx.setLineDash([4 / this.dpr, 4 / this.dpr]);
-			ctx.strokeRect(bbox.x, bbox.y, bbox.width, bbox.height);
+			ctx.strokeRect(paddedBbox.x, paddedBbox.y, paddedBbox.width, paddedBbox.height);
 			ctx.setLineDash([]);
 		}
 	}
@@ -343,6 +352,22 @@ export class SelectTool extends Tool {
 		}
 	}
 
+	private getSelectedObjectStrokeWidth(): number {
+		if (!this.selectedObject) return 0;
+
+		switch (this.selectedObject.type) {
+			case 'rect':
+				return this.selectedObject.strokeWidth;
+			case 'circle':
+				return this.selectedObject.strokeWidth;
+			case 'line':
+				return this.selectedObject.strokeWidth;
+
+			default:
+				return 0;
+		}
+	}
+
 	private drawObject(ctx: CanvasRenderingContext2D, obj: Drawable) {
 		switch (obj.type) {
 			case 'rect':
@@ -367,7 +392,16 @@ export class SelectTool extends Tool {
 		if (!this.selectedObject) return;
 
 		const previewBbox = this.getPreviewBoundingBox();
-		this.drawBoundingBox(previewBbox);
+		const strokeWidth = this.getSelectedObjectStrokeWidth();
+
+		const paddedBbox = {
+			x: previewBbox.x - strokeWidth / 2,
+			y: previewBbox.y - strokeWidth / 2,
+			width: previewBbox.width + strokeWidth,
+			height: previewBbox.height + strokeWidth,
+		};
+
+		this.drawBoundingBox(paddedBbox);
 	}
 
 	private drawBoundingBox(bbox: BBox) {
