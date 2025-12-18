@@ -5,7 +5,7 @@ export const Placeholder = () => {
 	return (
 		<Box
 			sx={{
-				height: 150,
+				aspectRatio: 16/9,
 				background: `linear-gradient(145deg,
 						var(--card-placeholder-bg-t) 0%,
 						var(--card-placeholder-bg-b) 100%)`,
