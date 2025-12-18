@@ -261,8 +261,6 @@ export class TextTool extends Tool {
 		const lines = this.wrapTextLogical(tempCtx, text, maxWidth);
 		const lineHeight = fontSize * 1.2;
 
-		console.log('lines:', lines);
-
 		let width = 0;
 		for (const line of lines) {
 			const w = tempCtx.measureText(line).width;
