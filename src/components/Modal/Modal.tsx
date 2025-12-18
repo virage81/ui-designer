@@ -23,7 +23,10 @@ import { getNewProjectName } from './utils';
 type NewProject = Omit<Project, 'id' | 'date'>;
 
 const DEFAULT_NAME = 'Проект';
-const DEFAULT_SIZE = 800;
+const DEFAULT_SIZE = {
+	width: 1280,
+	height: 720
+}
 
 export const Modal: FC = () => {
 	const dispatch = useDispatch();
@@ -36,8 +39,8 @@ export const Modal: FC = () => {
 	const [pendingName, setPendingName] = useState<string | null>(null);
 
 	const [projectName, setProjectName] = useState<string>(newProjectName);
-	const [width, setWidth] = useState<number | string>(DEFAULT_SIZE);
-	const [height, setHeight] = useState<number | string>(DEFAULT_SIZE);
+	const [width, setWidth] = useState<number | string>(DEFAULT_SIZE.width);
+	const [height, setHeight] = useState<number | string>(DEFAULT_SIZE.height);
 
 	const [projectNameError, setProjectNameError] = useState<string>('');
 	const [widthError, setWidthError] = useState<string>('');
@@ -47,8 +50,8 @@ export const Modal: FC = () => {
 
 	const resetForm: () => void = useCallback((): void => {
 		setProjectName(newProjectName);
-		setWidth(DEFAULT_SIZE);
-		setHeight(DEFAULT_SIZE);
+		setWidth(DEFAULT_SIZE.width);
+		setHeight(DEFAULT_SIZE.height);
 		setProjectNameError('');
 		setWidthError('');
 		setHeightError('');

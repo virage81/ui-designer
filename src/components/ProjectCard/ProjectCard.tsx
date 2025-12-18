@@ -26,17 +26,29 @@ export const ProjectCard: React.FC<Project> = ({ id, preview, name, date }) => {
 					backgroundColor: 'var(--header-bg)',
 					paddingBottom: 3,
 				}}>
-				{!preview ? (
-					<Placeholder />
-				) : (
-					<CardMedia
-						sx={{ borderTopLeftRadius: 8, borderTopRightRadius: 8 }}
-						component='img'
-						alt={name}
-						height='150'
-						image={preview}
-					/>
-				)}
+				<Box sx={{
+					position: 'relative',
+					width: '100%',
+					aspectRatio: '16/9',
+					borderTopLeftRadius: 8,
+					borderTopRightRadius: 8,
+					overflow: 'hidden'
+				}}>
+					{preview ? (
+						<CardMedia
+							component="img"
+							src={preview}
+							alt={name}
+							sx={{
+								width: '100%',
+								height: '100%',
+								objectFit: 'cover'
+							}}
+						/>
+					) : (
+						<Placeholder />
+					)}
+				</Box>
 
 				<CardContent sx={{ pb: 0.2 }}>
 					<Box sx={{ width: 250 }}>
