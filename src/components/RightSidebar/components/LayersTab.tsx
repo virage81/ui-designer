@@ -92,9 +92,9 @@ export const LayersTab = () => {
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId, activeLayer }));
 
-		if (layerId === activeLayer?.id) {
-			dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
-		}
+		// if (layerId === activeLayer?.id) {
+		// 	dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
+		// }
 	};
 
 	// Тут "делаем" активным слой и добавляем это событие в историю
@@ -236,7 +236,7 @@ export const LayersTab = () => {
 						}),
 					);
 				});
-				
+
 				dispatch(
 					setActiveLayer({
 						projectId,
