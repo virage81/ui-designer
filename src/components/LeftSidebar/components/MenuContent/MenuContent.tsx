@@ -147,13 +147,13 @@ export const MenuContent: React.FC<MenuContentProps> = ({ currentSetting }) => {
 							{currentColor}
 						</Typography>
 					</Box>
-					<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 0.5 }}>
+					<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 0.75 }}>
 						{COLOR_PALETTE.map(color => (
 							<Box
 								key={color}
 								sx={{
-									width: 24,
-									height: 24,
+									width: 28,
+									height: 28,
 									backgroundColor: color,
 									border: '1px solid var(--header-border-color)',
 									cursor: 'pointer',
