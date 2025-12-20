@@ -60,11 +60,9 @@ export const Modal: FC = () => {
 	const validateInput = (value: string, field: string): void => {
 		switch (field) {
 			case 'projectName': {
+				setProjectName(value);
 				const error = validateProjectName(value, projects);
 				setProjectNameError(error);
-				if (!error) {
-					setProjectName(value);
-				}
 				break;
 			}
 			case 'width': {
