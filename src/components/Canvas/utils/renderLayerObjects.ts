@@ -11,7 +11,6 @@ export const renderLayerObjects = (canvas: HTMLCanvasElement, objects: Drawable[
 
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	// Настройки по умолчанию
 	ctx.lineCap = 'round';
 	ctx.lineJoin = 'round';
 	ctx.font = '16px Arial';
@@ -73,7 +72,6 @@ export const renderLayerObjects = (canvas: HTMLCanvasElement, objects: Drawable[
 
 			case 'brush': {
 				const b = obj as Brush;
-				// if (b.points.length === 0) break;
 				if (b.points.length < 2) break;
 
 				ctx.strokeStyle = b.stroke;

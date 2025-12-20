@@ -63,8 +63,6 @@ export const Canvas: React.FC = () => {
 	const projectLayers = useMemo(() => layersByProject[projectId ?? ''] ?? [], [layersByProject, projectId]);
 	const saveProjectPreview = useSaveProjectPreview(currentProject, projectLayers, canvases);
 	const saveProjectPreviewRef = useRef(saveProjectPreview);
-	// const animationFrameRef = useRef<number | null>(null);
-	// const initialRenderRef = useRef(false);
 
 	const [canvasContainerWidth, setCanvasContainerWidth] = useState(currentProject.width);
 
@@ -114,7 +112,6 @@ export const Canvas: React.FC = () => {
 				saveProjectPreviewRef.current();
 			}
 		}, 30000);
-		// }, [saveProjectPreviewRef]);
 	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const triggerLayerSave = useCallback(() => {
@@ -131,7 +128,6 @@ export const Canvas: React.FC = () => {
 				saveProjectPreviewRef.current();
 			}
 		}, 30000);
-		// }, [saveProjectPreviewRef]);
 	}, [isTextEditingRef, saveProjectPreviewRef]);
 
 	const handleToolComplete = useCallback(
@@ -303,32 +299,15 @@ export const Canvas: React.FC = () => {
 		//eslint-disable-next-line
 	}, [tool, activeLayer, toolStyles, currentProject.id, layerObjects, zoom, textareaContainerRef, snapToGrid]);
 
-	// эффект для SelectTool
 	useEffect(() => {
 		if (toolRef.current instanceof SelectTool) {
 			const historyObjects = history[pointer].objects || [];
-
-			// Передаём ТОЛЬКО актуальные объекты активного слоя из истории
 			const activeLayerObjects = historyObjects.filter(obj => obj.layerId === activeLayer?.id);
 
 			toolRef.current.updateLayerObjects(activeLayerObjects);
 		}
 	}, [activeLayer?.id, tool, history, pointer]);
 
-	// // Тут перерисовываем canvas
-	// useEffect(() => {
-	// 	if (!canvasRef.current || !history) return;
-
-	// 	if (!initialRenderRef.current || isHistoryActive) {
-	// 		history[pointer].layers.forEach(l => {
-	// 			redrawCanvas(canvasesRef.current[l.id], l.canvasDataURL);
-	// 		});
-
-	// 		initialRenderRef.current = true;
-	// 	}
-	// }, [history, pointer, isHistoryActive]);
-
-	// Перерисовка canvas через векторный рендер по объектам
 	useEffect(() => {
 		if (!currentProject || !canvasesRef.current || !sortedLayers) return;
 
@@ -347,44 +326,6 @@ export const Canvas: React.FC = () => {
 
 			renderLayerObjects(canvas, objectsToRender);
 		});
-
-		// TODO: можно через requestAnimationFrame, но тогда не будет анимации
-		// const renderFrame = () => {
-		// 	const dpr = window.devicePixelRatio || 1;
-
-		// 	sortedLayers.forEach(layer => {
-		// 		const canvas = canvasesRef.current[layer.id];
-		// 		if (!canvas) return;
-
-		// 		let objectsToRender: Drawable[] = [];
-
-		// 		if (isHistoryActive && history && history[pointer]) {
-		// 			const historyObjects = history[pointer].objects || [];
-		// 			objectsToRender = historyObjects.filter(obj => obj.layerId === layer.id);
-		// 		} else {
-		// 			objectsToRender = allObjects.filter(obj => obj.layerId === layer.id);
-		// 		}
-
-		// 		renderLayerObjects(canvas, objectsToRender, dpr);
-		// 	});
-
-		// 	// Запрашиваем следующий кадр анимации
-		// 	animationFrameRef.current = requestAnimationFrame(renderFrame);
-		// };
-
-		// // Отменяем предыдущий кадр анимации
-		// if (animationFrameRef.current) {
-		// 	cancelAnimationFrame(animationFrameRef.current);
-		// }
-
-		// // Запускаем рендеринг
-		// animationFrameRef.current = requestAnimationFrame(renderFrame);
-
-		// return () => {
-		// 	if (animationFrameRef.current) {
-		// 		cancelAnimationFrame(animationFrameRef.current);
-		// 	}
-		// };
 	}, [allObjects, sortedLayers, currentProject, isHistoryActive, history, pointer, projectId]);
 
 	useEffect(() => {
