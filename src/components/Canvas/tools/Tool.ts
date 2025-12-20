@@ -124,4 +124,3 @@ export class Tool {
 }
 
 export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool | TextTool;
-// export type Tools = SelectTool | BrushTool | RectangleTool | CircleTool | LineTool | EraserTool;
