@@ -17,7 +17,6 @@ export type CreateLayerParams = {
 export type UpdateLayerParams = {
 	projectId: Project['id'];
 	data: { id: Layer['id'] } & Partial<Omit<Layer, 'id'>>;
-	canvasDataURL?: string;
 };
 
 export type DeleteLayerParams = {

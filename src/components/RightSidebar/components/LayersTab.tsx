@@ -50,7 +50,6 @@ export const LayersTab = () => {
 					id: layerId,
 					[name]: value,
 				},
-				canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 			}),
 		);
 
@@ -60,7 +59,6 @@ export const LayersTab = () => {
 					projectId: projectId,
 					activeLayer,
 					type: name === 'opacity' ? HISTORY_ACTIONS.LAYER_OPACITY : HISTORY_ACTIONS.LAYER_HIDE,
-					canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -91,10 +89,6 @@ export const LayersTab = () => {
 	// Тут удаляем слой и добавляем это событие в историю
 	const handleDelete = (layerId: Layer['id']) => {
 		dispatch(deleteLayer({ id: layerId, projectId: projectId, activeLayer }));
-
-		// if (layerId === activeLayer?.id) {
-		// 	dispatch(setActiveLayer({ projectId, id: layers[projectId][0].id }));
-		// }
 	};
 
 	// Тут "делаем" активным слой и добавляем это событие в историю
@@ -127,7 +121,6 @@ export const LayersTab = () => {
 			updateLayer({
 				projectId,
 				data: { id: layerId, name: editingLayerName.trim() || 'Без имени' },
-				canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 			}),
 		);
 
@@ -137,7 +130,6 @@ export const LayersTab = () => {
 					projectId,
 					activeLayer,
 					type: HISTORY_ACTIONS.LAYER_RENAME,
-					canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -168,7 +160,6 @@ export const LayersTab = () => {
 						id: layer.id,
 						zIndex: newLayers.length - index,
 					},
-					canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 				}),
 			);
 		});
@@ -179,7 +170,6 @@ export const LayersTab = () => {
 					projectId,
 					activeLayer,
 					type: HISTORY_ACTIONS.LAYER_ORDER,
-					canvasDataURL: activeLayer.canvasDataURL,
 				}),
 			);
 		}
@@ -232,7 +222,6 @@ export const LayersTab = () => {
 								id: layer.id,
 								zIndex: newLayers.length - index,
 							},
-							canvasDataURL: activeLayer ? activeLayer.canvasDataURL : '',
 						}),
 					);
 				});
@@ -250,7 +239,6 @@ export const LayersTab = () => {
 							projectId,
 							activeLayer,
 							type: HISTORY_ACTIONS.LAYER_ORDER,
-							canvasDataURL: activeLayer.canvasDataURL,
 						}),
 					);
 				}
@@ -260,7 +248,7 @@ export const LayersTab = () => {
 		window.addEventListener('keydown', handleKeyDown);
 
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [activeLayer, sortedLayers, projectId, dispatch]);
+	}, [activeLayer, sortedLayers, projectId, editingLayerId, dispatch]);
 
 	return (
 		<Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.5rem' }}>
@@ -280,7 +268,6 @@ export const LayersTab = () => {
 									name: 'Новый слой',
 									opacity: 100,
 									zIndex: layers[projectId].length + 1,
-									canvasDataURL: '',
 								},
 								activeLayer: activeLayer,
 							}),
