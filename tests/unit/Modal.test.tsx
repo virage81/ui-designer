@@ -51,7 +51,7 @@ describe('Modal Component', () => {
 		await waitFor(() => expect(screen.queryByText('Допустимы буквы и цифры')).not.toBeInTheDocument());
 	});
 
-	test.only('validation of width and height - positive integers', async () => {
+	test('validation of width and height - positive integers', async () => {
 		act(() => store.dispatch(openCreateProjectModal()));
 
 		const widthInput = screen.getByLabelText('Ширина холста (px)');

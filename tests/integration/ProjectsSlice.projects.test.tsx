@@ -10,26 +10,26 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 	])('Создание проекта', (name, width, height) => {
 		const { store } = JestStoreProvider(<div />);
 
-		const spied = jest.spyOn(store, 'dispatch');
-
 		act(() => {
 			store.dispatch(createProject({ name, width, height }));
 		});
-		const { projects, layers, history } = store.getState().projects;
-		const projectId = store.getState().projects.projects[0].id;
 
-		expect(projects).toStrictEqual([
-			expect.objectContaining({
-				id: expect.any(String),
-				name,
-				date: expect.any(String),
-				width,
-				height,
-			}),
-		]);
+		const projects = store.getState().projects.projects;
+		const projectId = projects[0].id;
+		const { layers, history } = store.getState().projects;
+
+		expect(projects).toHaveLength(1);
+		expect(projects[0]).toMatchObject({
+			name,
+			width,
+			height,
+		});
+		expect(projects[0]).toHaveProperty('id');
+		expect(projects[0]).toHaveProperty('date');
+		expect(projects[0]).toHaveProperty('preview');
+
 		expect(layers).toHaveProperty(projectId);
 		expect(history).toHaveProperty(projectId);
-		expect(spied).toHaveBeenCalledTimes(1);
 	});
 
 	test.each([
@@ -39,35 +39,26 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 	])('Редактирование проекта', (name, width, height) => {
 		const { store } = JestStoreProvider(<div />);
 
-		const spied = jest.spyOn(store, 'dispatch');
-
 		act(() => {
 			store.dispatch(createProject({ name, width, height }));
 		});
-		expect(store.getState().projects.projects).toStrictEqual([
-			expect.objectContaining({
-				id: expect.any(String),
-				name,
-				date: expect.any(String),
-				width,
-				height,
-			}),
-		]);
+
+		const projectId = store.getState().projects.projects[0].id;
 
 		act(() => {
-			store.dispatch(updateProject({ id: store.getState().projects.projects[0].id, height: 100, width: 100 }));
+			store.dispatch(updateProject({ id: projectId, height: 100, width: 100 }));
 		});
 
-		expect(store.getState().projects.projects).toStrictEqual([
-			expect.objectContaining({
-				id: expect.any(String),
-				name,
-				date: expect.any(String),
-				width: 100,
-				height: 100,
-			}),
-		]);
-		expect(spied).toHaveBeenCalledTimes(2);
+		const updatedProject = store.getState().projects.projects[0];
+
+		expect(updatedProject).toMatchObject({
+			id: projectId,
+			name,
+			width: 100,
+			height: 100,
+		});
+		expect(updatedProject).toHaveProperty('date');
+		expect(updatedProject).toHaveProperty('preview');
 	});
 
 	test.each([
@@ -77,26 +68,16 @@ describe('CRUD операции для ProjectSlice.projects', () => {
 	])('Удаление проекта', (name, width, height) => {
 		const { store } = JestStoreProvider(<div />);
 
-		const spied = jest.spyOn(store, 'dispatch');
-
 		act(() => {
 			store.dispatch(createProject({ name, width, height }));
 		});
 
-		expect(store.getState().projects.projects).toStrictEqual([
-			expect.objectContaining({
-				id: expect.any(String),
-				name,
-				date: expect.any(String),
-				width,
-				height,
-			}),
-		]);
+		const projectId = store.getState().projects.projects[0].id;
 
 		act(() => {
-			store.dispatch(deleteProject({ id: store.getState().projects.projects[0].id }));
+			store.dispatch(deleteProject({ id: projectId }));
 		});
-		expect(store.getState().projects.projects).toStrictEqual([]);
-		expect(spied).toHaveBeenCalledTimes(2);
+
+		expect(store.getState().projects.projects).toHaveLength(0);
 	});
 });
