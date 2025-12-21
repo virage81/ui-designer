@@ -150,7 +150,6 @@ export const Canvas: React.FC = () => {
 						projectId,
 						activeLayer,
 						type: tool,
-						canvasDataURL: '',
 					}),
 				);
 			}

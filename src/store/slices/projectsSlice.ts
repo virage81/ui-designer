@@ -1,11 +1,10 @@
-import { createAction, createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { generateId } from '@shared/helpers';
 import type { Drawable } from '@shared/types/canvas';
 import type {
 	AddToHistoryParams,
 	ClearHistoryParams,
 	Project,
-	SaveHistorySnapshotParams,
 	SetHistoryParams,
 	UndoRedoHistoryParams,
 } from '@shared/types/project';
@@ -61,7 +60,6 @@ const projectsSlice = createSlice({
 				name: 'Фон',
 				opacity: 100,
 				zIndex: 1,
-				canvasDataURL: '',
 			};
 
 			state.layers[id] = [layer];
@@ -146,46 +144,13 @@ const projectsSlice = createSlice({
 		},
 
 		updateLayer: (state, action: PayloadAction<UpdateLayerParams>) => {
-			const { data, projectId, canvasDataURL } = action.payload;
+			const { data, projectId } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
 			const layerIndex = state.layers?.[projectId]?.findIndex(item => item.id === data.id);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${data.id} not found`);
 
 			state.layers[projectId][layerIndex] = { ...state.layers[projectId][layerIndex], ...data };
-
-			const layer = state.layers[projectId][layerIndex];
-
-			if (layer && canvasDataURL) {
-				layer.canvasDataURL = canvasDataURL;
-			}
-			if (state.activeLayer && canvasDataURL) {
-				state.activeLayer.canvasData = canvasDataURL;
-			}
-
-			/**
-			 * Тут делаем изменяемый слой активным
-			 * в случае, если он неактивен
-			 */
-			// if (state.activeLayer?.id !== layer.id) {
-			// 	state.activeLayer = layer;
-
-			// 	/**
-			// 	 * Тут действия с историей.
-			// 	 * Увеличиваем указатель на шаг
-			// 	 */
-			// 	const newPointer = ++state.history[projectId].pointer;
-			// 	// и добавляем новый элемент в историю
-			// 	state.history[projectId].history[newPointer] = {
-			// 		layers: [...state.layers[projectId]],
-			// 		objects: [...state.canvasObjects],
-			// 		type: HISTORY_ACTIONS.LAYER_ACTIVE,
-			// 		id: newPointer,
-			// 		date: new Date().getTime(),
-			// 		activeLayer: layer,
-			// 	};
-			// }
-			// Устанавливаем активность истории для перерисовки
 			state.history[projectId].active = true;
 		},
 
@@ -297,8 +262,6 @@ const projectsSlice = createSlice({
 			const layerIndex = state.layers?.[payload.projectId]?.findIndex(item => item.id === payload.layerId);
 			if (layerIndex === -1 || layerIndex === undefined) throw new Error(`Layer with ID ${payload.layerId} not found`);
 
-			state.layers[payload.projectId][layerIndex].canvasDataURL = '';
-			state.layers[payload.projectId][layerIndex].canvasData = undefined;
 			state.activeLayer = state.layers[payload.projectId][layerIndex];
 			state.canvasObjects = state.canvasObjects.filter(object => object.layerId !== payload.layerId);
 
@@ -347,7 +310,7 @@ const projectsSlice = createSlice({
 
 		// Тут добавляем события в историю
 		addToHistory: (state, action: PayloadAction<AddToHistoryParams>) => {
-			const { projectId, type, activeLayer, canvasDataURL } = action.payload;
+			const { projectId, type, activeLayer } = action.payload;
 			if (!checkProjectExistence(state, projectId)) throw new Error(`Project with ID ${projectId} does not exist`);
 
 			const pointer = state.history[projectId].pointer;
@@ -355,18 +318,6 @@ const projectsSlice = createSlice({
 			if (state.history[projectId].history.length - 1 > pointer) {
 				const diff = state.history[projectId].history.length - pointer;
 				state.history[projectId].history.splice(pointer + 1, diff);
-			}
-
-			// Тут действия с историей
-			const layers = state.layers[projectId];
-			const layer = layers.find(l => l.id === activeLayer.id);
-
-			if (layer && canvasDataURL) {
-				layer.canvasDataURL = canvasDataURL;
-			}
-
-			if (state.activeLayer && canvasDataURL) {
-				state.activeLayer.canvasData = canvasDataURL;
 			}
 
 			// Тут увеличиваем указатель на шаг
@@ -380,19 +331,6 @@ const projectsSlice = createSlice({
 				date: new Date().getTime(),
 				activeLayer,
 			};
-
-			// Тут задаётся лимит истории
-			// const history = state.history[projectId].history;
-			// const historyLimit = 16;
-
-			// if (history.length > historyLimit) {
-			// 	const limitedHistory = history.slice(-historyLimit);
-			// 	state.history[projectId].history = limitedHistory;
-			// 	limitedHistory.forEach((h, index) => (h.id = index));
-
-			// 	state.history[projectId].pointer = state.history[projectId].history.length - 1;
-			// 	state.history[projectId].sliced = true;
-			// }
 
 			// Устанавливаем активность истории для перерисовки
 			state.history[projectId].active = false;
@@ -581,8 +519,6 @@ const projectsSlice = createSlice({
 		},
 	},
 });
-
-export const saveHistorySnapshot = createAction<SaveHistorySnapshotParams>('history/saveHistorySnapshot');
 
 export const sortedLayersSelector = createSelector(
 	[(state: RootState) => state.projects.layers, (_, projectId: string) => projectId],

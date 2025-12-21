@@ -32,15 +32,12 @@ export interface Layer {
 	opacity: number;
 	zIndex: number;
 	hidden: boolean;
-	canvasDataURL: string;
-	canvasData?: string;
 }
 
 export interface AddToHistoryParams {
 	projectId: string;
 	activeLayer: Layer;
 	type: HISTORY_ACTIONS | ACTIONS;
-	canvasDataURL: string;
 }
 
 export interface UndoRedoHistoryParams {
@@ -51,13 +48,6 @@ export interface SetHistoryParams {
 	projectId: Project['id'];
 	id: number;
 }
-
 export interface ClearHistoryParams {
 	projectId: string;
-}
-
-export interface SaveHistorySnapshotParams {
-	projectId: Project['id'];
-	layerId: Layer['id'];
-	canvasDataURL: string;
 }

@@ -25,8 +25,8 @@ type NewProject = Omit<Project, 'id' | 'date'>;
 const DEFAULT_NAME = 'Проект';
 const DEFAULT_SIZE = {
 	width: 1280,
-	height: 720
-}
+	height: 720,
+};
 
 export const Modal: FC = () => {
 	const dispatch = useDispatch();
@@ -141,13 +141,6 @@ export const Modal: FC = () => {
 			setIsLoading(false);
 		};
 	}, [projects, pendingName, navigate, location.pathname, dispatch]);
-
-	// TODO: удалить, тк не отрабатывает при создании нового проекта на странице редактора
-	// useEffect(() => {
-	// 	return () => {
-	// 		dispatch(closeCreateProjectModal());
-	// 	};
-	// }, [dispatch]);
 
 	return (
 		<Dialog
