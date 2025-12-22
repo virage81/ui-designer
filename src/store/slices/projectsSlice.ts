@@ -101,7 +101,12 @@ const projectsSlice = createSlice({
 
 			state.projects.splice(projectIndex, 1);
 
-			if (!state.layers[action.payload.id]) throw new Error('There is no layers to delete');
+			const projectLayers = state.layers[action.payload.id];
+			if (!projectLayers) throw new Error('There is no layers to delete');
+
+			const layerIdsToDelete = projectLayers.map(layer => layer.id);
+			state.canvasObjects = state.canvasObjects.filter(obj => !layerIdsToDelete.includes(obj.layerId));
+
 			delete state.layers[action.payload.id];
 
 			if (!state.history[action.payload.id]) throw new Error('There is no history to delete');
