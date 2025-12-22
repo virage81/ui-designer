@@ -71,6 +71,7 @@ export const TopMenu: React.FC = () => {
 	useEffect(() => {
 		if (isInitialMount) {
 			dispatch(resetPreviewSave());
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setIsInitialMount(false);
 		}
 	}, [dispatch, isInitialMount]);
@@ -78,13 +79,13 @@ export const TopMenu: React.FC = () => {
 	useEffect(() => {
 		if (isInitialMount || !lastPreviewSavedAt) return;
 
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setSaveStatus('saved');
 
 		const duration = lastSaveWasManual ? 1500 : 1000;
 		const timer = setTimeout(() => setSaveStatus('idle'), duration);
 
 		return () => clearTimeout(timer);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [lastPreviewSavedAt, lastSaveWasManual, isInitialMount]);
 
 	useEffect(() => {

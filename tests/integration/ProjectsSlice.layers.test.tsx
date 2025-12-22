@@ -190,6 +190,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 				deleteLayer({
 					projectId,
 					id: store.getState().projects.layers[projectId][1].id,
+					activeLayer: null,
 				}),
 			);
 		});
@@ -233,6 +234,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					deleteLayer({
 						projectId,
 						id: projectId,
+						activeLayer: null,
 					}),
 				),
 			).toThrow();
@@ -491,6 +493,7 @@ describe('CRUD операции для ProjectSlice.layers', () => {
 					deleteLayer({
 						projectId: store.getState().projects.projects[0].id,
 						id: layers[projectId][0].id,
+						activeLayer: null,
 					}),
 				),
 			).toThrow();
