@@ -226,11 +226,28 @@ export const TopMenu: React.FC = () => {
 					'& .MuiMenu-list': {
 						padding: 0,
 					},
+					'& .MuiMenuItem-root': {
+						display: 'flex',
+						justifyContent: 'space-between',
+						gap: '1rem',
+						fontSize: '14px',
+						'& span': {
+							color: 'var(--color-muted)',
+						},
+					},
 				}}>
-				<MenuItem onClick={handleNewProject}>Новый проект (Ctrl+Alt+N)</MenuItem>
-				<MenuItem onClick={handleSave}>Сохранить (Ctrl+S)</MenuItem>
-				<MenuItem onClick={handleExportPng}>Экспортировать в png (Ctrl+E)</MenuItem>
-				<MenuItem onClick={handleOpenHelpModal}>Горячие клавиши (F1)</MenuItem>
+				<MenuItem onClick={handleNewProject}>
+					Новый проект <span>(Ctrl+Alt+N)</span>
+				</MenuItem>
+				<MenuItem onClick={handleSave}>
+					Сохранить <span>(Ctrl+S)</span>
+				</MenuItem>
+				<MenuItem onClick={handleExportPng}>
+					Экспортировать в png <span>(Ctrl+E)</span>
+				</MenuItem>
+				<MenuItem onClick={handleOpenHelpModal}>
+					Горячие клавиши <span>(F1)</span>
+				</MenuItem>
 			</Menu>
 			<HelpModal open={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
 		</>
